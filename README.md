@@ -32,6 +32,11 @@ Holding period target: ~5-15 trading days (swing, not day trading).
   system notices" without re-running the full scan. Robinhood-only, no
   Alpha Vantage calls, skips instantly (zero cost) when there's nothing
   open.
+- `premarket_watchlist_instructions.md` — a third playbook, once daily at
+  9:15am ET (15 min before open): flags notable overnight premarket
+  movers and any obvious catalyst, purely as context for the 9:30am open
+  run. Never opens, sizes, or decides a trade. Writes `premarket_notes.md`
+  (overwritten fresh each morning).
 
 ## Status
 

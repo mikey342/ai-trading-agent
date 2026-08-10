@@ -133,12 +133,39 @@ For candidates passing Tier 2:
 
 A candidate that fails any Tier 3 check is dropped, not force-fit.
 
+## Entry price and chase-protection
+
+The funnel (Tiers 1-3) can take several minutes to run across the full
+universe — this is a multi-step agent doing sequential tool calls and
+reasoning, not a low-latency system, and that's fine for a swing horizon
+of days. But it means the price read during Tier 3 confirmation
+(`signal_price`) can be stale by the time a trade is actually about to be
+simulated. Two rules to keep this honest:
+
+1. **Always re-fetch a fresh quote** (`get_equity_quotes`/
+   `get_option_quotes`) immediately before simulating a fill in step 6 of
+   `run_instructions.md` — call this `entry_price`. Never reuse a quote
+   pulled earlier in the funnel as the simulated fill price.
+2. **Chase-protection**: if `entry_price` has already moved more than
+   `0.5 × stop_distance` (see sizing below) beyond `signal_price` in the
+   favorable direction since Tier 3 confirmed the setup, **do not chase
+   it** — drop the trade this run and log it under "Rejected by gates" as
+   a chase-protection skip, not a data/gate failure. The setup can
+   requalify on a later run if it's still valid then. This is exactly the
+   protection against "the stock already jumped too high by the time we'd
+   execute" — better to skip a trade than enter at a materially worse
+   reward:risk than what was actually evaluated.
+   Moving in the *unfavorable* direction isn't a rejection — just size
+   and set the stop/R-target off the real `entry_price`, not the stale
+   `signal_price`.
+
 ## Position sizing (equity) — risk-based, not equal-weight
 
 1. `stop_distance = min(1.0-1.5 × ATR14, entry_price × gates.md stop-loss
    floor)` — always the *tighter* of the ATR-derived stop and the hard
-   ceiling. Use 1.5x by default; 1.0x is the tighter end of the range used
-   by contemporary breakout swing traders (see `framework.md`, Qullamaggie)
+   ceiling, computed off the fresh `entry_price` above, not `signal_price`.
+   Use 1.5x by default; 1.0x is the tighter end of the range used by
+   contemporary breakout swing traders (see `framework.md`, Qullamaggie)
    and is the adaptive knob to tighten if stops are proving too loose.
 2. `risk_per_trade = 1% of current NAV` (adaptive — this is the number to
    tune if position sizing needs revisiting, not the gates.md ceiling).

@@ -24,6 +24,12 @@ full mapping.
 3. Read `positions.md` — current equity positions, options positions, and
    NAV history.
 4. Read the last ~10 entries of `trade_journal.md`.
+5. If running the 9:30am open slot, read `premarket_notes.md` if it's
+   dated today — use it only to prioritize which candidates to look at
+   first in Tier 1 (e.g., a flagged gapper is worth checking early). It
+   is informational context only, never a substitute for Tier 1-3 gating
+   against fresh prices — every candidate still goes through the full
+   funnel regardless of what's noted there.
 
 ## 1. Market context and regime filter
 
@@ -141,8 +147,14 @@ failure to route around.
 
 ## 6. Simulate execution
 
-For trades passing every gate: record as filled at the current
-quote/premium. **Never call any real Robinhood order-placement tool —
+Before recording any fill: re-fetch a **fresh** quote for the symbol —
+never reuse a price read earlier in the funnel (Tier 1-3 can take several
+minutes across the full universe). Apply `strategy.md`'s chase-protection
+check against this fresh price; if it fails, drop the trade and log it,
+don't force it through at a worse price than what was actually evaluated.
+
+For trades passing every gate (including chase-protection): record as
+filled at this fresh quote/premium. **Never call any real Robinhood order-placement tool —
 `place_equity_order`, `place_option_order`, or any other order/exercise
 tool — under any circumstance in this workflow.** This is a paper-trading
 system; `MODE` in `gates.md` must be `PAPER`. Update `positions.md`
