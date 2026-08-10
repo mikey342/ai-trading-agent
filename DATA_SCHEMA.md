@@ -56,6 +56,38 @@ specific rule is actually earning its place).
 | `nav_after` | open/close | NAV following this action. |
 | `notes` | all | Free text. For rejections, the specific failing check. |
 
+## What the paper P&L does and doesn't capture
+
+Everything logged here is modeled as if trading for real, and the numbers
+are not idealized: prices are live at the actual decision time, buys fill
+at the **ask** and sells at the **bid** (never the midpoint), so the full
+round-trip spread is charged on every trade. Orders are modeled as
+marketable limits, and every gate — chase protection, spread, depth,
+position caps — is applied exactly as it would be live.
+
+Five things are **not** modeled, and every one of them makes the paper
+record look better than reality would:
+
+1. **Fill certainty.** Every marketable limit is assumed to fill
+   instantly at the quoted price. Real ones partially fill, or miss
+   entirely when the book moves first.
+2. **Slippage beyond the quote.** The spread is charged; the extra drift
+   a real order can suffer in a fast market is not.
+3. **Options contract fees** (~$0.03–0.65 per contract in regulatory
+   fees). Equities and ETFs are commission-free, options are not.
+4. **Leveraged ETF expense ratios** (~0.9%/yr) — non-trivial even on a
+   7–10 day hold.
+5. **Dividends.** A real position crossing an ex-date collects the
+   payment; the paper book does not.
+
+**The paper book is entirely separate from the real brokerage account.**
+Market data is read from Robinhood; actual positions are never read and
+never touched, and no order-placement tool is ever called.
+
+Practical reading: expect live results to run modestly worse than the
+paper record. A strategy showing only a thin paper edge most likely has
+no real one once these costs land.
+
 ## On backtesting — an honest distinction
 
 This file is a **forward paper track record**, not a backtest. They

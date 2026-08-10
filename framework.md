@@ -277,9 +277,12 @@ diversify across many small positions rather than concentrating in six.
 - **No modeling of leveraged-ETF decay.** The 10-day time-stop is a blunt
   guard against it, not a model of it. Realized decay depends on the
   actual volatility path and isn't projected anywhere.
-- **No transaction costs or slippage** in the paper P&L (margin interest
-  is moot — margin is disabled). Leveraged ETF expense ratios (~0.9%/yr)
-  are also unmodeled.
+- **Paper P&L omits five real costs**, all of which bias it optimistic:
+  fill certainty (limits are assumed to always fill at the quote),
+  slippage beyond the spread, options contract fees, leveraged ETF
+  expense ratios (~0.9%/yr), and dividends. The bid-ask spread itself
+  *is* charged. See `DATA_SCHEMA.md` for the full accounting. Margin
+  interest is moot — margin is disabled.
 - **Universe is now the Tier 0 screener** (~96 names at last check), not
   the old hand-picked list — a real improvement, though the funnel still
   only carries the top 15 into Tier 1 for wall-clock reasons, so the

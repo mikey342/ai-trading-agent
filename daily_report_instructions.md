@@ -67,6 +67,14 @@ trade in progress, a rule that behaved unexpectedly, a strategy.md
 adaptation made today.
 ```
 
+Close every report with this line verbatim, so no reader mistakes the
+figures for a real account:
+
+> Paper trading — simulated book, no real orders placed. P&L charges the
+> bid-ask spread but omits fill uncertainty, slippage, options fees, ETF
+> expense ratios, and dividends; expect live results to run modestly
+> worse. See `DATA_SCHEMA.md`.
+
 ## 3. Commit and push
 
 Commit as `report: YYYY-MM-DD daily summary` and push to `main`.
