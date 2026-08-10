@@ -31,4 +31,73 @@ changelog entry made this run)
 
 ---
 
-_(No runs yet. First entry will be added by the first scheduled run.)_
+### 2026-08-10 (manual test run, ~03:20 UTC) — premarket run
+
+**Market status:** Closed (Monday premarket, not a holiday)
+**Account:** NAV $25,000, cash $25,000, halted: no (first-ever run, no
+history)
+
+**Regime filter:** SPY $773.26 > 200DMA $700.13 → PASS (risk-on). New
+entries permitted.
+
+**Budget constraint hit:** Alpha Vantage free-tier daily cap (25
+requests/day) meant the full ~19-symbol watchlist could not be screened.
+Narrowed Tier 1 to 5 diversified candidates: AAPL, JPM, UNH, XOM (one per
+major sector from the seed watchlist) + PLTR (opportunistic, from
+most-actively-traded — top gainers/losers were dominated by sub-$5
+penny stocks/warrants, excluded by `gates.md`).
+
+**Scouted:** AAPL, JPM, UNH, XOM, PLTR
+
+**Tier 1 results:**
+- AAPL — PASS (price $313.33 > 50DMA $309.79 > 200DMA $279.41, within 9%
+  of 52wk high, RS proxy 0.74)
+- JPM — PASS (price $357.52 > 50DMA $333.00 > 200DMA $313.24, 1.5% below
+  52wk high, RS proxy 0.94 — highest-ranked)
+- UNH — FAIL (price $407.08 below 50DMA $412.80, trend stack broken)
+- XOM — PASS (price $153.04 > 50DMA $146.48 > 200DMA $140.20, RS proxy 0.70)
+- PLTR — FAIL (50DMA $132.60 below 200DMA $152.28, trend stack broken;
+  GLOBAL_QUOTE call skipped to conserve budget once this was clear)
+
+**Tier 1 survivors, ranked by value/momentum tiebreaker:** JPM (0.94),
+AAPL (0.74), XOM (0.70) — all 3 well under the top-8 cap, so all could
+have advanced; JPM vetted first given remaining budget (~11 calls left)
+and highest rank.
+
+**Tier 2 (JPM only, budget-limited):** EMA8 $355.01 > EMA21 $348.65, price
+within 1.5% of 52wk high → breakout trigger fires. PASS.
+
+**Tier 3 (JPM):** Blocked structurally — `MACD` returned a premium-only
+endpoint error (confirmed, not a transient rate-limit). At the time of
+this run, Tier 3 still required MACD confirmation, so JPM could not be
+confirmed and no trade was opened. **This has since been fixed**: Tier 3
+now uses the EMA8/EMA21 spread (already fetched in Tier 2) instead of
+MACD, so this specific blocker should not recur.
+
+**Decisions:** No new positions opened. Correct outcome under the rules
+in force at the time — a candidate without complete Tier 3 confirmation
+is dropped, never force-traded.
+
+**Rejected by gates:** None reached the gating step (JPM was dropped at
+Tier 3 confirmation, before gates.md checks apply).
+
+**Position review:** None — first-ever run, no open positions.
+
+**Infrastructure note (not a trading decision):** This run's results
+could not be committed/pushed — the cloud session's GitHub access
+returned "GitHub access is not enabled for this session. An org admin
+must connect the Claude GitHub App for this organization." This journal
+entry was manually backfilled from the run's output after the fact, since
+the run's own local commit was lost with the ephemeral session. Until
+this is fixed, no scheduled run can persist state on its own.
+
+**Strategy adaptation this run:** None from the routine itself (blocked
+before that step). Two adaptations made manually afterward, in response
+to this run's findings: (1) removed the `MACD` dependency from Tier 3
+(structurally premium-gated, not fixable by retrying), (2) this journal
+entry backfilled to preserve the analysis.
+
+---
+
+_(Further runs will be appended below by the scheduled routine, once
+GitHub push access is fixed.)_

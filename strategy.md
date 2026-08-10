@@ -95,8 +95,15 @@ extracting the last 5 values of each. A candidate qualifies if **either**:
 
 For candidates passing Tier 2:
 
-1. `MACD` (12/26/9, daily): MACD line > signal line, or a bullish crossover
-   within the last 3 of the 5 extracted values.
+1. **Momentum confirmation**: EMA8/EMA21 spread (already pulled in Tier 2 —
+   no new call needed) is widening over its last 5 values, i.e. momentum
+   is accelerating, not just present. `MACD` was the original design for
+   this check but is **permanently premium-gated on the current Alpha
+   Vantage plan** (confirmed live, not a transient rate-limit — see
+   `gates.md` operational notes), so it is never called. If the plan is
+   ever upgraded to unlock it, MACD confirmation can be reinstated as a
+   second, redundant momentum check — but the EMA-spread check alone is
+   sufficient and must not be treated as incomplete confirmation.
 2. `NEWS_SENTIMENT` (limit 5-10, this symbol): sentiment not negative.
 3. `EARNINGS_CALENDAR` (this symbol): no earnings report scheduled in the
    next 3 calendar days (blackout — this is event risk, not a rule this

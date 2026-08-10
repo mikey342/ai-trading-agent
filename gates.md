@@ -55,8 +55,11 @@
 
 ## Operational notes (not risk limits, but load-bearing for the routine)
 
-- `TIME_SERIES_DAILY_ADJUSTED` is **premium-gated** on the current Alpha
-  Vantage plan and returns an error, not data. Do not call it.
+- `TIME_SERIES_DAILY_ADJUSTED` and `MACD` are **premium-gated** on the
+  current Alpha Vantage plan and return an error, not data — confirmed
+  live via a real run on 2026-08-10, not a transient rate-limit. Do not
+  call either. `strategy.md`'s Tier 3 uses the EMA8/EMA21 spread (already
+  fetched in Tier 2) as the momentum confirmation instead of MACD.
 - `RSI`, `EMA`, `MACD`, `ATR`, and weekly/monthly time series endpoints
   return full multi-year histories (60-100k+ characters) saved to a file,
   not inline. `run_instructions.md` specifies extracting only the last few

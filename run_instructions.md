@@ -70,10 +70,12 @@ to the actual JSON shape returned — inspect the file's top-level keys with
 Apply the Tier 2 breakout/pullback trigger logic. Drop anything that fails.
 
 ### Tier 3 — finalists (cap 3 per gates.md)
-For Tier 2 survivors, pull `MACD`, `NEWS_SENTIMENT` (limit param 5-10),
-`EARNINGS_CALENDAR` (per symbol), and `ATR` (14, daily) — same
-last-5-values extraction rule for `MACD` and `ATR`. Apply the Tier 3
-confirmation checklist. Drop anything that fails.
+For Tier 2 survivors: check the EMA8/EMA21 spread from the values already
+extracted in Tier 2 (no new call — `MACD` is permanently premium-gated on
+this plan and must never be called; see `gates.md`). Then pull
+`NEWS_SENTIMENT` (limit param 5-10), `EARNINGS_CALENDAR` (per symbol), and
+`ATR` (14, daily) — same last-5-values extraction rule for `ATR`. Apply
+the Tier 3 confirmation checklist. Drop anything that fails.
 
 ## 4. Decide instrument: equity, options, or skip
 

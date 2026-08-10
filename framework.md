@@ -109,10 +109,14 @@ hit API rate limits. So the workflow is explicitly tiered — see
   survivors of tier 1, extracting only the most recent value from the saved
   file (never read the whole file — see `run_instructions.md`). Confirms
   entry timing.
-- **Tier 3 (finalists only, most expensive):** `MACD` for final momentum
-  confirmation, `NEWS_SENTIMENT` for the catalyst check, and — only if an
-  options expression is being considered — Robinhood `get_option_chains` /
-  `get_option_quotes` for strikes/liquidity.
+- **Tier 3 (finalists only, most expensive):** EMA8/EMA21 spread (reused
+  from Tier 2, no new call) for final momentum confirmation,
+  `NEWS_SENTIMENT` for the catalyst check, and — only if an options
+  expression is being considered — Robinhood `get_option_chains` /
+  `get_option_quotes` for strikes/liquidity. (`MACD` was the original
+  design for momentum confirmation here but is permanently premium-gated
+  on the current Alpha Vantage plan — confirmed via a live run, not a
+  transient limit — so it was removed rather than retried every run.)
 
 This mirrors how real systematic desks actually operate under compute/data
 budgets: broad cheap screens first, expensive analysis only on what
