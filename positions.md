@@ -14,7 +14,7 @@ separate and simulated.
 | Realized P&L (all-time) | $0 |
 | Today's realized P&L | $0 |
 | Trading halted today? | No |
-| Last updated | (not yet run) |
+| Last updated | 2026-08-10, scheduled premarket run (data-blocked, see `trade_journal.md`) |
 
 ## Open positions — equity
 
@@ -43,4 +43,5 @@ is a one-way flag, same semantics as the equity table.
 
 | Date | Run type | NAV | Cash | Realized P&L (that run) | Halted that day? |
 |---|---|---|---|---|---|
-| _(none yet)_ | | | | | |
+| 2026-08-10 | premarket (manual test) | $25,000 | $25,000 | $0 | No |
+| 2026-08-10 | premarket (scheduled, data-blocked) | $25,000 | $25,000 | $0 | No |

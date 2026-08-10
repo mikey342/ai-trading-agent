@@ -99,5 +99,47 @@ entry backfilled to preserve the analysis.
 
 ---
 
-_(Further runs will be appended below by the scheduled routine, once
-GitHub push access is fixed.)_
+### 2026-08-10 (scheduled routine run, exact clock time lost with the
+session) — premarket run
+
+**Market status:** Closed (Monday premarket, not a holiday)
+**Account:** NAV $25,000, cash $25,000, halted: no
+
+**Regime filter:** Not completed — the SPY data pull for the 200DMA check
+was the first data call attempted this run, and it failed immediately on
+the Alpha Vantage free-tier daily quota (25 requests/day), already
+exhausted by the earlier manual test run the same day. A second probe
+was made to rule out a transient rate-limit; it failed the same way,
+confirming the quota was genuinely exhausted, not a blip.
+
+**Scouted:** None — screening never started. With the regime filter
+itself blocked, no Tier 1 candidate could be evaluated this run.
+
+**Decisions:** No new positions opened. Correct outcome — no data means
+no trade, never force a decision without the inputs the rules require.
+
+**Rejected by gates:** None reached the gating step — blocked at the
+data-availability stage, before any candidate existed to gate.
+
+**Position review:** None needed — no open positions existed to review.
+
+**Infrastructure note (not a trading decision):** This run's updates to
+`positions.md` and `trade_journal.md` were made locally but could not be
+pushed — every GitHub write path (`git push`, and the GitHub MCP tools)
+returned `403 Resource not accessible by integration`, because the
+Claude GitHub App was not yet installed on this repository (confirmed
+missing from the account's Installed GitHub Apps list). The local commit
+was lost when the session ended. **This has since been fixed**: the repo
+owner installed the Claude GitHub App on 2026-08-10, and a follow-up
+session confirmed push access works. This entry is a manual backfill
+from the run's own summary output, reconstructed after the fact — the
+same category of loss as the prior run's entry, now with the root cause
+identified and resolved rather than just worked around.
+
+**Strategy adaptation this run:** None — blocked before the strategy
+funnel was reached. No adaptation needed; the fix here was
+infrastructural (GitHub App install), not a change to `strategy.md`.
+
+---
+
+_(Further runs will be appended below by the scheduled routine.)_
