@@ -142,11 +142,22 @@ the trade more capital-efficient. Never a standalone signal source.
 - Max premium at risk = gates.md's options premium cap. This is the entire
   max loss for the position — no additional stop-loss math needed, the
   defined-risk structure already caps it.
-- Exit: at the equity-equivalent stop/target price, OR at 21 days-to-
-  expiration remaining (standard practitioner checkpoint — force a close
-  or roll decision, don't let gamma risk run unmanaged into expiration),
-  OR when 50% of the option's DTE at entry has elapsed, whichever comes
-  first.
+- **At entry**, compute the underlying stop and R-target using the exact
+  same ATR-based math as the equity position sizing above, and write them
+  into `positions.md`'s `Underlying stop` / `Underlying R-target` columns.
+  These are fixed at entry and never recomputed on a later run — a future
+  run comparing against a freshly-recalculated ATR could silently drift
+  from what was actually decided at entry.
+- **Every subsequent run**, compare the underlying's current price against
+  those stored values using the exact same trailing-stop mechanic as the
+  equity exit rules (fixed stop until the R-target is hit, then trail
+  EMA21, one-way flag, never lower than the original stop).
+- Exit the option position if: the underlying hits its current exit stop
+  (per the trailing mechanic above), OR 21 days-to-expiration remaining is
+  reached (standard practitioner checkpoint — force a close or roll
+  decision, don't let gamma risk run unmanaged into expiration), OR 50% of
+  the option's DTE at entry has elapsed with the R-target not yet reached
+  — whichever comes first.
 
 ## Leverage overlay
 

@@ -29,9 +29,15 @@ stop).
 
 ## Open positions — options
 
-| Symbol | Structure | Strike(s) | Expiration | Delta at entry | Entry premium | Entry date | Current premium | Unrealized P&L | Notes |
-|---|---|---|---|---|---|---|---|---|---|
-| _(none yet)_ | | | | | | | | | |
+| Symbol | Structure | Strike(s) | Expiration | Delta at entry | Entry premium | Entry date | Underlying @ entry | Underlying stop | Underlying R-target | R-target reached? | Current underlying price | Current premium | Unrealized P&L | Notes |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| _(none yet)_ | | | | | | | | | | | | | | |
+
+`Underlying stop`/`Underlying R-target` are fixed at entry from the same
+ATR-based sizing math used for the equity version of this signal (see
+`strategy.md`) — never recomputed later, so exit decisions stay
+consistent with what was actually decided at entry. `R-target reached?`
+is a one-way flag, same semantics as the equity table.
 
 ## NAV history (append one row every run — needed for future performance metrics)
 

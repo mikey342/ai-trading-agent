@@ -36,9 +36,13 @@ For every row in `positions.md` (equity and options separately):
   last 5 values (same jq/tail rule as step 4 below), and set
   `Current exit stop = max(EMA21, original stop)`. Check if price has
   closed at/below this trailing stop.
-- Options: Robinhood `get_option_quotes` for current premium, and check
-  days-to-expiration remaining vs. both the 21-DTE checkpoint and 50% of
-  DTE-at-entry.
+- Options: Robinhood `get_option_quotes` for current premium, and
+  `GLOBAL_QUOTE` for the underlying. Compare the underlying's current
+  price against the stored `Underlying stop` / `Underlying R-target` in
+  `positions.md` using the same trailing-stop mechanic as equity (fixed
+  stop until R-target hit, then trail EMA21 — see `strategy.md`). Also
+  check days-to-expiration remaining vs. both the 21-DTE checkpoint and
+  50% of DTE-at-entry.
 - Check against the full exit rules in `strategy.md` (current exit stop
   per the above, 50DMA trend-template break, time-stop, options DTE
   checkpoints).
