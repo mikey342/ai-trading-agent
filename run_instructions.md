@@ -24,7 +24,7 @@ full mapping.
 3. Read `positions.md` — current equity positions, options positions, and
    NAV history.
 4. Read the last ~10 entries of `trade_journal.md`.
-5. If running the 9:30am open slot, read `premarket_notes.md` if it's
+5. If running the 10:30am morning slot, read `premarket_notes.md` if it's
    dated today — use it only to prioritize which candidates to look at
    first in Tier 1 (e.g., a flagged gapper is worth checking early). It
    is informational context only, never a substitute for Tier 1-3 gating
@@ -33,12 +33,19 @@ full mapping.
 
 ## 1. Market context and regime filter
 
-This routine fires three times daily (9:30am ET market open, 2:30pm ET
-midday, 4:30pm ET close) — deliberately never before the open, so every
-run works with a real, live regular-session price rather than a stale
-prior-day close or a thin premarket quote. (The 4:30pm run uses the
-official last-completed-session close, which is likewise a real,
-executable price — not an approximation.)
+This routine fires three times daily — **10:30am, 2:30pm, and 3:30pm ET**
+— all of them *inside* regular market hours. That placement is
+deliberate on both ends:
+
+- **Never before the open**, so every run sees a live regular-session
+  price rather than a stale prior-day close or a thin premarket quote.
+- **Never after the close**, because a run that decides to open a
+  position at 4:30pm cannot actually fill it — the order would sit until
+  the next morning at an unknown price, which is not what the analysis
+  evaluated.
+- **10:30am rather than the 9:30am bell**: the first ~30 minutes carry
+  the day's widest spreads and sharpest reversals. Paying that spread
+  buys nothing on a 5-15 day horizon (see `strategy.md`, "Order entry").
 
 1. Call `MARKET_STATUS` (Alpha Vantage). If it fails (quota exhausted),
    don't abort the run — fall back to treating the market as open during
@@ -49,9 +56,9 @@ executable price — not an approximation.)
    `get_equity_technical_indicators` (Robinhood, SPY, type=sma, period=200,
    interval=day, output=latest) to get SPY's 200-day SMA. This sets the
    **direction mode for the whole run**: SPY > SMA(200) → **LONG mode**
-   (long equity, calls, call debit spreads); SPY < SMA(200) → **SHORT
-   mode** (long puts / put debit spreads **only** — never short stock,
-   see `gates.md`). Record the mode explicitly in the journal.
+   (stock sleeve, plus optionally a 2x long ETF); SPY < SMA(200) →
+   **SHORT mode** (2x inverse index ETF only — never short a stock, never
+   use margin, see `gates.md`). Record the mode explicitly in the journal.
    Existing positions are reviewed and exited in either mode, regardless
    of which way the regime currently points.
 
@@ -78,7 +85,10 @@ For every row in `positions.md` (equity and options separately):
   50% of DTE-at-entry.
 - Check against the full exit rules in `strategy.md` (current exit stop
   per the above, SMA(50) trend-template break, time-stop, options DTE
-  checkpoints).
+  checkpoints). **Time-stops differ by sleeve** — 20 trading days for an
+  ordinary stock, **10** for an index leveraged ETF, **7** for a
+  single-stock leveraged ETF (decay scales with volatility; see
+  `gates.md`).
 - If an exit condition is met: simulate closing (record exit price/premium,
   compute realized P&L), update `positions.md`, and log it in
   `trade_journal.md` with the specific rule that triggered it.
@@ -103,15 +113,17 @@ rule and the 2x exposure accounting in `gates.md`.
 ### Tier 0 — universe (one call)
 Call `run_scan` with `scan_id: de1b1994-b5db-472a-9b79-c052f1215193`
 ("Swing Agent - Trend Candidates"). This returns live market-wide results
-already filtered on market cap, price, liquidity, ADX(14) > 25, and
-RSI(14) 35-70, with those values included per row — no extra calls needed
-to read them. Note the total match count in the journal.
+already filtered on market cap > $2B, price > $5, 30d avg volume > 1M,
+ADX(14) > 25, RSI(14) 25-75, and relative options volume > 0.5 — with all
+those values included per row, so no extra calls are needed to read them.
+Note the total match count in the journal (~96 at last check).
 
-Rank the rows by `Average directional index (14)` descending (client-side,
-free) and take the **top 15** into Tier 1. This is the entire candidate
-universe for the run — there is no hardcoded watchlist anymore. If
-`run_scan` fails, fall back to screening a small diversified set of liquid
-large-caps and flag it in the journal as degraded operation.
+Rank client-side (free) primarily by `Average directional index (14)`
+descending, using `Relative options volume` as a tiebreaker, and take the
+**top 15** into Tier 1. This is the entire candidate universe for the run
+— there is no hardcoded watchlist anymore. If `run_scan` fails, fall back
+to screening a small diversified set of liquid large-caps and flag it in
+the journal as degraded operation.
 
 ### Tier 1 — trend template (top 15 from Tier 0)
 Pull `get_equity_quotes` (one batched call for all 15) and
@@ -183,12 +195,21 @@ failure to route around.
 
 Before recording any fill: re-fetch a **fresh** quote for the symbol —
 never reuse a price read earlier in the funnel (Tier 1-3 can take several
-minutes across the full universe). Apply `strategy.md`'s chase-protection
-check against this fresh price; if it fails, drop the trade and log it,
-don't force it through at a worse price than what was actually evaluated.
+minutes across the full universe). Then, in order:
 
-For trades passing every gate (including chase-protection): record as
-filled at this fresh quote/premium. **Never call any real Robinhood order-placement tool —
+1. Apply `strategy.md`'s **chase-protection** check against this fresh
+   price; if it fails, drop the trade and log it — don't force it through
+   at a worse price than what was actually evaluated.
+2. Apply the **spread sanity check**: if bid-ask exceeds 0.5% of mid for
+   an equity/ETF, skip and log it.
+3. Record the fill as a **marketable limit order**, priced per
+   `strategy.md`'s "Order entry" section — **buys at the `ask_price`,
+   sells at the `bid_price`** (options: `high_fill_rate_buy_price` /
+   `high_fill_rate_sell_price`). Never simulate a fill at the midpoint or
+   at `last_trade_price`; both flatter the record versus a real fill.
+   Never simulate a market order.
+
+**Never call any real Robinhood order-placement tool —
 `place_equity_order`, `place_option_order`, or any other order/exercise
 tool — under any circumstance in this workflow.** This is a paper-trading
 system; `MODE` in `gates.md` must be `PAPER`. Update `positions.md`

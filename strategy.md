@@ -249,8 +249,43 @@ simulated. Two rules to keep this honest:
    `high_fill_rate_buy_price` and sells at `high_fill_rate_sell_price`
    (both returned by `get_option_quotes`), not at `mark_price` — mark is
    the midpoint and systematically flatters paper P&L versus what a real
-   order actually fills at. For equity, use the quote price but treat it
-   the same way: never assume a better-than-midpoint fill.
+   order actually fills at. For equity and ETFs, simulate **buys at the
+   `ask_price` and sells at the `bid_price`** from `get_equity_quotes` —
+   never at `last_trade_price` or the midpoint. This bakes the full
+   bid-ask spread into every round trip, which is a real cost the system
+   would otherwise silently ignore.
+
+## Order entry — limit orders, never market
+
+Fills are simulated today, but the simulation must reflect how the order
+would actually be placed, or the paper record measures a strategy nobody
+could execute.
+
+**Always a marketable limit order. Never a market order.** A market order
+surrenders all price control and, in a fast or thin market, fills far
+from the last print. A marketable limit fills essentially as quickly
+while capping the worst price accepted:
+
+- **Buying:** limit at the current **ask**. Marketable, so it fills
+  immediately in normal conditions, but it cannot fill above that price
+  if the market jumps mid-order.
+- **Selling:** limit at the current **bid**, same logic inverted.
+- **Never chase a partial fill** by re-submitting higher. If the limit
+  doesn't fill, the setup can requalify on the next run — this is the
+  same discipline as the chase-protection rule above.
+
+**Timing.** The most volatile, widest-spread period of the day is the
+first ~30 minutes after the open. Entering there means paying a wider
+spread for no informational benefit on a 5-15 day horizon. This is why
+the morning run fires at **10:30am ET rather than at the 9:30am bell** —
+late enough for opening spreads to normalize, still early in the session.
+
+**Liquidity sanity check before any entry:** if the bid-ask spread
+exceeds **0.5% of the mid price** for an equity or ETF, skip the trade
+and log it. A spread that wide on a name that passed a liquidity screen
+usually means something is wrong — a halt, a news event, or stale data —
+and the cost of crossing it eats a meaningful fraction of the expected
+edge on a 2R trade.
 2. **Chase-protection**: if `entry_price` has already moved more than
    `0.5 × stop_distance` (see sizing below) beyond `signal_price` in the
    favorable direction since Tier 3 confirmed the setup, **do not chase
@@ -383,6 +418,60 @@ little extra.
 - **Tighter time-stop: 10 trading days**, versus 20 for ordinary stock
   positions. See the decay note below — time is a materially larger enemy
   here.
+
+### Single-stock leveraged ETFs (allowed, with a volatility gate)
+
+Many large caps have 2x ETFs, verified live 2026-08-10:
+
+| Underlying | 2x long ETF | 30d avg volume |
+|---|---|---|
+| TSLA | TSLL | 76M |
+| NVDA | NVDL | 13.5M |
+| MSFT | MSFU | 7.7M |
+| META | METU | 5.4M |
+| AMZN | AMZU | 3.3M |
+| AAPL | AAPU | 2.2M |
+| GOOGL | GGLL | 1.7M |
+| COIN | CONL | 18.6M |
+
+These let the stock sleeve take leveraged exposure to a name the funnel
+picked, without options or margin. **But the decay problem is far worse
+here than for index ETFs**, and the numbers below are not hypothetical.
+
+For a 2x daily-reset fund, the expected drag is approximately **σ² per
+year** — it scales with the *square* of volatility, so a stock twice as
+volatile as the index decays four times as fast:
+
+| Underlying | Approx. annualized vol | Approx. 2x drag/yr | Drag over a 10-day hold |
+|---|---|---|---|
+| SPY | ~16% | ~2.6% | ~0.1% |
+| TSLA | ~60% | ~36% | ~1.4% |
+| COIN | ~85% | ~70% | ~2.8% |
+
+Observed 2026-08-10, holding through a full drawdown: **CONL fell 92%**
+from its 52-week high ($52.40 → $4.07) — Coinbase itself did nothing of
+the sort — while TSLL fell 67% and METU 59%. Over a disciplined 5-15 day
+swing hold the drag is tolerable; those figures are what happens to
+someone who holds through chop and doesn't honor the time-stop.
+
+**Rules for the single-stock variant:**
+- Only permitted when the underlying's **ATR(14) as a percentage of price
+  is ≤ 4%**. Above that, the decay is too steep for the holding period —
+  trade the plain stock instead. This is what keeps a CONL-type outcome
+  out of the book.
+- **7-trading-day time-stop** — shorter than the index sleeve's 10, since
+  drag is several times larger.
+- Requires 30-day average volume ≥ 1M shares (all listed above qualify;
+  re-check before using any ETF not on this list, since many single-stock
+  leveraged ETFs are thinly traded).
+- Counts **2x** toward gross exposure, same as the index sleeve.
+- The **signal still comes from the underlying stock** passing the full
+  Tier 1-3 funnel. The ETF is only the expression — never screen or
+  signal off the leveraged ETF itself, whose own moving averages and
+  52-week range are distorted by leverage and decay.
+- Prefer plain equity by default. Use the leveraged version only for a
+  setup that passed every tier cleanly, and never as a way to
+  "make up" for a small position size.
 
 ### Volatility decay — why the time-stop is tighter
 Every one of these funds targets **2x the *daily*** return, and resets

@@ -45,8 +45,12 @@ For each open **equity** position:
   it.
 - Check if price has closed below SMA(50) (trend-template break — exits
   regardless of R-target state).
-- Check the time-stop (held > 20 trading days without reaching R-target,
-  pure date math from `Entry date`, no API call).
+- Check the time-stop (pure date math from `Entry date`, no API call).
+  The limit depends on the sleeve: **20** trading days for an ordinary
+  stock, **10** for an index leveraged ETF (SSO/QLD/SDS/QID), **7** for a
+  single-stock leveraged ETF (TSLL/NVDL/etc.) — decay scales with
+  volatility, so the more leveraged-and-volatile the instrument, the
+  shorter the leash. See `gates.md`.
 
 For each open **options** position:
 - `get_option_quotes` for current premium, `get_equity_quotes` for the

@@ -184,6 +184,71 @@ character. Concretely:
   decay (options) and daily-reset volatility decay (leveraged ETFs) make
   the time-stop *more* binding than for a plain stock position.
 
+## How well-established is this, really?
+
+An honest audit, because "proven framework used by quants" conflates two
+very different tiers of evidence.
+
+### Tier A — robustly documented in peer-reviewed finance
+These are among the most replicated findings in empirical finance, and
+real quantitative funds do build on them:
+
+- **Cross-sectional momentum** — Jegadeesh & Titman (1993). Replicated
+  across decades, countries, and asset classes; added to the standard
+  asset-pricing model as the fourth factor (Carhart, 1997).
+- **Time-series momentum / trend following** — Moskowitz, Ooi & Pedersen
+  (2012), across 58 instruments and 25 years.
+- **Value, and especially value+momentum together** — Fama & French
+  (1992); Asness, Moskowitz & Pedersen (2013), "Value and Momentum
+  Everywhere," *Journal of Finance*.
+- **Post-earnings-announcement drift** — Bernard & Thomas (1989).
+- **Volatility-scaled position sizing** — standard practice across
+  managed-futures/CTA funds; uncontroversial.
+
+### Tier B — practitioner frameworks with real but weaker evidence
+This is where Minervini sits, and the distinction matters:
+
+- **Minervini's trend template / SEPA** — Mark Minervini is a real trader
+  with verified competition results (1997 and 2021 U.S. Investing
+  Championship). But he is a **discretionary** trader, not a quant. SEPA
+  is a practitioner heuristic popularized through his books; it is **not**
+  in the academic literature and is **not** what systematic funds run.
+  What it *is*: a sensible, concrete operationalization of trend and
+  momentum — Tier A ideas — into checkable rules.
+- **Turtle Trading** — genuine documented results, but from 1980s
+  **futures** markets, not equities, and widely believed to have degraded.
+- **O'Neil / CANSLIM** — decades of use; independent validation is mixed.
+- **Connors' RSI work** — backtested in his books, but over limited
+  periods and criticized as prone to overfitting.
+- **Qullamaggie** — a genuinely verified public track record, but n=1, in
+  a particular era, concentrated in high-momentum names.
+
+### The honest characterization
+This system is **a practitioner-flavored implementation of Tier A
+factors** — not a replication of what a quant fund does. Real systematic
+equity shops differ from this in nearly every operational respect: they
+trade universes of thousands of names rather than a top-15 slice, derive
+thresholds statistically instead of from round numbers (RSI 35-45, ADX
+25, 25% of the 52-week high are all conventions, not optimized
+parameters), run formal risk models and transaction-cost models, and
+diversify across many small positions rather than concentrating in six.
+
+### Four caveats that genuinely bite
+1. **Survivorship bias in the practitioner sources.** Minervini and
+   Qullamaggie are known *because* they won. The many traders who used
+   similar methods and didn't are invisible. Their records are evidence
+   these methods *can* work, not that they work on average.
+2. **Published anomalies decay.** McLean & Pontiff (2016) found returns
+   to documented anomalies fall roughly 58% post-publication. Everything
+   cited here is published.
+3. **Momentum crashes.** Momentum's failure mode is not gentle — it
+   suffers rare, severe drawdowns (notably 2009). The regime filter is a
+   partial mitigation, not a solution.
+4. **None of it is validated *here*.** The strongest caveat: no backtest
+   of this specific synthesis, on this universe, with these thresholds,
+   exists. Tier A evidence supports the ingredients; it says nothing
+   about this recipe.
+
 ## What's deliberately not here (yet)
 
 - **No backtest.** Every methodology cited above has a published track

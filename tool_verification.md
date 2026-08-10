@@ -90,6 +90,27 @@ SSO ran +47% off its March low ($48.63 → $71.68) while SDS fell −34%
 compounding rewards sustained trends and punishes chop — hence the
 tighter 10-day time-stop in `gates.md`.
 
+### Single-stock leveraged ETFs verified (2026-08-10)
+All quote and return fundamentals through the standard equity tools.
+Volumes are 30-day averages:
+
+| Underlying | 2x ETF | Volume | 52wk high → current | Drawdown |
+|---|---|---|---|---|
+| TSLA | TSLL | 76M | $23.74 → $7.80 | −67% |
+| COIN | CONL | 18.6M | $52.40 → $4.07 | **−92%** |
+| NVDA | NVDL | 13.5M | $43.27 → $35.71 | −17% |
+| MSFT | MSFU | 7.7M | $58.89 → $38.21 | −35% |
+| META | METU | 5.4M | $51.20 → $21.00 | −59% |
+| AMZN | AMZU | 3.3M | $47.14 → $41.88 | −11% |
+| AAPL | AAPU | 2.2M | $48.89 → $39.56 | −19% |
+| GOOGL | GGLL | 1.7M | $153.00 → $109.81 | −28% |
+
+CONL's −92% is the load-bearing observation: Coinbase itself fell nowhere
+near that. Decay on a 2x daily-reset fund scales with σ², so a
+high-volatility underlying compounds losses through chop far faster than
+an index does. This is why `gates.md` imposes an ATR ≤ 4% volatility gate
+and a 7-day time-stop on the single-stock variant.
+
 ### Scanner filters available but not yet used
 The screener exposes an **options-flow filter group** that nothing in the
 current strategy touches: `FILTER_TYPE_RELATIVE_OPTIONS_VOLUME` (unusual
