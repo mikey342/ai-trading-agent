@@ -249,10 +249,30 @@ candidate qualifies if **either**:
 
 For candidates passing Tier 2:
 
-1. **Momentum confirmation**: EMA8/EMA21 spread (already pulled in Tier 2 —
-   no new call needed) is widening over its last 5 values, i.e. momentum
-   is accelerating, not just present. In LONG mode that means the EMA8−
-   EMA21 spread growing more positive; in SHORT mode, more negative.
+1. **Momentum confirmation**: the EMA8/EMA21 spread (already pulled in
+   Tier 2 — no new call needed) must show momentum *accelerating*, not
+   merely present.
+
+   **Precise test — the latest spread must be the widest of the five.**
+   Compute `|EMA8 − EMA21|` for each of the last 5 sessions; the most
+   recent value must be strictly greater than all four prior values.
+   Anything else fails.
+
+   This wording replaces an earlier "spread is widening over its last 5
+   values," which was ambiguous enough to be unusable: on real BAC data
+   (1.093 → 1.133 → 1.184 → 1.163 → 1.147) a *net* reading passes
+   (+0.054 across the window) while a *trend* reading fails (two
+   consecutive narrowing sessions). Two runs could reach opposite
+   conclusions from identical numbers, which disqualifies it as a
+   mechanical rule. The stricter reading is the deliberate choice: a
+   breakout whose momentum is already decelerating is exactly the one to
+   decline. On that BAC data this test **fails**, and the trade is
+   dropped.
+
+   Direction still matters for the sign: in LONG mode EMA8 must be above
+   EMA21, in SHORT mode below — the magnitude test above applies to the
+   absolute spread once that direction check passes.
+
    `MACD` (Alpha Vantage) was the
    original design for this check but is **permanently premium-gated on
    the current Alpha Vantage plan** (confirmed live, not a transient
@@ -379,9 +399,13 @@ fill rather than avoiding an entire time window.
    Use 1.5x by default; 1.0x is the tighter end of the range used by
    contemporary breakout swing traders (see `framework.md`, Qullamaggie)
    and is the adaptive knob to tighten if stops are proving too loose.
-2. `risk_per_trade = 1% of current NAV` for a with-trend setup, or
-   **0.5% for a counter-trend setup** (adaptive — this is the number to
-   tune if position sizing needs revisiting, not the gates.md ceiling).
+2. `risk_per_trade = 0.4% of current NAV` for a with-trend setup, or
+   **0.2% for a counter-trend setup**. These are set so the ATR math and
+   the 15%-of-NAV position cap in `gates.md` land in roughly the same
+   place — see that file's "Why 15% / 0.4%" note. The previous 1% / 0.5%
+   pairing was ~13× larger than the old 3% cap could express, which made
+   this entire sizing calculation dead code. If you tune this, re-check
+   the position cap alongside it; they are a set, not independent knobs.
 3. `shares = floor(risk_per_trade_dollars / stop_distance)`
 4. `position_dollar_size = shares × entry_price`, capped at gates.md's max
    position size regardless of what the risk math above produced.
