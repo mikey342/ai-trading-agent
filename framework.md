@@ -13,6 +13,37 @@ trading days**. Two runs a day (premarket + close) are for monitoring and
 new-signal generation, not intraday scalping — nothing here is designed for
 sub-daily timeframes.
 
+## Sources checked (2026-08-09 research pass)
+
+Beyond the five approaches below, a live research pass confirmed rather
+than overturned the direction, and added two refinements:
+
+- **O'Shaughnessy, *What Works on Wall Street*** — backtested 1954-2003:
+  a combined Value + Momentum strategy returned ~17-18% CAGR vs. the
+  S&P 500's ~11.5%, beating the market in 100% of rolling 10-year periods.
+  Value alone and momentum alone both underperform the combination. This
+  is why Tier 1 now includes a value/quality tiebreaker, not just trend —
+  see `strategy.md`.
+- **AQR, "Value and Momentum Everywhere" (Asness, Moskowitz, Pedersen)** —
+  the same value+momentum combination effect holds across 8 asset classes
+  and markets, not just US equities — evidence it's a real, persistent
+  effect rather than a data-mined fluke in one dataset.
+- **Qullamaggie (Kristjan Kullamägi)** — a contemporary breakout swing
+  trader with a large, public, verifiable track record. Two things
+  borrowed directly: (1) stop-loss sized off a volatility measure (average
+  daily range, closely analogous to the ATR this system already uses),
+  risking 0.25-1% of account per trade — validates the risk-per-trade
+  sizing already in `strategy.md`; (2) a win rate as low as 20-35% can
+  still be strongly profitable if winners are allowed to run via a
+  trailing stop rather than exited at a fixed target — this is why
+  `strategy.md`'s exit rules now prefer a trailing EMA stop over a fixed
+  2R target once a trade is working.
+- **Options practitioner consensus** (multiple sources) — 21 days-to-
+  expiration is the standard checkpoint to force a close/roll decision on
+  any options position, since gamma risk accelerates as expiration nears.
+  Added to `strategy.md`'s options exit rules alongside the existing DTE-
+  decay rule.
+
 ## The five approaches this system draws from
 
 These are real, publicly documented systematic/discretionary methodologies

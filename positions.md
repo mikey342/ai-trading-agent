@@ -18,9 +18,14 @@ separate and simulated.
 
 ## Open positions — equity
 
-| Symbol | Qty | Entry price | Entry date | Stop-loss | Take-profit | Current price | Unrealized P&L | Leverage used? | Notes |
-|---|---|---|---|---|---|---|---|---|---|
-| _(none yet)_ | | | | | | | | | |
+| Symbol | Qty | Entry price | Entry date | Original stop | R-target | R-target reached? | Current exit stop | Current price | Unrealized P&L | Leverage used? | Notes |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| _(none yet)_ | | | | | | | | | | | |
+
+`R-target reached?` is a one-way flag (No → Yes, never back to No — see
+`strategy.md` exit rules). `Current exit stop` = original stop until the
+flag flips to Yes, then the trailing EMA21 (never lower than the original
+stop).
 
 ## Open positions — options
 

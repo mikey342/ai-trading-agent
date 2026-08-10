@@ -26,13 +26,22 @@ anything here or in `strategy.md` if they ever conflict.
 ## 2. Review existing positions first (always, regardless of regime)
 
 For every row in `positions.md` (equity and options separately):
-- Equity: `GLOBAL_QUOTE` for current price.
+- Equity: `GLOBAL_QUOTE` for current price, and `COMPANY_OVERVIEW` (cheap)
+  for the current `50DayMovingAverage`.
+- If `R-target reached?` is still "No": check if current price has now hit
+  the R-target — if so, flip the flag to "Yes" in `positions.md` (this
+  never flips back). Whether or not it just flipped, also check if price
+  has hit the original fixed stop.
+- If `R-target reached?` is "Yes": pull `EMA` (21, daily), extract the
+  last 5 values (same jq/tail rule as step 4 below), and set
+  `Current exit stop = max(EMA21, original stop)`. Check if price has
+  closed at/below this trailing stop.
 - Options: Robinhood `get_option_quotes` for current premium, and check
-  days-elapsed vs. the DTE at entry.
-- Check against the exit rules in `strategy.md` (stop, target, RSI>75,
-  price closed below 50DMA, time-stop, and for options the 50%-DTE-elapsed
-  rule). For the RSI/50DMA checks you'll need that symbol's current
-  `COMPANY_OVERVIEW` (cheap) and `RSI` (see the extraction note in step 4).
+  days-to-expiration remaining vs. both the 21-DTE checkpoint and 50% of
+  DTE-at-entry.
+- Check against the full exit rules in `strategy.md` (current exit stop
+  per the above, 50DMA trend-template break, time-stop, options DTE
+  checkpoints).
 - If an exit condition is met: simulate closing (record exit price/premium,
   compute realized P&L), update `positions.md`, and log it in
   `trade_journal.md` with the specific rule that triggered it.
