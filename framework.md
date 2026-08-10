@@ -91,32 +91,43 @@ of pieces from each, not a pure implementation of any one:
 
 ## The funnel: cheap screen → expensive confirmation
 
-This isn't from a textbook — it's a practical constraint. Some Alpha
-Vantage endpoints (`RSI`, `MACD`, `EMA`, `SMA`, weekly/monthly time series)
-return **entire multi-year histories with no compact option**, saved to a
-file rather than returned inline, because the payload is too large for a
-single response (60–100k+ characters observed for a single symbol). Calling
-these for a large universe on every run would be both slow and likely to
-hit API rate limits. So the workflow is explicitly tiered — see
+This isn't from a textbook — it's a practical constraint, though the
+specifics changed on 2026-08-10 (see below). The general principle stays:
+running expensive analysis on a full universe every run is wasteful and
+budget-risky, so the workflow is explicitly tiered — see
 `run_instructions.md` for the exact sequence:
 
-- **Tier 1 (full universe, cheap):** `COMPANY_OVERVIEW` + `GLOBAL_QUOTE`
-  per candidate. This alone gives trend (50DMA/200DMA are already fields in
-  `COMPANY_OVERVIEW` — no separate SMA call needed), valuation, quality,
-  growth, and current price. Eliminate anything failing the trend template
-  here before spending any more calls on it.
-- **Tier 2 (shortlist only, medium cost):** `RSI` and `EMA` (8/21) for
-  survivors of tier 1, extracting only the most recent value from the saved
-  file (never read the whole file — see `run_instructions.md`). Confirms
-  entry timing.
+- **Tier 1 (full universe, cheap):** batched `get_equity_quotes` +
+  `get_equity_fundamentals` for price, valuation, and 52-week range, plus
+  per-symbol `get_equity_technical_indicators` (sma, 50 and 200) for
+  trend. Eliminate anything failing the trend template here before
+  spending any more calls on it.
+- **Tier 2 (shortlist only):** `get_equity_technical_indicators` for RSI
+  and EMA (8/21). Confirms entry timing.
 - **Tier 3 (finalists only, most expensive):** EMA8/EMA21 spread (reused
   from Tier 2, no new call) for final momentum confirmation,
-  `NEWS_SENTIMENT` for the catalyst check, and — only if an options
-  expression is being considered — Robinhood `get_option_chains` /
-  `get_option_quotes` for strikes/liquidity. (`MACD` was the original
-  design for momentum confirmation here but is permanently premium-gated
-  on the current Alpha Vantage plan — confirmed via a live run, not a
-  transient limit — so it was removed rather than retried every run.)
+  `NEWS_SENTIMENT` (Alpha Vantage) for the catalyst check,
+  `get_earnings_results` for the earnings blackout, and — only if an
+  options expression is being considered — Robinhood
+  `get_option_chains`/`get_option_quotes` for strikes/liquidity.
+
+**Update, 2026-08-10:** live testing found Robinhood's own data tools
+(`get_equity_quotes`, `get_equity_fundamentals`, `get_equity_technical_
+indicators`, `get_earnings_results`) cover almost all of the above, with
+no observed daily cap (unlike Alpha Vantage's hard 25/day) and a built-in
+`output: "latest"`/`"last:N"` trim server-side — unlike Alpha Vantage's
+indicator endpoints (`RSI`, `MACD`, `EMA`, `SMA`, weekly/monthly time
+series), which return entire multi-year histories with no compact option
+(60-100k+ characters for a single symbol, confirmed live). So the tiers
+above are now Robinhood-primary; Alpha Vantage is reserved for
+`NEWS_SENTIMENT` (Robinhood has no news/sentiment equivalent) and
+occasional deliberate deep-dives (institutional/insider holdings,
+transcripts) — never a full-universe pull. `MACD` on Alpha Vantage is
+also permanently premium-gated on the current plan (confirmed via a live
+run, not a transient limit); Robinhood's own `macd` indicator type is a
+working substitute if a second momentum check is ever wanted, though the
+EMA-spread check already covers this need. See `strategy.md`'s "Data
+sources" table for the exact tool-by-tool mapping.
 
 This mirrors how real systematic desks actually operate under compute/data
 budgets: broad cheap screens first, expensive analysis only on what

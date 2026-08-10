@@ -33,37 +33,51 @@ only, to keep the funnel's Tier 1 pass tractable — see `framework.md`).
 
 ## Data sources — validated, tiered (see framework.md "The funnel")
 
-Confirmed live against the actual connected accounts:
+Confirmed live against the actual connected accounts. **Robinhood is now
+the primary source for almost everything** — it has no observed daily
+cap (unlike Alpha Vantage's hard 25/day), returns clean values with a
+built-in `output: latest`/`last:N` trim (no huge-payload/file-extraction
+workaround needed), and its indicator values cross-checked against Alpha
+Vantage's (JPM 50DMA: $333.00 from both, confirmed 2026-08-10). Alpha
+Vantage is reserved for the handful of things only it provides.
 
-| Tool | Cost | Notes |
+| Tool | Provider | Notes |
 |---|---|---|
-| `COMPANY_OVERVIEW` | Cheap, clean JSON | Has `50DayMovingAverage`, `200DayMovingAverage`, `52WeekHigh/Low`, P/E, PEG, ROE, margins, growth, Beta |
-| `GLOBAL_QUOTE` | Cheap, clean JSON | Current price, volume, day change |
-| `RSI`, `EMA`, `MACD`, `ATR` | **Expensive** — full history dumped to a file, not returned inline | Extract only the last 5 data points via `jq`/`tail`; never read the whole file (see `run_instructions.md`) |
-| `TIME_SERIES_DAILY_ADJUSTED` | **Blocked** — premium-only on the current Alpha Vantage plan | Do not call it; if it's ever needed, that means the plan changed and this file should be revisited |
-| `TIME_SERIES_WEEKLY_ADJUSTED` | Works but huge (100k+ chars) | Avoid unless a specific rule below calls for it |
-| `NEWS_SENTIMENT` | Works but large (limit the `limit` param, e.g. 5-10) | Use only in Tier 3, per symbol |
-| `EARNINGS_CALENDAR` | Cheap | Use per finalist symbol to check the blackout window |
-| Robinhood `get_option_chains`, `get_option_quotes` | As needed | Tier 3, only if an options expression is being considered |
+| `get_equity_quotes` | Robinhood | Current price. Batches up to 20 symbols in one call. |
+| `get_equity_fundamentals` | Robinhood | PE, PB, market cap, 52-week high/low (with dates), sector. Batches up to 10 symbols per call. No PEG — use PE ranked cross-sectionally within the candidate set instead. |
+| `get_equity_technical_indicators` | Robinhood | `sma`/`ema`/`rsi`/`atr`/`macd`/`bollinger`/`vwap`/`obv`, one symbol per call, but `output: "latest"` or `"last:N"` returns exactly what's needed — no extraction step required. |
+| `get_earnings_results` | Robinhood | Trailing 8 quarters actual-vs-estimate EPS + next report date, one symbol per call. Covers both the earnings-blackout check and a real surprise-history read for the PEAD catalyst layer. |
+| `get_option_chains`, `get_option_quotes` | Robinhood | Tier 3+, only if an options expression is being considered, or reviewing an open options position. |
+| `NEWS_SENTIMENT` | Alpha Vantage | The one thing Robinhood has no equivalent for. Limit the `limit` param (5-10). Use sparingly — Tier 3 finalists only, capped at 3/run by gates.md. |
+| `MARKET_STATUS` | Alpha Vantage | Cheap, used once per run for the open/closed check. If Alpha Vantage's daily quota is exhausted, treat the market as open during normal US trading hours as a fallback rather than skipping the run entirely — this check doesn't need Alpha Vantage specifically. |
+| `TIME_SERIES_DAILY_ADJUSTED`, `MACD` (Alpha Vantage) | Alpha Vantage | **Blocked** — premium-only on the current plan. Never call either; Robinhood's `get_equity_technical_indicators` (type=macd) covers the MACD need if it's ever wanted again. |
+| `INSTITUTIONAL_HOLDINGS`, `INSIDER_TRANSACTIONS`, `EARNINGS_CALL_TRANSCRIPT`, `EARNINGS_ESTIMATES` | Alpha Vantage | Not used in the regular funnel — reserved for occasional, deliberate deep-dives on a specific name, never a full-universe pull. |
 
 ## Tier 1 — Trend template (full universe + top gainers/losers)
 
-Pull `COMPANY_OVERVIEW` + `GLOBAL_QUOTE` for every candidate. A candidate
-survives Tier 1 only if **all** of (Minervini-style trend template, adapted
-to available fields):
+Pull `get_equity_quotes` (all candidates in one batched call, up to 20) +
+`get_equity_fundamentals` (batched, up to 10 per call — so 2 calls for the
+full watchlist). Then, per candidate, `get_equity_technical_indicators`
+(type=sma, period=50, output=latest) and (type=sma, period=200,
+output=latest) — these are one-symbol-per-call, so this is the expensive
+part of Tier 1, budget-wise, but Robinhood has shown no daily cap so far
+(unlike Alpha Vantage's hard 25/day). A candidate survives Tier 1 only if
+**all** of (Minervini-style trend template, adapted to available fields):
 
-1. Current price > `50DayMovingAverage` > `200DayMovingAverage`
-2. Current price within 25% of `52WeekHigh`
-3. Current price at least 25% above `52WeekLow`
-4. Relative-strength proxy: `(price - 52WeekLow) / (52WeekHigh - 52WeekLow)` ≥ 0.6
-   (i.e., trading in the upper 40% of its 52-week range — a cheap stand-in
-   for a true relative-strength-vs-SPY line, which would need expensive
-   historical series for every candidate; see `framework.md` limitations)
-5. Also pull `GLOBAL_QUOTE` for SPY once per run (not per candidate) and
-   confirm SPY's own price > its `200DayMovingAverage` (from
-   `COMPANY_OVERVIEW` on SPY) — this is the regime filter from `gates.md`.
-   If it fails, skip Tier 2/3 entirely for new entries this run (existing
-   positions are still reviewed per the exit rules below).
+1. Current price > SMA(50) > SMA(200)
+2. Current price within 25% of `high_52_weeks`
+3. Current price at least 25% above `low_52_weeks`
+4. Relative-strength proxy: `(price - low_52_weeks) / (high_52_weeks -
+   low_52_weeks)` ≥ 0.6 (i.e., trading in the upper 40% of its 52-week
+   range — a cheap stand-in for a true relative-strength-vs-SPY line,
+   which would need a full historical series for every candidate; see
+   `framework.md` limitations)
+5. Also pull `get_equity_quotes` for SPY once per run (not per candidate)
+   and `get_equity_technical_indicators` (SPY, sma, period=200,
+   output=latest) to confirm SPY's price > its 200-day SMA — this is the
+   regime filter from `gates.md`. If it fails, skip Tier 2/3 entirely for
+   new entries this run (existing positions are still reviewed per the
+   exit rules below).
 
 ### Value tiebreaker and Tier 2 cap
 
@@ -71,25 +85,27 @@ Published research (O'Shaughnessy's *What Works on Wall Street*, AQR's
 "Value and Momentum Everywhere" — see `framework.md`) finds that momentum
 combined with value outperforms momentum alone. So among Tier 1 survivors,
 rank by a composite of `0.6 × relative-strength proxy (from #4 above) +
-0.4 × (1 / PEGRatio)` (from `COMPANY_OVERVIEW`; if `PEGRatio` is missing or
-negative, use `PERatio` inverted instead, or treat that term as neutral —
-don't drop the candidate solely for a missing field). This is a
+0.4 × (1 / pe_ratio, ranked cross-sectionally within this run's candidate
+set — lower P/E ranks higher)` (from `get_equity_fundamentals`; Robinhood
+doesn't expose PEG, so this uses raw P/E relative to peers in the same
+run rather than growth-adjusted P/E — a cruder value signal, noted as a
+limitation, not silently upgraded to something it isn't). This is a
 prioritization, not an additional pass/fail gate — it decides which
-survivors advance to the more expensive Tier 2, capped at the **top 8**, to
-keep the funnel's cost bounded even if an unusually large fraction of the
-watchlist passes Tier 1.
+survivors advance to the more expensive Tier 2, capped at the **top 8**.
 
 ## Tier 2 — Entry trigger (shortlist from Tier 1 only)
 
-Pull `RSI` (14, daily) and `EMA` (8 and 21, daily) for Tier 1 survivors,
-extracting the last 5 values of each. A candidate qualifies if **either**:
+Pull `get_equity_technical_indicators` for RSI (period=14, output="last:5")
+and EMA (period=8 and period=21, output="last:5") for Tier 1 survivors —
+`output` trims the response server-side, no extraction step needed. A
+candidate qualifies if **either**:
 
-- **Breakout trigger** (Turtle-style): price within 2% of `52WeekHigh`
+- **Breakout trigger** (Turtle-style): price within 2% of `high_52_weeks`
   AND EMA8 > EMA21
 - **Pullback trigger** (Connors-style): RSI(14) between 35-45 AND price
-  still > `50DayMovingAverage` (pullback within an intact uptrend, not a
-  breakdown) AND EMA21 is flat-to-rising over the last 5 values (trend not
-  rolling over)
+  still > SMA(50) (pullback within an intact uptrend, not a breakdown)
+  AND EMA21 is flat-to-rising over the last 5 values (trend not rolling
+  over)
 
 ## Tier 3 — Confirmation (finalists only, cap at 3 per run per gates.md)
 
@@ -97,19 +113,23 @@ For candidates passing Tier 2:
 
 1. **Momentum confirmation**: EMA8/EMA21 spread (already pulled in Tier 2 —
    no new call needed) is widening over its last 5 values, i.e. momentum
-   is accelerating, not just present. `MACD` was the original design for
-   this check but is **permanently premium-gated on the current Alpha
-   Vantage plan** (confirmed live, not a transient rate-limit — see
-   `gates.md` operational notes), so it is never called. If the plan is
-   ever upgraded to unlock it, MACD confirmation can be reinstated as a
-   second, redundant momentum check — but the EMA-spread check alone is
+   is accelerating, not just present. `MACD` (Alpha Vantage) was the
+   original design for this check but is **permanently premium-gated on
+   the current Alpha Vantage plan** (confirmed live, not a transient
+   rate-limit — see `gates.md`). Robinhood's `get_equity_technical_
+   indicators` (type=macd) is a working substitute if a second, redundant
+   momentum check is ever wanted — but the EMA-spread check alone is
    sufficient and must not be treated as incomplete confirmation.
-2. `NEWS_SENTIMENT` (limit 5-10, this symbol): sentiment not negative.
-3. `EARNINGS_CALENDAR` (this symbol): no earnings report scheduled in the
-   next 3 calendar days (blackout — this is event risk, not a rule this
-   system is trying to trade).
-4. `ATR` (14, daily): pull and extract the latest value — needed for
-   sizing and the stop below.
+2. `NEWS_SENTIMENT` (Alpha Vantage, limit 5-10, this symbol): sentiment
+   not negative. The one step in this whole funnel that still needs
+   Alpha Vantage — Robinhood has no news/sentiment tool.
+3. `get_earnings_results` (Robinhood, this symbol): no earnings report
+   scheduled in the next 3 calendar days (blackout — event risk, not a
+   rule this system is trying to trade). Also gives 8 quarters of
+   actual-vs-estimate EPS — a consistent beat streak is a soft positive
+   for the PEAD catalyst read, a miss streak a soft negative.
+4. `get_equity_technical_indicators` (Robinhood, type=atr, period=14,
+   output=latest): needed for sizing and the stop below.
 
 A candidate that fails any Tier 3 check is dropped, not force-fit.
 
@@ -186,7 +206,7 @@ take-profit with a state flag per position, tracked in `positions.md`:
 Close a position if **any** of:
 1. Price hits the current exit stop (fixed stop pre-R-target, or trailing
    EMA21 stop post-R-target, per above)
-2. Price closes back below `50DayMovingAverage` (trend template broken —
+2. Price closes back below SMA(50) (trend template broken —
    the premise for the trade no longer holds). This always exits,
    regardless of R-target/trailing-stop state.
 3. Held > 20 trading days without reaching the R-target (time-stop —

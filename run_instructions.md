@@ -5,6 +5,16 @@ repo. You have no memory of prior runs except what is written in these
 files. Follow this playbook exactly, in order. `gates.md` overrides
 anything here or in `strategy.md` if they ever conflict.
 
+**Tool budget note**: Robinhood's data tools (`get_equity_quotes`,
+`get_equity_fundamentals`, `get_equity_technical_indicators`,
+`get_earnings_results`) are the primary data source throughout this
+playbook and have shown no daily cap. Alpha Vantage is reserved for
+`NEWS_SENTIMENT` only (Robinhood has no equivalent) plus `MARKET_STATUS` —
+its 25-requests/day quota is shared across every session using this key,
+including manual test runs, and has been fully exhausted before by
+same-day manual testing. See `strategy.md`'s "Data sources" table for the
+full mapping.
+
 ## 0. Orientation
 
 1. Read `gates.md` in full. If `MODE` is not exactly `PAPER`, stop now,
@@ -17,34 +27,40 @@ anything here or in `strategy.md` if they ever conflict.
 
 ## 1. Market context and regime filter
 
-1. Call `MARKET_STATUS`. If the market is closed for a holiday, log a
-   one-line journal entry and end the run.
-2. Call `GLOBAL_QUOTE` and `COMPANY_OVERVIEW` for **SPY**. Check SPY price
-   > `200DayMovingAverage`. Record the result — this gates all *new*
-   entries this run (existing positions are still reviewed regardless).
+1. Call `MARKET_STATUS` (Alpha Vantage). If it fails (quota exhausted),
+   don't abort the run — fall back to treating the market as open during
+   normal US trading hours (9:30am-4pm ET, weekdays) based on the current
+   time, and note the fallback in the journal. If the market is closed for
+   a holiday, log a one-line journal entry and end the run.
+2. Call `get_equity_quotes` (Robinhood) for **SPY**, and
+   `get_equity_technical_indicators` (Robinhood, SPY, type=sma, period=200,
+   interval=day, output=latest) to get SPY's 200-day SMA. Check SPY price
+   > SMA(200). Record the result — this gates all *new* entries this run
+   (existing positions are still reviewed regardless).
 
 ## 2. Review existing positions first (always, regardless of regime)
 
 For every row in `positions.md` (equity and options separately):
-- Equity: `GLOBAL_QUOTE` for current price, and `COMPANY_OVERVIEW` (cheap)
-  for the current `50DayMovingAverage`.
+- Equity: `get_equity_quotes` for current price, and
+  `get_equity_technical_indicators` (type=sma, period=50, output=latest)
+  for the current SMA(50).
 - If `R-target reached?` is still "No": check if current price has now hit
   the R-target — if so, flip the flag to "Yes" in `positions.md` (this
   never flips back). Whether or not it just flipped, also check if price
   has hit the original fixed stop.
-- If `R-target reached?` is "Yes": pull `EMA` (21, daily), extract the
-  last 5 values (same jq/tail rule as step 4 below), and set
-  `Current exit stop = max(EMA21, original stop)`. Check if price has
-  closed at/below this trailing stop.
+- If `R-target reached?` is "Yes": pull `get_equity_technical_indicators`
+  (type=ema, period=21, output=latest) and set `Current exit stop =
+  max(EMA21, original stop)`. Check if price has closed at/below this
+  trailing stop.
 - Options: Robinhood `get_option_quotes` for current premium, and
-  `GLOBAL_QUOTE` for the underlying. Compare the underlying's current
+  `get_equity_quotes` for the underlying. Compare the underlying's current
   price against the stored `Underlying stop` / `Underlying R-target` in
   `positions.md` using the same trailing-stop mechanic as equity (fixed
   stop until R-target hit, then trail EMA21 — see `strategy.md`). Also
   check days-to-expiration remaining vs. both the 21-DTE checkpoint and
   50% of DTE-at-entry.
 - Check against the full exit rules in `strategy.md` (current exit stop
-  per the above, 50DMA trend-template break, time-stop, options DTE
+  per the above, SMA(50) trend-template break, time-stop, options DTE
   checkpoints).
 - If an exit condition is met: simulate closing (record exit price/premium,
   compute realized P&L), update `positions.md`, and log it in
@@ -59,27 +75,29 @@ Otherwise, run the funnel from `strategy.md`:
 
 ### Tier 1 — full universe
 For every symbol in the `strategy.md` watchlist, plus the top 3-5 from
-`TOP_GAINERS_LOSERS`, pull `COMPANY_OVERVIEW` + `GLOBAL_QUOTE`. Apply the
-Tier 1 trend-template checklist. Drop anything that fails.
+`TOP_GAINERS_LOSERS` (Alpha Vantage — cheap, one call for the whole list),
+pull `get_equity_quotes` and `get_equity_fundamentals` (both batched —
+up to 20 and 10 symbols per call respectively), then per-symbol
+`get_equity_technical_indicators` (sma, period=50 and period=200,
+output=latest). Apply the Tier 1 trend-template checklist. Drop anything
+that fails.
 
 ### Tier 2 — shortlist
-For Tier 1 survivors, call `RSI` (14, daily) and `EMA` (8 and 21, daily).
-**Extraction rule for these and all indicator/time-series tools in this
-workflow:** the result will be saved to a file because it's too large to
-return inline. Do **not** read the whole file. Use `jq` (or `tail`) to pull
-just the last 5 data points, e.g. roughly:
-`jq '.data | to_entries | .[-5:]' <saved_file>` (adjust the path expression
-to the actual JSON shape returned — inspect the file's top-level keys with
-`jq keys` first if unsure, rather than dumping the whole thing).
-Apply the Tier 2 breakout/pullback trigger logic. Drop anything that fails.
+For Tier 1 survivors (capped at top 8 by the value/momentum tiebreaker —
+see `strategy.md`), call `get_equity_technical_indicators` for RSI
+(period=14, output="last:5") and EMA (period=8 and 21, output="last:5").
+The `output` parameter trims the response server-side — no file/jq
+extraction needed. Apply the Tier 2 breakout/pullback trigger logic. Drop
+anything that fails.
 
 ### Tier 3 — finalists (cap 3 per gates.md)
 For Tier 2 survivors: check the EMA8/EMA21 spread from the values already
-extracted in Tier 2 (no new call — `MACD` is permanently premium-gated on
-this plan and must never be called; see `gates.md`). Then pull
-`NEWS_SENTIMENT` (limit param 5-10), `EARNINGS_CALENDAR` (per symbol), and
-`ATR` (14, daily) — same last-5-values extraction rule for `ATR`. Apply
-the Tier 3 confirmation checklist. Drop anything that fails.
+pulled in Tier 2 (no new call). Then pull `NEWS_SENTIMENT` (Alpha Vantage,
+limit param 5-10), `get_earnings_results` (Robinhood, per symbol), and
+`get_equity_technical_indicators` (Robinhood, type=atr, period=14,
+output=latest). Apply the Tier 3 confirmation checklist. Drop anything
+that fails. `MACD` (Alpha Vantage) is permanently premium-gated on this
+plan and must never be called — the EMA-spread check already covers this.
 
 ## 4. Decide instrument: equity, options, or skip
 
@@ -90,6 +108,11 @@ For each finalist that survives Tier 3:
   for the symbol and evaluate against the DTE/delta/liquidity gates in
   `gates.md`. If no expiration/strike meets all of them, use equity instead
   — do not loosen the options gates to force a fit.
+- If choosing options: compute the underlying stop/R-target using the same
+  ATR-based math as equity (see `strategy.md`), and record them in
+  `positions.md`'s `Underlying stop`/`Underlying R-target` columns at
+  entry — this is what future runs will check against, not a
+  recalculation.
 
 ## 5. Gate every proposed trade
 
@@ -143,9 +166,11 @@ blind to everything that happened today.
 
 ## Handling errors gracefully
 
-- Premium/rate-limit error on any call: log it, skip that symbol/tier
-  (don't abort the whole run), prioritize finishing the position-review
-  step over scouting new ones, and note the truncation in the journal.
+- Alpha Vantage quota/premium error on any call: log it, skip that
+  symbol/tier (don't abort the whole run), prioritize finishing the
+  position-review step over scouting new ones, and note the truncation in
+  the journal. `MARKET_STATUS` specifically has a time-based fallback (see
+  step 1) rather than blocking the run.
 - Never treat a data error as a reason to fall back to guessing a value —
   skip the candidate instead.
 
@@ -154,6 +179,4 @@ blind to everything that happened today.
 - Never call a real order-placement tool — equity or option.
 - Never edit `gates.md` or `framework.md`.
 - Never delete or rewrite past `trade_journal.md` entries.
-- Never read a full RSI/EMA/MACD/ATR/time-series file into context —
-  extract only what's needed via `jq`/`tail`.
 - Always commit and push before ending the run.

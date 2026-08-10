@@ -58,13 +58,25 @@
 - `TIME_SERIES_DAILY_ADJUSTED` and `MACD` are **premium-gated** on the
   current Alpha Vantage plan and return an error, not data — confirmed
   live via a real run on 2026-08-10, not a transient rate-limit. Do not
-  call either. `strategy.md`'s Tier 3 uses the EMA8/EMA21 spread (already
-  fetched in Tier 2) as the momentum confirmation instead of MACD.
-- `RSI`, `EMA`, `MACD`, `ATR`, and weekly/monthly time series endpoints
-  return full multi-year histories (60-100k+ characters) saved to a file,
-  not inline. `run_instructions.md` specifies extracting only the last few
-  values via `jq`/`tail` — reading the whole file wastes enormous context
-  for no benefit and risks the run timing out.
+  call either.
+- **Alpha Vantage's daily quota (25 requests/day, shared across every
+  session using this key — manual test runs and scheduled runs draw from
+  the same pool)** caused a full data blackout on 2026-08-10: a scheduled
+  run got zero usable Alpha Vantage calls because manual test runs earlier
+  the same day had exhausted it. Fix applied the same day: Robinhood's own
+  data tools (`get_equity_quotes`, `get_equity_fundamentals`,
+  `get_equity_technical_indicators`, `get_earnings_results`) now cover
+  almost the entire funnel with no observed daily cap — see `strategy.md`'s
+  "Data sources" table. Alpha Vantage is reserved for `NEWS_SENTIMENT`
+  only (plus occasional deliberate deep-dives, never a full-universe
+  pull), which should keep normal runs to ~3 Alpha Vantage calls instead
+  of 50-75.
+- Robinhood's `get_equity_technical_indicators` supports `output:
+  "latest"`/`"last:N"` — use it. Alpha Vantage's indicator endpoints
+  (`RSI`, `EMA`, `MACD`, `ATR`, weekly/monthly time series) have no such
+  option and dump full multi-year histories (60-100k+ characters) to a
+  file; if one is ever called anyway, extract only the last few values via
+  `jq`/`tail` rather than reading the whole file.
 - If a call hits a rate-limit or premium-only error mid-run, do not treat
   it as a crash: log the truncation, prioritize reviewing existing
   positions over scouting new ones, and finish the run.
