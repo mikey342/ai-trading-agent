@@ -86,11 +86,22 @@ scout or open new positions this run, but say so explicitly in the journal.
 
 Otherwise, run the funnel from `strategy.md`:
 
-### Tier 1 — full universe
-For every symbol in the `strategy.md` watchlist, plus the top 3-5 from
-`TOP_GAINERS_LOSERS` (Alpha Vantage — cheap, one call for the whole list),
-pull `get_equity_quotes` and `get_equity_fundamentals` (both batched —
-up to 20 and 10 symbols per call respectively), then per-symbol
+### Tier 0 — universe (one call)
+Call `run_scan` with `scan_id: de1b1994-b5db-472a-9b79-c052f1215193`
+("Swing Agent - Trend Candidates"). This returns live market-wide results
+already filtered on market cap, price, liquidity, ADX(14) > 25, and
+RSI(14) 35-70, with those values included per row — no extra calls needed
+to read them. Note the total match count in the journal.
+
+Rank the rows by `Average directional index (14)` descending (client-side,
+free) and take the **top 15** into Tier 1. This is the entire candidate
+universe for the run — there is no hardcoded watchlist anymore. If
+`run_scan` fails, fall back to screening a small diversified set of liquid
+large-caps and flag it in the journal as degraded operation.
+
+### Tier 1 — trend template (top 15 from Tier 0)
+Pull `get_equity_quotes` (one batched call for all 15) and
+`get_equity_fundamentals` (2 batched calls), then per-symbol
 `get_equity_technical_indicators` (sma, period=50 and period=200,
 output=latest). Apply the Tier 1 trend-template checklist. Drop anything
 that fails.

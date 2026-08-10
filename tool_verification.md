@@ -22,6 +22,8 @@ Last verified: **2026-08-10**.
 | `get_option_chains` | ✅ | Returns chain id + all expiration dates. |
 | `get_option_instruments` | ✅ | **Required middle step** — chains do not contain contracts. Filter by expiration/type/strike. |
 | `get_option_quotes` | ✅ | Takes instrument UUIDs. Returns delta, open_interest, bid/ask, mark, full Greeks, IV. **Confirms every options gate in `gates.md` is actually enforceable.** |
+| `get_scanner_filter_specs` | ✅ | Full filter catalog — fundamental, price/volume, technical, and options-flow groups. |
+| `create_scan` / `run_scan` | ✅ | Real market-wide screener. Created `de1b1994-b5db-472a-9b79-c052f1215193`; returned **266 live matches**, with ADX/RSI/volume/market-cap/price per row. **Replaced the hardcoded watchlist as the candidate source** — see `strategy.md` Tier 0. |
 
 ### Options flow is three steps, not two
 `get_option_chains` (get chain + expirations) → `get_option_instruments`
@@ -63,6 +65,20 @@ quota loses news sentiment and top-gainers scouting; see the graceful
 degradation rules in `strategy.md` and `run_instructions.md` — those
 paths must never hard-block trading, or a free-tier quota limit silently
 becomes a permanent no-trade bug.
+
+### Scanner filters available but not yet used
+The screener exposes an **options-flow filter group** that nothing in the
+current strategy touches: `FILTER_TYPE_RELATIVE_OPTIONS_VOLUME` (unusual
+options activity vs. that name's own baseline),
+`FILTER_TYPE_TOTAL_CALL_VOLUME` / `TOTAL_PUT_VOLUME`,
+`FILTER_TYPE_IMPLIED_VOLATILITY`, `FILTER_TYPE_OPEN_INTEREST_VOLUME`.
+Unusual options volume is a well-known early-positioning signal built
+entirely from public exchange data, and it's free here. Also unused:
+`FILTER_TYPE_PEG` (the scanner has PEG even though
+`get_equity_fundamentals` does not), `FILTER_TYPE_GAP` (premarket gaps —
+directly useful to the premarket routine), `FILTER_TYPE_EARNINGS_DATE`
+(could enforce the earnings blackout at screen time instead of per
+candidate), and `FILTER_TYPE_SECTOR` (sector-diversification caps).
 
 ## Not yet verified
 

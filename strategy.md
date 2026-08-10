@@ -9,27 +9,45 @@ Adaptation policy at the bottom.
 `gates.md` always wins in a conflict. This file never overrides a hard
 limit.
 
-## Universe
+## Universe — Tier 0: market-wide screener
 
 Benchmark/regime reference: **SPY** (not itself traded — used for the
 regime filter and as the relative-strength baseline).
 
-Seed watchlist (diversified across sectors so cross-sectional comparisons
-mean something — edit freely, but keep it diversified):
+Candidates come from a **saved Robinhood screener**, not a hardcoded
+list:
 
-| Symbol | Sector |
-|---|---|
-| AAPL, MSFT, NVDA, GOOGL | Technology |
-| AMZN, COST, MCD | Consumer discretionary |
-| JPM, V, MA | Financials |
-| UNH, LLY, JNJ | Healthcare |
-| HON, CAT | Industrials |
-| XOM, CVX | Energy |
-| META | Communication services |
-| PG | Consumer staples |
+- **scan_id:** `de1b1994-b5db-472a-9b79-c052f1215193`
+  ("Swing Agent - Trend Candidates")
+- **Call:** `run_scan` with that id — **one call**, returns live results
+  with `Last`, `Market cap`, `RSI`, `Average directional index (14)`,
+  `Average volume`, `Relative volume`, `% Change` already populated per
+  row. No extra per-symbol calls needed at this stage.
+- **Filters:** market cap > $2B, price > $5 (matches `gates.md`'s
+  penny-stock exclusion), 30-day average volume > 1M shares (liquidity),
+  **ADX(14) > 25** (a real trend exists — direction-agnostic), RSI(14)
+  between 35-70 (not already blown off).
 
-Plus opportunistic candidates from `TOP_GAINERS_LOSERS` each run (top 3-5
-only, to keep the funnel's Tier 1 pass tractable — see `framework.md`).
+**Why this replaced the old hardcoded ~19-name watchlist:** verified live
+2026-08-10, the screen returned **266 qualifying names**, and most of the
+old watchlist (AAPL, MSFT, NVDA, GOOGL, META, JPM) **failed** it — ADX
+below 25, i.e. not actually trending — while it surfaced names never on
+the list (PANW, CRWD, FTNT, NET, NU...). A hand-picked mega-cap list was
+simultaneously too narrow to find real leaders and padded with names that
+didn't meet the strategy's own criteria. It also made the
+relative-strength ranking nearly meaningless: ranking 19 pre-selected
+mega-caps against each other is not a cross-sectional signal.
+
+**Narrowing for the funnel:** 266 is far more than Tier 1 can process.
+Rank the scan results by `Average directional index (14)` descending —
+strongest trends first, computed client-side from data the scan already
+returned, costing nothing — and take the **top 15** into Tier 1. If the
+scan returns fewer than 15, use them all. Log the scan's total match
+count in the journal so the universe's breadth on a given day is visible.
+
+If `run_scan` fails, fall back to the previous behavior (screen a small
+diversified set of liquid large-caps) and say so explicitly in the
+journal — but treat that as degraded operation, not normal.
 
 ## Data sources — validated, tiered (see framework.md "The funnel")
 
@@ -53,16 +71,17 @@ Vantage is reserved for the handful of things only it provides.
 | `TIME_SERIES_DAILY_ADJUSTED`, `MACD` (Alpha Vantage) | Alpha Vantage | **Blocked** — premium-only on the current plan. Never call either; Robinhood's `get_equity_technical_indicators` (type=macd) covers the MACD need if it's ever wanted again. |
 | `INSTITUTIONAL_HOLDINGS`, `INSIDER_TRANSACTIONS`, `EARNINGS_CALL_TRANSCRIPT`, `EARNINGS_ESTIMATES` | Alpha Vantage | Not used in the regular funnel — reserved for occasional, deliberate deep-dives on a specific name, never a full-universe pull. |
 
-## Tier 1 — Trend template (full universe + top gainers/losers)
+## Tier 1 — Trend template (top 15 from the Tier 0 scan)
 
-Pull `get_equity_quotes` (all candidates in one batched call, up to 20) +
-`get_equity_fundamentals` (batched, up to 10 per call — so 2 calls for the
-full watchlist). Then, per candidate, `get_equity_technical_indicators`
-(type=sma, period=50, output=latest) and (type=sma, period=200,
-output=latest) — these are one-symbol-per-call, so this is the expensive
-part of Tier 1, budget-wise, but Robinhood has shown no daily cap so far
-(unlike Alpha Vantage's hard 25/day). A candidate survives Tier 1 only if
-**all** of (Minervini-style trend template, adapted to available fields):
+Pull `get_equity_quotes` (all 15 in one batched call) +
+`get_equity_fundamentals` (batched, 10 per call — 2 calls). Then, per
+candidate, `get_equity_technical_indicators` (type=sma, period=50,
+output=latest) and (type=sma, period=200, output=latest) — these are
+one-symbol-per-call and are the expensive part of Tier 1 (~30 calls for
+15 names). Robinhood has shown no daily cap, but each call costs wall-clock
+time, which is why Tier 0 narrows to 15 first. A candidate survives Tier 1
+only if **all** of (Minervini-style trend template, adapted to available
+fields):
 
 1. Current price > SMA(50) > SMA(200)
 2. Current price within 25% of `high_52_weeks`
