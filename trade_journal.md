@@ -286,3 +286,65 @@ blocker was market/session availability, not a gate.
 **Strategy adaptation this run:** None. Adaptation policy requires
 reviewing the last 10 closed trades; there are still zero closed trades
 on record.
+
+---
+
+### 2026-08-10 13:57 UTC — morning run
+
+**gates.md MODE check:** `PAPER` — confirmed, run proceeds under normal paper-trading rules.
+
+**Market status:** `MARKET_STATUS` (Alpha Vantage) failed again — shared 25/day quota exhausted (same recurring pattern noted in every prior entry). Time-based fallback: 09:54 ET Monday, a regular trading weekday, inside 9:30am-4pm ET → market open. Corroborated independently via Robinhood `get_equity_quotes` (SPY): `venue_last_trade_time` 2026-08-10T13:55 UTC, live regular-session trades today. This is the first run of the day to actually land inside a regular-session window (the prior three runs today were all premarket misfires, per earlier entries).
+
+**Account:** NAV $10,000, cash $10,000, halted: no (no open positions).
+
+**Position review:** `positions.md` shows zero open equity/options positions — nothing to review.
+
+**Regime filter:** SPY $773.20 > 200DMA $702.97 → **LONG mode / risk-on**. New with-trend entries are bullish stock/ETF or bull index ETF; bearish stock passes count as counter-trend.
+
+**Scouted (Tier 0):** `run_scan` (scan_id de1b1994...) returned only **7 total matches** today (well below the ~92-96 typically seen — a genuinely thin trending universe today, not a call failure). All 7 taken into Tier 1 (below the top-15 cap), ranked by ADX(14) desc / relative options volume tiebreak:
+
+| Rank | Symbol | ADX(14) | Rel. options vol |
+|---|---|---|---|
+| 1 | ANF | 30.66 | 0.81 |
+| 2 | TSLA | 30.56 | 0.64 |
+| 3 | MP | 29.12 | 0.55 |
+| 4 | RKLB | 28.02 | 0.53 |
+| 5 | VIPS | 27.45 | 0.67 |
+| 6 | BRK.B | 27.18 | 0.52 |
+| 7 | COO | 25.05 | 4.70 |
+
+**Earnings blackout (Tier 1, one `get_earnings_calendar` days=7 call):** RKLB reports today (2026-08-10, PM) — dropped, within the 3-day blackout window. 6 candidates proceed: ANF, TSLA, MP, VIPS, BRK.B, COO.
+
+**Tier 1 — trend template, both directions, all 6:**
+- **ANF** ($114.70, SMA50 $91.45, SMA200 $91.80): SMA50 < SMA200 → fails LONG stack (price>SMA50>SMA200 requires SMA50>SMA200). price ($114.70) not < SMA50 → fails SHORT. **FAIL both.**
+- **TSLA** ($327.90, SMA50 $380.44, SMA200 $408.80, 52wk $297.38-$498.83): fails LONG (price<SMA50). SHORT: price<SMA50<SMA200 ✓ (327.90<380.44<408.80); within 25% of low52 ✓ (327.90 ≤ 371.73); ≥25% below high52 ✓ (327.90 ≤ 374.12); relative-weakness proxy = (327.90-297.38)/(498.83-297.38) = **0.152** ≤0.4 ✓. **PASS SHORT (bearish).**
+- **MP** ($54.62, SMA50 $53.10, SMA200 $58.22): SMA50<SMA200 → fails LONG stack. price ($54.62) not < SMA50 ($53.10) → fails SHORT. **FAIL both.**
+- **VIPS** ($15.49, SMA50 $14.13, SMA200 $16.36): SMA50<SMA200 → fails LONG stack. price not < SMA50 → fails SHORT. **FAIL both.**
+- **BRK.B** ($536.75, SMA50 $495.07, SMA200 $491.03, 52wk $462.55-$537.49): LONG stack holds (536.75>495.07>491.03) and within 25% of high, but **fails rule 3** — "at least 25% above low52" requires price ≥ $578.19 (462.55×1.25); price is $536.75. BRK.B's 52-week range is only ~16% top-to-bottom, so this rule is structurally unsatisfiable for it right now regardless of how close to the high it trades. SHORT: price not < SMA50 → fails. **FAIL both.**
+- **COO** ($75.44, SMA50 $69.28, SMA200 $73.15): SMA50<SMA200 → fails LONG stack. price not < SMA50 → fails SHORT. **FAIL both.**
+
+**Tier 1 survivor: TSLA only**, bearish/SHORT-mode pass. Since SPY regime is LONG (risk-on), this is **counter-trend**.
+
+**Counter-trend gate check (TSLA, all 5 required):**
+1. Max 1 counter-trend position open: 0 currently open → OK.
+2. ADX(14) > 30: TSLA ADX = 30.56 → **PASS** (barely).
+3. Extreme 52wk-range reading, bearish needs ≤0.25: computed 0.152 → **PASS**.
+4. No degraded data (news_sentiment must not be UNAVAILABLE) — not reached; gated at Tier 3.
+5. Half size: 0.2% NAV risk (gates.md is authoritative over strategy.md's stale "0.5%" reference in its counter-trend section) — to be applied only if TSLA reaches sizing.
+
+**Tier 2 — entry trigger (TSLA, SHORT mode):**
+- RSI(14) last 5 sessions: 36.67, 39.05, 37.39, 36.80, **41.26** (most recent).
+- EMA8 last 5: 321.64, 322.91, 322.61, 321.92, **323.40**.
+- EMA21 last 5: 349.34, 347.34, 344.99, 342.68, **341.40**.
+- **Breakdown trigger**: price within 2% of low52 ($297.38 × 1.02 = $303.33) — price $327.90 is **not** within 2% (it's ~10.3% above the low). **FAIL.**
+- **Rally-to-resistance trigger**: RSI(14) between 55-65 — most recent RSI is 41.26, well outside the band. **FAIL.**
+
+**TSLA dropped at Tier 2 — no entry trigger fired.** The trend/counter-trend gates were satisfied, but neither SHORT-mode timing trigger did; per `run_instructions.md` this is dropped, not force-fit, and never downgraded. (Not logged to `trade_log.csv` — DATA_SCHEMA.md scopes required reject rows to Tier 3/gate-level rejections, and TSLA didn't reach Tier 3.)
+
+**Index sleeve (SSO, since SPY is in LONG mode):** SPY trend template: price $773.20 > SMA50 $747.19 > SMA200 $702.97 ✓; within 25% of high52 ($776.85) ✓. **Fails rule 3** — at least 25% above low52 ($629.28 × 1.25 = $786.60) — price $773.20 doesn't clear it. Same structural cause as BRK.B: SPY's current 52-week range is only ~23.4% top-to-bottom (low $629.28 on 2026-03-30, high $776.85 on 2026-08-05, just 3 sessions old), so this specific rule cannot be satisfied by any price inside that range. **No SSO trade.** Flagging as an observation, not a strategy change — the adaptation policy requires a pattern across ≥5 of the last 10 *closed* trades before touching a named parameter, and there are zero closed trades to date. Worth re-checking if this rule keeps blocking otherwise-strong setups once there's a real track record.
+
+**Decisions:** No new positions opened (equity, options, or index sleeve). No positions closed (none open).
+
+**Rejected by gates:** None reached gates.md-level sizing/execution checks — TSLA was dropped at Tier 2 (entry trigger), everything else at Tier 1 (trend template) or the Tier 1 earnings blackout (RKLB).
+
+**Strategy adaptation this run:** None. Zero closed trades on record; adaptation policy requires reviewing closed-trade history.
