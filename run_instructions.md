@@ -24,7 +24,7 @@ full mapping.
 3. Read `positions.md` — current equity positions, options positions, and
    NAV history.
 4. Read the last ~10 entries of `trade_journal.md`.
-5. If running the 10:30am morning slot, read `premarket_notes.md` if it's
+5. If running the 9:30am morning slot, read `premarket_notes.md` if it's
    dated today — use it only to prioritize which candidates to look at
    first in Tier 1 (e.g., a flagged gapper is worth checking early). It
    is informational context only, never a substitute for Tier 1-3 gating
@@ -33,9 +33,8 @@ full mapping.
 
 ## 1. Market context and regime filter
 
-This routine fires three times daily — **10:30am, 2:30pm, and 3:30pm ET**
-— all of them *inside* regular market hours. That placement is
-deliberate on both ends:
+This routine fires three times daily — **9:30am (market open), 2:30pm,
+and 3:30pm ET** — all of them *inside* regular market hours:
 
 - **Never before the open**, so every run sees a live regular-session
   price rather than a stale prior-day close or a thin premarket quote.
@@ -43,9 +42,11 @@ deliberate on both ends:
   position at 4:30pm cannot actually fill it — the order would sit until
   the next morning at an unknown price, which is not what the analysis
   evaluated.
-- **10:30am rather than the 9:30am bell**: the first ~30 minutes carry
-  the day's widest spreads and sharpest reversals. Paying that spread
-  buys nothing on a 5-15 day horizon (see `strategy.md`, "Order entry").
+- **At the open, not an hour after it.** The analysis takes ~15 minutes,
+  so the morning run naturally executes around 9:45. Delaying to avoid
+  opening spreads would cost more in missed breakouts than it saves in
+  execution — see `strategy.md`, "Order entry". Wide spreads are caught
+  case-by-case by the 0.5% spread check at fill time.
 
 1. Call `MARKET_STATUS` (Alpha Vantage). If it fails (quota exhausted),
    don't abort the run — fall back to treating the market as open during
@@ -56,9 +57,11 @@ deliberate on both ends:
    `get_equity_technical_indicators` (Robinhood, SPY, type=sma, period=200,
    interval=day, output=latest) to get SPY's 200-day SMA. This sets the
    **direction mode for the whole run**: SPY > SMA(200) → **LONG mode**
-   (stock sleeve, plus optionally a 2x long ETF); SPY < SMA(200) →
-   **SHORT mode** (2x inverse index ETF only — never short a stock, never
-   use margin, see `gates.md`). Record the mode explicitly in the journal.
+   (stock sleeve via equity or bull ETFs, plus optionally a 2x long index
+   ETF); SPY < SMA(200) → **SHORT mode** (stock sleeve via bear ETFs, plus
+   optionally an inverse index ETF). Never short a stock, never use
+   margin, in either mode — see `gates.md`. Record the mode explicitly in
+   the journal.
    Existing positions are reviewed and exited in either mode, regardless
    of which way the regime currently points.
 
@@ -95,20 +98,26 @@ For every row in `positions.md` (equity and options separately):
 
 ## 3. New entries — direction depends on the mode set in step 1
 
-### If SHORT mode (SPY below its SMA(200))
-**Skip the entire stock-selection funnel** (Tiers 0-3 below). The only
-bearish expression is the index sleeve: check whether SPY (or QQQ) passes
-the *inverted* trend template and a short trigger fires per `strategy.md`;
-if so, buy **SDS** (or QID) — a 2x inverse ETF, bought with cash. Never
-short a stock and never use margin. Then continue to step 5 (gates).
-Say explicitly in the journal that the stock funnel was skipped because
-of SHORT mode, so a quiet run isn't mistaken for a broken one.
+**The stock-selection funnel runs in both modes** — only the direction of
+its tests and the instrument used to express a pass are mirrored.
 
 ### If LONG mode
-Run the stock-selection funnel below. Additionally, consider **one**
-index-sleeve position (SSO or QLD) if SPY/QQQ itself passes the long
-trend template and a trigger fires — subject to the max-1-index-position
-rule and the 2x exposure accounting in `gates.md`.
+Run the funnel with the long trend template and long triggers. Express a
+pass as plain equity, or as that name's **bull** single-stock ETF if the
+leveraged-ETF gates in `gates.md` are met. Additionally consider **one**
+index-sleeve position (SSO or QLD) if SPY/QQQ itself passes.
+
+### If SHORT mode
+Run the same funnel with the **inverted** trend template and short
+triggers (see `strategy.md`). Express a pass by buying that name's
+**bear** ETF — checking the mapping table in `strategy.md` and confirming
+via `get_equity_fundamentals` both that the ETF clears the 1M-share
+liquidity floor and **what its actual leverage is** (several are −1x, not
+−2x). If a qualifying name has no sufficiently liquid bear ETF, take no
+trade on it. Additionally consider one inverse index-sleeve position
+(SDS or QID) if SPY/QQQ passes the inverted template.
+
+Never short a stock and never use margin, in either mode.
 
 ### Tier 0 — universe (one call)
 Call `run_scan` with `scan_id: de1b1994-b5db-472a-9b79-c052f1215193`

@@ -58,8 +58,10 @@
 | Max portfolio gross exposure | 1.1x of NAV | Computed with the 2x multiplier above applied to any leveraged ETF position. |
 | Index leveraged ETF time-stop | **10 trading days** (vs 20 for ordinary stock) | These target 2x the *daily* return and reset daily, so multi-day holds are path-dependent and decay in chop — a flat round-trip in the index still loses money. Short leash by design. See `strategy.md`. |
 | **Single-stock** leveraged ETF time-stop | **7 trading days** | Decay scales with σ², and single stocks are far more volatile than indices — roughly 36%/yr drag on a TSLA-like name, ~70%/yr on a COIN-like one, versus ~2.6%/yr on SPY. |
-| Single-stock leveraged ETF volatility gate | Underlying **ATR(14) ≤ 4% of price** | Hard gate. Above it, decay is too steep for the holding period — trade the plain stock instead. Observed 2026-08-10: CONL (2x COIN) fell **92%** from its 52-week high while COIN itself did nothing remotely similar. |
-| Leveraged ETF liquidity floor | 30-day average volume ≥ 1M shares | Many single-stock leveraged ETFs are thin; verify before using any not already listed in `strategy.md`. |
+| Single-stock leveraged ETF volatility gate | Underlying **ATR(14) ≤ 4% of price** | Hard gate. Above it, decay is too steep for the holding period — trade the plain stock instead (LONG mode) or take no trade (SHORT mode). Observed 2026-08-10: CONL (2x COIN) fell **92%** from its 52-week high while COIN itself did nothing remotely similar. |
+| Leveraged ETF liquidity floor | 30-day average volume ≥ 1M shares | Hard gate. Bear-side ETFs are frequently far thinner than their bull counterparts — METD (744K), GGLS (368K), CONI (144K) and TSLS (409K) all **fail** this. If a name's bear ETF is below the floor, there is no bearish expression for that name; take no trade rather than reaching for an illiquid one. |
+| **Verify leverage per instrument** | Read the fund's own description before sizing | Bear ETFs do **not** reliably mirror their bull counterpart's leverage — AAPD, MSFD, AMZD and TSLS are **−1x**, while NVD and TSLQ are **−2x**. Never infer leverage from the ticker or from the bull side. |
+| **−2x inverse decay penalty** | Treat −2x single-stock funds as the highest-decay instrument permitted | Daily-reset drag is `(L²−L)/2 × σ²`, so **−2x carries 3× the drag of +2x** — identical to a +3x fund. Observed: CONI −2x COIN fell $141.65 → $52.64; TSLQ −2x TSLA fell $51.45 → $25.17. |
 
 ## Execution gates
 
@@ -68,7 +70,7 @@
 | Order type | **Marketable limit only — never market orders** | Buys limit at the ask, sells limit at the bid. A market order surrenders price control and can fill far from the last print in a fast or thin market. |
 | Simulated fill price | Buys at `ask_price`, sells at `bid_price` (options: `high_fill_rate_buy/sell_price`) | Never the midpoint or `last_trade_price` — both flatter paper P&L versus a real fill and hide the spread cost of every round trip. |
 | Max bid-ask spread at entry | **0.5% of mid** (equity/ETF) | Wider than this on a name that passed the liquidity screen usually signals a halt, a news event, or stale data. Skip and log rather than crossing it. |
-| Trading window | All runs inside regular hours: **10:30am, 2:30pm, 3:30pm ET** | Never pre-open (stale/thin quotes) and never post-close (a decision that cannot be filled until the next session at an unknown price). 10:30am rather than the bell avoids the widest spreads of the day. |
+| Trading window | All runs inside regular hours: **9:30am, 2:30pm, 3:30pm ET** | Never pre-open (stale/thin quotes) and never post-close (a decision that cannot be filled until the next session at an unknown price). The morning run starts at the open and executes when its analysis completes (~15 min); delaying past the open costs more in missed breakouts than it saves in spread. Wide spreads are handled by the 0.5% check at fill time, not by avoiding a time window. |
 
 ## Operational notes (not risk limits, but load-bearing for the routine)
 

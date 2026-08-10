@@ -88,23 +88,22 @@ than simply gating whether it trades at all:
 
 | SPY vs its 200-day SMA | Mode | New entries allowed |
 |---|---|---|
-| SPY **above** SMA(200) | **LONG mode** | Long equity (stock sleeve) + optionally a 2x long index ETF (SSO/QLD) |
-| SPY **below** SMA(200) | **SHORT mode** | **2x inverse index ETF only (SDS/QID)** — no individual-name shorts |
+| SPY **above** SMA(200) | **LONG mode** | Stock sleeve (plain equity, or a bull single-stock ETF) + optionally a 2x long index ETF (SSO/QLD) |
+| SPY **below** SMA(200) | **SHORT mode** | Stock sleeve via **bear single-stock ETFs** + optionally a 2x inverse index ETF (SDS/QID) |
 
 **Never short a stock, and never use margin — in any mode, for any
 reason.** Both are disabled outright in `gates.md`. Short selling has
 unbounded loss (a squeeze can run indefinitely) plus borrow cost and
 recall risk, and a system that reviews positions a few times a day cannot
-manage that. Bearish exposure is taken **only** by *buying* a 2x inverse
+manage that. Bearish exposure is taken **only** by *buying* an inverse
 ETF with cash, where max loss is the amount paid.
 
-In SHORT mode the **stock-selection funnel is skipped entirely** — the
-only bearish expression is the index sleeve. Rationale: single-name
-bearish bets would need puts, and at a $10,000 NAV the 3% cap allows just
-$300 of premium, which rarely buys a sensible contract (a verified JPM
-~45 DTE ATM call was $970). Rather than pretend that path is usable at
-this account size, SHORT mode trades the index directly. Options remain
-permitted by `gates.md` and become practical at a larger NAV.
+**The stock-selection funnel runs in both modes.** In SHORT mode it hunts
+for names passing the *inverted* trend template, and expresses each one
+by buying that name's bear ETF (see the mapping table below) — subject to
+that ETF clearing the liquidity floor. If a qualifying name has no
+sufficiently liquid bear ETF, take no trade on it; do not substitute a
+different instrument or reach for a thin one.
 
 Both modes use identical machinery — trend template, entry triggers, ATR
 sizing, R-targets, trailing stops — just mirrored. Everything below is
@@ -274,11 +273,17 @@ while capping the worst price accepted:
   doesn't fill, the setup can requalify on the next run — this is the
   same discipline as the chase-protection rule above.
 
-**Timing.** The most volatile, widest-spread period of the day is the
-first ~30 minutes after the open. Entering there means paying a wider
-spread for no informational benefit on a 5-15 day horizon. This is why
-the morning run fires at **10:30am ET rather than at the 9:30am bell** —
-late enough for opening spreads to normalize, still early in the session.
+**Timing.** The morning run fires at the **9:30am ET open** and executes
+as soon as its analysis completes (typically ~15 minutes later). An
+earlier draft delayed this to 10:30am to avoid the widest spreads of the
+day; that reasoning was borrowed from day trading and doesn't hold here.
+On a 5-15 day swing with a ~3% stop and a ~6% target, a few basis points
+of spread is noise — while waiting an hour lets breakout setups run away,
+after which chase-protection correctly rejects them. The net effect of
+waiting was systematically missing the fastest-moving setups in exchange
+for a rounding error of execution cost. Wide spreads are instead handled
+*dynamically* by the 0.5% spread check below, which skips a specific bad
+fill rather than avoiding an entire time window.
 
 **Liquidity sanity check before any entry:** if the bid-ask spread
 exceeds **0.5% of the mid price** for an equity or ETF, skip the trade
@@ -419,24 +424,45 @@ little extra.
   positions. See the decay note below — time is a materially larger enemy
   here.
 
-### Single-stock leveraged ETFs (allowed, with a volatility gate)
+### Single-stock leveraged ETFs — both directions (with gates)
 
-Many large caps have 2x ETFs, verified live 2026-08-10:
+Most large caps have **both** a bull and a bear ETF, so the stock sleeve
+can express a bearish single-name view without shorting, margin, or
+options. All verified live 2026-08-10 (30-day average volumes):
 
-| Underlying | 2x long ETF | 30d avg volume |
-|---|---|---|
-| TSLA | TSLL | 76M |
-| NVDA | NVDL | 13.5M |
-| MSFT | MSFU | 7.7M |
-| META | METU | 5.4M |
-| AMZN | AMZU | 3.3M |
-| AAPL | AAPU | 2.2M |
-| GOOGL | GGLL | 1.7M |
-| COIN | CONL | 18.6M |
+| Underlying | Bull ETF | Vol | Bear ETF | Vol | Bear leverage |
+|---|---|---|---|---|---|
+| NVDA | NVDL | 13.5M | **NVD** | 78.8M | −2x |
+| TSLA | TSLL | 76M | **TSLQ** | 5.9M | −2x |
+| AMZN | AMZU | 3.3M | **AMZD** | 13.6M | −1x |
+| AAPL | AAPU | 2.2M | **AAPD** | 11.4M | −1x |
+| MSFT | MSFU | 7.7M | **MSFD** | 1.7M | −1x |
+| META | METU | 5.4M | METD | 744K | ❌ below floor |
+| GOOGL | GGLL | 1.7M | GGLS | 368K | ❌ below floor |
+| COIN | CONL | 18.6M | CONI | 144K | ❌ below floor |
 
-These let the stock sleeve take leveraged exposure to a name the funnel
-picked, without options or margin. **But the decay problem is far worse
-here than for index ETFs**, and the numbers below are not hypothetical.
+**Two asymmetries that must not be glossed over:**
+
+1. **Bear-side leverage varies.** Several are only **−1x**, not −2x
+   (AAPD, MSFD, AMZD, and TSLS). Always read the fund's own description
+   via `get_equity_fundamentals` before sizing — never assume the bear
+   ticker mirrors the bull ticker's leverage. Position sizing is ATR-based
+   off the ETF itself, so this is handled automatically *if* the right
+   instrument is measured, and badly wrong if it isn't.
+2. **Inverse funds decay much faster.** The daily-reset drag is
+   `(L² − L)/2 × σ²`, which means **−2x carries three times the drag of
+   +2x** (3σ² vs 1σ²) — the same penalty as a +3x fund. Observed:
+   CONI (−2x COIN) fell $141.65 → $52.64 and TSLQ (−2x TSLA) fell
+   $51.45 → $25.17. Treat −2x single-stock funds as the most
+   decay-prone instrument in this system.
+
+**Bear side is often much thinner.** Three of eight fail the 1M-share
+liquidity floor outright. If a name's bear ETF is below the floor, there
+is simply no bearish expression for that name — take no trade rather than
+reaching for an illiquid one.
+
+**But the decay problem is far worse here than for index ETFs**, and the
+numbers below are not hypothetical.
 
 For a 2x daily-reset fund, the expected drag is approximately **σ² per
 year** — it scales with the *square* of volatility, so a stock twice as
