@@ -72,9 +72,12 @@ routine already logs a full state summary every run.
 If something did trigger:
 - **Position closed** (stop/target/trend-break/time-stop/DTE hit):
   simulate the close (exit price/premium, realized P&L), update
-  `positions.md` (remove from open, update cash/NAV), and append a short
-  `trade_journal.md` entry — just what closed and which rule fired, not
-  the full scan template.
+  `positions.md` (remove from open, update cash/NAV), append a
+  `action=close` row to `trade_log.csv` with `run_type=monitor`,
+  `exit_rule`, `realized_pnl`, and `r_multiple` (see `DATA_SCHEMA.md`),
+  and append a short `trade_journal.md` entry — just what closed and
+  which rule fired, not the full scan template. For options closes, use
+  `high_fill_rate_sell_price`, not `mark_price`.
 - **R-target flag flipped from No to Yes** (but nothing closed): update
   `positions.md`'s flag and `Current exit stop`. This alone doesn't need a
   journal entry — it's routine state-tracking, not a decision — but the

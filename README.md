@@ -22,7 +22,18 @@ Holding period target: ~5-15 trading days (swing, not day trading).
   change and why.
 - `positions.md` — current simulated equity + options book, and NAV
   history.
-- `trade_journal.md` — append-only log of every run's decisions.
+- `trade_journal.md` — append-only narrative log of every run's decisions,
+  including a mandatory technical rationale for every trade opened.
+- `trade_log.csv` — the same decisions as machine-readable rows (opens,
+  closes, and rejections, each with its full indicator snapshot) for
+  computing win rate, expectancy, and R-multiples. Schema in
+  `DATA_SCHEMA.md`.
+- `DATA_SCHEMA.md` — column definitions for `trade_log.csv`, plus an
+  honest note on why a forward paper record is not the same thing as a
+  backtest.
+- `tool_verification.md` — which data tools have actually been called and
+  confirmed working, versus assumed. Worth reading before trusting any
+  rule that depends on a data field.
 - `run_instructions.md` — the step-by-step playbook the scheduled scan
   agent follows (3x/day: market open, midday, close): full scan for new
   candidates plus position review.

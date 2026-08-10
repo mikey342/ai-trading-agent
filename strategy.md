@@ -123,6 +123,17 @@ For candidates passing Tier 2:
 2. `NEWS_SENTIMENT` (Alpha Vantage, limit 5-10, this symbol): sentiment
    not negative. The one step in this whole funnel that still needs
    Alpha Vantage — Robinhood has no news/sentiment tool.
+   **Graceful degradation (important):** if this call fails because the
+   Alpha Vantage daily quota is exhausted, do **not** drop the candidate
+   and do **not** invent a sentiment value. Proceed with the trade if
+   every other check passes, and record `news_sentiment: UNAVAILABLE` in
+   both `trade_log.csv` and the journal entry. Rationale: a hard block
+   here would mean a free-tier quota limit silently becomes a permanent
+   no-trade bug (the same class of failure as the premium-gated `MACD`
+   issue). The trend template and earnings blackout still provide partial
+   protection against bad-news names. This is a real, accepted reduction
+   in safety, which is exactly why it must be logged every time rather
+   than passed over silently.
 3. `get_earnings_results` (Robinhood, this symbol): no earnings report
    scheduled in the next 3 calendar days (blackout — event risk, not a
    rule this system is trying to trade). Also gives 8 quarters of
@@ -146,6 +157,12 @@ simulated. Two rules to keep this honest:
    `get_option_quotes`) immediately before simulating a fill in step 6 of
    `run_instructions.md` — call this `entry_price`. Never reuse a quote
    pulled earlier in the funnel as the simulated fill price.
+   **Fill-price realism:** for options, simulate buys at
+   `high_fill_rate_buy_price` and sells at `high_fill_rate_sell_price`
+   (both returned by `get_option_quotes`), not at `mark_price` — mark is
+   the midpoint and systematically flatters paper P&L versus what a real
+   order actually fills at. For equity, use the quote price but treat it
+   the same way: never assume a better-than-midpoint fill.
 2. **Chase-protection**: if `entry_price` has already moved more than
    `0.5 × stop_distance` (see sizing below) beyond `signal_price` in the
    favorable direction since Tier 3 confirmed the setup, **do not chase
@@ -186,6 +203,13 @@ the trade more capital-efficient. Never a standalone signal source.
 - Target delta 0.40-0.60 (near-the-money to slightly OTM).
 - Liquidity gate (hard, see `gates.md`): adequate open interest, bid-ask
   spread within limit.
+- **Tool flow is three steps** (verified 2026-08-10, see
+  `tool_verification.md`): `get_option_chains` (chain id + expirations) →
+  `get_option_instruments` (contract UUIDs, filtered by expiration/type/
+  strike) → `get_option_quotes` (delta, open_interest, bid/ask, mark,
+  Greeks). Chains carry no contracts — the middle step isn't skippable.
+  Every field the options gates need is confirmed present in the quote
+  response, so no gate here is aspirational.
 - Max premium at risk = gates.md's options premium cap. This is the entire
   max loss for the position — no additional stop-loss math needed, the
   defined-risk structure already caps it.

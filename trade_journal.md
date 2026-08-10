@@ -17,9 +17,31 @@ Each run should add one entry using the template below.
 **Scouted:** (symbols considered this run and why, e.g. from `TOP_GAINERS_LOSERS`)
 
 **Decisions:**
-- SYMBOL — action (opened/closed/held/skipped) — qty — price — rationale
-  (indicator values, news summary, which strategy.md rule fired)
-- ...
+
+For every position **opened**, record all of the following — this is
+mandatory, not optional, and the same values must also go into
+`trade_log.csv` (see `DATA_SCHEMA.md`):
+
+- SYMBOL — opened — instrument (equity/option) — qty — fill price
+  - **Trigger:** breakout or pullback (which `strategy.md` rule fired)
+  - **Trend:** price $X vs SMA50 $Y vs SMA200 $Z (the stack that
+    qualified it)
+  - **Momentum:** RSI(14) = X, EMA8 = Y, EMA21 = Z, spread widening?
+  - **Relative strength:** pct_52w_range = X (and composite rank)
+  - **Valuation:** P/E = X (rank within this run's candidate set)
+  - **Catalyst:** news sentiment = X (or `UNAVAILABLE` — never guessed),
+    earnings in X days, recent EPS surprise history
+  - **Risk:** ATR14 = X → stop $Y (Z% away), R-target $W, position sized
+    to risk $V (1% of NAV)
+  - **If options:** strike, expiration, delta, IV, DTE, and why an option
+    beat plain equity for this specific signal
+  - **One-sentence thesis:** why this trade, in plain language
+
+For every position **closed**: which exit rule fired, exit price,
+realized P&L, and R-multiple.
+
+For every candidate **rejected**: which specific check failed and the
+value that failed it.
 
 **Rejected by gates:** (any candidate trade that failed a `gates.md` check,
 and which check)

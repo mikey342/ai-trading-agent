@@ -117,10 +117,14 @@ plan and must never be called — the EMA-spread check already covers this.
 For each finalist that survives Tier 3:
 - Default to equity.
 - Consider an options expression only if it clearly improves capital
-  efficiency for this specific signal — check Robinhood `get_option_chains`
-  for the symbol and evaluate against the DTE/delta/liquidity gates in
-  `gates.md`. If no expiration/strike meets all of them, use equity instead
-  — do not loosen the options gates to force a fit.
+  efficiency for this specific signal. The lookup is **three steps**
+  (verified — see `tool_verification.md`): `get_option_chains`
+  (chain + expirations) → `get_option_instruments` (contract UUIDs for
+  the chosen expiration/type/strike) → `get_option_quotes` (delta,
+  open_interest, bid/ask, Greeks). Evaluate against the DTE/delta/
+  liquidity gates in `gates.md`. If no expiration/strike meets all of
+  them, use equity instead — do not loosen the options gates to force a
+  fit.
 - If choosing options: compute the underlying stop/R-target using the same
   ATR-based math as equity (see `strategy.md`), and record them in
   `positions.md`'s `Underlying stop`/`Underlying R-target` columns at
@@ -161,14 +165,24 @@ system; `MODE` in `gates.md` must be `PAPER`. Update `positions.md`
 accordingly (deduct simulated cash, add the position row with stop/target
 or DTE/premium as applicable).
 
-## 7. Update positions.md and trade_journal.md
+## 7. Update positions.md, trade_log.csv, and trade_journal.md
 
 1. Recompute NAV (cash + market value of open equity + open options) and
    append one row to the `positions.md` NAV history table for this run.
-2. Append one new entry to `trade_journal.md` using the template at the
-   top of that file: market status, regime result, scouted symbols,
-   decisions (with which tier/trigger fired), rejections, position
-   reviews, and instrument choice (equity vs options) with reasoning.
+2. **Append a row to `trade_log.csv` for every position opened, every
+   position closed, and every candidate rejected at Tier 3 or at the
+   gates** — see `DATA_SCHEMA.md` for the column definitions. Include the
+   full indicator snapshot that justified the decision (ATR/RSI/EMA/SMA/
+   52wk-range/PE/sentiment/regime). Rejections matter as much as fills:
+   without them there's no way to tell whether a filter is well-calibrated
+   or just declining good trades. Never fabricate a value — write
+   `UNAVAILABLE` if a data source failed.
+3. Append one new entry to `trade_journal.md` using the template at the
+   top of that file, including the **mandatory per-trade rationale
+   fields** (trigger, trend, momentum, relative strength, valuation,
+   catalyst, risk sizing, and a one-sentence thesis). The journal is the
+   human-readable "why"; the CSV is the queryable "what" — both get
+   written, and they must agree.
 
 ## 8. Adapt strategy (small, evidence-based changes only)
 
@@ -185,13 +199,21 @@ blind to everything that happened today.
 
 ## Handling errors gracefully
 
-- Alpha Vantage quota/premium error on any call: log it, skip that
-  symbol/tier (don't abort the whole run), prioritize finishing the
-  position-review step over scouting new ones, and note the truncation in
-  the journal. `MARKET_STATUS` specifically has a time-based fallback (see
-  step 1) rather than blocking the run.
-- Never treat a data error as a reason to fall back to guessing a value —
-  skip the candidate instead.
+- Alpha Vantage quota/premium error on any call: log it, don't abort the
+  whole run, prioritize finishing the position-review step over scouting
+  new ones, and note the degradation in the journal. Specifically:
+  - `MARKET_STATUS` → time-based fallback (see step 1).
+  - `TOP_GAINERS_LOSERS` → skip opportunistic candidates, still screen the
+    `strategy.md` watchlist normally.
+  - `NEWS_SENTIMENT` → **do not drop the candidate.** Record
+    `news_sentiment: UNAVAILABLE` and proceed if every other check passes
+    (see `strategy.md`'s graceful-degradation rule). A hard block here
+    would turn a free-tier quota limit into a permanent no-trade bug.
+- Never fabricate a value to fill a gap. "Skip the candidate" applies to
+  a *Robinhood* data failure (trend/momentum/ATR data is load-bearing and
+  has no substitute); the Alpha Vantage news check has an explicit
+  logged-degradation path instead, because it is a secondary safety
+  filter rather than a core signal.
 
 ## Hard rules, restated
 
