@@ -428,3 +428,85 @@ Both logged to `trade_log.csv` as Tier 3 rejects (trade_id `TECH-20260810-1`, `T
 **Rejected by gates:** None reached gates.md-level sizing/execution checks. TECH and TXG were dropped at Tier 3 (momentum confirmation) — see `trade_log.csv`. DINO, CXW, PARR, PRU, BFLY, NTNX were dropped at Tier 2 (no entry trigger fired); GFS, GGG, FSLR at Tier 1 (trend template); DFTX at the Tier 1→2 value/momentum cut. Per `DATA_SCHEMA.md`, only Tier 3/gate-level rejections are logged to the CSV.
 
 **Strategy adaptation this run:** None. Zero closed trades on record; the adaptation policy requires reviewing closed-trade history, which doesn't exist yet.
+
+---
+
+### 2026-08-10 19:41 UTC — close run (3:30pm ET slot)
+
+**gates.md MODE check:** `PAPER` — confirmed, run proceeds under normal paper-trading rules.
+
+**Market status:** `MARKET_STATUS` (Alpha Vantage) failed again — shared 25/day quota exhausted (same recurring pattern as every prior entry today). Time-based fallback: 15:37 ET Monday, inside 9:30am-4pm ET → market open. Corroborated via Robinhood `get_equity_quotes` (SPY): live regular-session trade at 2026-08-10T19:37:53Z. This run landed close to the 3:30pm ET slot — the close run, third and last of the day.
+
+**Account:** NAV $10,000, cash $10,000, halted: no (no open positions).
+
+**Position review:** `positions.md` shows zero open equity/options positions — nothing to review.
+
+**Regime filter:** SPY $772.97 > 200DMA $702.97 → **LONG mode / risk-on** (unchanged all day).
+
+**Scouted (Tier 0):** `run_scan` (scan_id de1b1994...) returned **96 total matches** this run. Top 15 by ADX(14) desc / relative options volume tiebreak:
+
+| Rank | Symbol | ADX(14) | Rel. options vol |
+|---|---|---|---|
+| 1 | TECH | 59.71 | 0.61 |
+| 2 | EAT | 45.42 | 0.67 |
+| 3 | LEGN | 43.17 | 0.52 |
+| 4 | BMY | 41.78 | 0.57 |
+| 5 | PARR | 41.62 | 0.58 |
+| 6 | BFLY | 39.15 | 2.50 |
+| 7 | TXG | 39.15 | 4.05 |
+| 8 | ADP | 38.58 | 0.51 |
+| 9 | PBF | 37.95 | 0.53 |
+| 10 | GFS | 37.52 | 1.00 |
+| 11 | DFTX | 37.23 | 2.27 |
+| 12 | JD | 36.91 | 1.34 |
+| 13 | IMAX | 36.59 | 0.76 |
+| 14 | NTNX | 35.64 | 1.29 |
+| 15 | ICE | 35.64 | 0.62 |
+
+**Earnings blackout (Tier 1, one `get_earnings_calendar` days=7 call):** LEGN reports 2026-08-11 (tomorrow) — dropped. EAT reports 2026-08-12 (2 days) — dropped. JD reports 2026-08-13 (3 days) — dropped. 12 candidates proceed: TECH, BMY, PARR, BFLY, TXG, ADP, PBF, GFS, DFTX, IMAX, NTNX, ICE.
+
+**Tier 1 — trend template, both directions, all 12:**
+- **TECH** ($72.165, SMA50 $64.7845, SMA200 $59.9093, 52wk $43.195–$72.39 [new high today]): stack ✓; pct_52w_range=0.9923 ✓. **PASS LONG.**
+- **BMY** ($65.075, SMA50 $58.7366, SMA200 $56.0958, 52wk $42.52–$68.10): stack ✓; pct_52w_range=0.8817 ✓. **PASS LONG.**
+- **PARR** ($72.02, SMA50 $64.8326, SMA200 $52.2711, 52wk $26.92–$87.03): stack ✓; pct_52w_range=0.7503 ✓. **PASS LONG.**
+- **BFLY** ($9.74, SMA50 $6.918, SMA200 $4.5113, 52wk $1.32–$10.05 [new high today]): stack ✓; pct_52w_range=0.9645 ✓. **PASS LONG.**
+- **TXG** ($59.555, SMA50 $38.9354, SMA200 $24.2510, 52wk $11.16–$59.775 [new high today]): stack ✓; pct_52w_range=0.9955 ✓. **PASS LONG.**
+- **ADP** ($272.01, SMA50 $240.5449, SMA200 $235.5970, 52wk $188.16–$310.08): stack ✓; pct_52w_range=0.6877 ✓. **PASS LONG.**
+- **PBF** ($66.13, SMA50 $51.503, SMA200 $40.6261, 52wk $21.46–$74.74): stack ✓; pct_52w_range=0.8384 ✓. **PASS LONG.**
+- **GFS** ($51.11, SMA50 $69.2058, SMA200 $51.9567): price<SMA50 → fails LONG stack. SMA50>SMA200 → fails SHORT stack too (not a descending stack). **FAIL both.**
+- **DFTX** ($44.16, SMA50 $37.4734, SMA200 $21.8935, 52wk $8.70–$49.70): stack ✓; pct_52w_range=0.8649 ✓. **PASS LONG.**
+- **IMAX** ($50.775, SMA50 $42.2032, SMA200 $37.8884, 52wk $24.20–$51.60): stack ✓; pct_52w_range=0.9699 ✓. **PASS LONG.**
+- **NTNX** ($64.57, SMA50 $53.5186, SMA200 $49.0692, 52wk $34.01–$82.42): stack ✓; pct_52w_range=0.6313 ✓ (barely). **PASS LONG.**
+- **ICE** ($150.61, SMA50 $140.1366, SMA200 $154.5897): price>SMA50 but SMA50<SMA200 → fails LONG stack (52wk range only ~44% top-to-bottom, and pct_52w_range=0.4266 fails the 0.6 threshold anyway). SHORT: price not < SMA50 → fails. **FAIL both.**
+
+**Tier 1 survivors (10, all bullish/with-trend since SPY regime is LONG):** TECH, BMY, PARR, BFLY, TXG, ADP, PBF, DFTX, IMAX, NTNX.
+
+**Value/momentum composite ranking (0.6×rel-strength + 0.4×value-rank; negative-PE names ranked below all positive-PE names, ordered least-negative-first; top 8 advance):** PBF (0.903), BMY (0.840), PARR (0.806), IMAX (0.760), TECH (0.729), ADP (0.679), BFLY (0.623), DFTX (0.608), NTNX (0.601), TXG (0.597) — **NTNX and TXG cut** (bottom two). Top 8 to Tier 2: PBF, BMY, PARR, IMAX, TECH, ADP, BFLY, DFTX.
+
+**Tier 2 — entry trigger, top 8** (indicator series still dated through Fri 2026-08-07 close — no new daily bar has rolled yet today):
+- **PBF:** price $66.13 vs high52 $74.74 → 11.5% off, breakout fails. RSI=53.51, outside 35-45. **DROP.**
+- **BMY:** price $65.075 vs high52 $68.10 → 4.4% off, breakout fails. RSI=63.25, outside 35-45. **DROP.**
+- **PARR:** price $72.02 vs high52 $87.03 → 17.2% off, breakout fails. RSI=39.50 (in band) but EMA21 last-5 declining (75.54→74.24), not flat-to-rising. **DROP.**
+- **IMAX:** price $50.775 within 1.60% of high52 $51.60 ✓; EMA8 $48.663 > EMA21 $45.598 ✓. **Breakout trigger fires — PASS.**
+- **TECH:** price $72.165 within 0.31% of today's new high $72.39 ✓; EMA8 $72.034 > EMA21 $70.909 ✓. **Breakout trigger fires — PASS.**
+- **ADP:** price $272.01 vs high52 $310.08 → 12.3% off, breakout fails. RSI=65.84, outside 35-45. **DROP.**
+- **BFLY:** price $9.74 vs today's new high $10.05 → 3.08% off, just outside the 2% breakout band. RSI=61.60, outside 35-45. **DROP.**
+- **DFTX:** price $44.16 vs high52 $49.70 → 11.2% off, breakout fails. RSI=61.88, outside 35-45. **DROP.**
+
+**Tier 2 survivors: IMAX, TECH** (both breakout triggers, under the Tier 3 cap of 3).
+
+**Tier 3 — momentum confirmation (|EMA8−EMA21| must be strictly widest at the most recent of 5 sessions):**
+- **TECH:** spread Aug3→Aug7: 1.5696, 1.4470, 1.3192, 1.1891, **1.1243** (most recent) — narrowest of the 5, decelerating. **FAILS.** (Identical indicator readings and identical outcome to this morning's midday reject, since no new daily bar has closed since Friday.)
+- **IMAX:** spread Aug3→Aug7: 3.2059, 3.5001, 3.5547, 3.4033, **3.0648** (most recent) — peaked Aug 5, now the narrowest of the 5, rolling over. **FAILS.**
+
+Both logged to `trade_log.csv` as Tier 3 rejects (`TECH-20260810-2`, `IMAX-20260810-1`) with full indicator snapshots. `news_sentiment` recorded `UNAVAILABLE` for both — Alpha Vantage quota already confirmed exhausted this run, so the Tier 3 news call was not attempted (would fail identically); non-gating for a candidate already dropped on momentum.
+
+**Index sleeve (SSO, since SPY is in LONG mode):** SPY trend template: $772.97 > SMA50 $747.19 > SMA200 $702.97 ✓; within 25% of high52 ($776.85) ✓. **Fails rule 3** — at least 25% above low52 ($629.28 × 1.25 = $786.60) — price doesn't clear it. Same structural issue as every run today: SPY's 52-week range (low set 2026-03-30) makes this rule unsatisfiable at the current range regardless of trend strength. **No SSO trade.** Third occurrence today — still just one day's worth of data points, not yet a pattern across ≥5 of the last 10 *closed* trades per the adaptation policy's threshold, so no strategy change proposed. Worth flagging for the human's attention if this persists once real trades start closing: a structural SPY range condition that blocks the index sleeve on every single run this system has ever made is worth a deliberate look, distinct from the self-adaptation policy's evidence bar.
+
+**Decisions:** No new positions opened (equity, options, or index sleeve). No positions closed (none open).
+
+**Rejected by gates:** None reached gates.md-level sizing/execution checks. TECH and IMAX were dropped at Tier 3 (momentum confirmation) — see `trade_log.csv`. PBF, BMY, PARR, ADP, BFLY, DFTX were dropped at Tier 2 (no entry trigger fired); GFS, ICE at Tier 1 (trend template); NTNX, TXG at the Tier 1→2 value/momentum cut.
+
+**Strategy adaptation this run:** None. Zero closed trades on record; the adaptation policy requires reviewing closed-trade history, which doesn't exist yet.
+
+**Day summary (all three runs today):** Zero trades opened across morning, midday, and close runs. The funnel worked as designed — real candidates reached Tier 2/3 each run (TSLA counter-trend at Tier 2 this morning; TECH/TXG then IMAX/TECH again at Tier 3 midday/close) but none cleared the final bar. No gate was loosened to force a fit. First actual trading day still pending a candidate that clears every tier.
