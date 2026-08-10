@@ -1,10 +1,7 @@
-# Premarket Notes
+# Premarket Notes — 2026-08-10
 
-Overwritten fresh every morning by the premarket routine (~9:15am ET,
-15 minutes before market open). Purely informational — this file never
-reflects a trading decision and is never treated as one. The 9:30am morning
-run may use it to prioritize which candidates to look at first in Tier 1,
-but always re-checks everything against real, fresh prices — nothing here
-substitutes for that.
+## Notable movers
+- COO: +2.25%, prior close $74.23 -> premarket $75.90 — catalyst: no earnings today (next report 2026-09-09); news unavailable (quota)
 
-_(No premarket run yet.)_
+## Everything else
+Flat / no notable premarket movement: (none — scan universe contained only COO)
