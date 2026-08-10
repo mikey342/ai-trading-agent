@@ -154,3 +154,52 @@ budget. Worth flagging to the human: either space out manual runs from
 scheduled ones, or upgrade the Alpha Vantage plan if same-day double
 runs become routine. Not something this agent can fix by editing
 `gates.md` or `strategy.md`.
+
+---
+
+### 2026-08-10 05:54 UTC — off-schedule run (market closed)
+
+**gates.md MODE check:** `PAPER` — confirmed, run proceeds under normal
+paper-trading rules.
+
+**Market status:** Closed. `MARKET_STATUS` (Alpha Vantage) failed —
+`"our standard API rate limit is 25 requests per day"`, same shared-quota
+exhaustion flagged in the prior entry and in `gates.md`'s operational
+notes. Fell back to the time-based check per `run_instructions.md` step
+1: current time 05:54 UTC = 01:54 ET Monday, well outside the 9:30am-4pm
+ET regular session, so market is closed. Corroborated independently via
+Robinhood `get_equity_quotes` (SPY): `venue_last_trade_time` (regular
+session) is `2026-08-07T19:59:59Z` — Friday's close, three days stale —
+while only `last_non_reg_trade_price`/extended-hours activity is recent.
+No live regular-session price exists right now.
+
+**Scheduling note:** This run fired at 01:54 ET, which does not match any
+of the three documented run times in `run_instructions.md`
+(9:30am/2:30pm/4:30pm ET). Flagging for the human to check the schedule
+config — this looks like an off-schedule or misconfigured trigger, not
+one of the intended three daily runs. No action taken by this agent
+beyond logging it, since `run_instructions.md`/`gates.md` don't authorize
+editing scheduling infrastructure.
+
+**Regime filter:** Not evaluated — no new entries are being considered
+this run regardless (market closed, no live session price), so this was
+skipped rather than spending an unusable data call.
+
+**Position review:** `positions.md` shows zero open equity or options
+positions — nothing to review.
+
+**Scouted:** None. Consistent with `run_instructions.md`'s design
+rationale for the 9:30/2:30/4:30 ET schedule ("every run works with a
+real, live regular-session price rather than a stale prior-day close or a
+thin premarket quote") — scouting against Friday's stale close or a thin
+overnight quote would violate that rationale, so no candidates were
+pulled.
+
+**Decisions:** No new positions opened. No positions closed (none open).
+
+**Rejected by gates:** N/A — no candidates reached the gating step; the
+blocker was market/session availability, not a gate.
+
+**Strategy adaptation this run:** None. Adaptation policy requires
+reviewing the last 10 closed trades; there are still zero closed trades
+on record.

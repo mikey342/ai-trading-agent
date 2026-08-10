@@ -49,3 +49,4 @@ is a one-way flag, same semantics as the equity table.
 | Date | Run type | NAV | Cash | Realized P&L (that run) | Halted that day? |
 |---|---|---|---|---|---|
 | 2026-08-10 (premarket, 05:15 UTC) | premarket | $25,000 | $25,000 | $0 | No |
+| 2026-08-10 (off-schedule, 05:54 UTC) | off-schedule (market closed) | $10,000 | $10,000 | $0 | No |
