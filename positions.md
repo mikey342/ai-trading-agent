@@ -64,3 +64,4 @@ is a one-way flag, same semantics as the equity table.
 |---|---|---|---|---|---|
 | 2026-08-10 (premarket, 05:15 UTC) | premarket | $25,000 | $25,000 | $0 | No |
 | 2026-08-10 (off-schedule, 05:54 UTC) | off-schedule (market closed) | $10,000 | $10,000 | $0 | No |
+| 2026-08-10 (off-schedule, 09:18 UTC) | off-schedule (premarket) | $10,000 | $10,000 | $0 | No |

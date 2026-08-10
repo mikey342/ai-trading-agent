@@ -225,3 +225,60 @@ blocker was market/session availability, not a gate.
 **Strategy adaptation this run:** None. Adaptation policy requires
 reviewing the last 10 closed trades; there are still zero closed trades
 on record.
+
+---
+
+### 2026-08-10 09:18 UTC — off-schedule run (premarket)
+
+**gates.md MODE check:** `PAPER` — confirmed, run proceeds under normal
+paper-trading rules (though no trading action is taken this run — see
+below).
+
+**Market status:** `MARKET_STATUS` (Alpha Vantage) failed again —
+`"our standard API rate limit is 25 requests per day"`, same shared-quota
+exhaustion pattern noted in every prior entry. Fell back to the
+time-based check per `run_instructions.md` step 1: system clock read
+2026-08-10T09:18 UTC, confirmed via `date -u`. UTC-4 (EDT) makes that
+**05:18 ET**, more than four hours before the 9:30am ET open. Corroborated
+independently via Robinhood `get_equity_quotes` (SPY): the regular-session
+`venue_last_trade_time` is still `2026-08-07T19:59:59Z` (last Friday's
+close); only `last_non_reg_trade_price` (premarket) is recent. No live
+regular-session price exists right now.
+
+**Scheduling note (now the third occurrence):** This is the third
+consecutive scheduled/off-schedule run to fire outside the three
+documented windows (9:30am/2:30pm/3:30pm ET) — after the 05:15 UTC and
+05:54 UTC runs earlier today, all premarket. Across all runs logged in
+this journal to date, **zero have fired during an actual regular-session
+window**, meaning this system has never yet had the opportunity to
+evaluate or open a live trade. This is a scheduling/trigger configuration
+issue outside what `run_instructions.md`/`gates.md` authorize this agent
+to fix (no permission to edit scheduling infrastructure) — flagging for
+the human explicitly, including via a direct notification alongside this
+run, since three-for-three premarket misfires is a pattern, not a fluke.
+
+**Regime filter (informational only, not acted on):** Before recognizing
+the time-window issue, `run_scan` (Tier 0, scan_id
+`de1b1994-b5db-472a-9b79-c052f1215193`) and a SPY quote/200-SMA check were
+already in flight and are logged here for continuity, but **no candidate
+funnel or trade was run against them** — a premarket price is not a valid
+basis for a simulated fill per `strategy.md`'s order-entry rules. SPY
+last regular-session close $773.26 (2026-08-07), 200-day SMA $702.97 →
+SPY comfortably above SMA(200), consistent with the risk-on regime noted
+in prior entries. Tier 0 scan returned 92 total matches (`total_items`),
+similar order of magnitude to the 96 seen previously. None of this was
+used to screen, rank, or open anything.
+
+**Position review:** `positions.md` shows zero open equity or options
+positions — nothing to review regardless of session status.
+
+**Scouted:** None — funnel intentionally not run; see above.
+
+**Decisions:** No new positions opened. No positions closed (none open).
+
+**Rejected by gates:** N/A — no candidates reached the gating step; the
+blocker was market/session availability, not a gate.
+
+**Strategy adaptation this run:** None. Adaptation policy requires
+reviewing the last 10 closed trades; there are still zero closed trades
+on record.
