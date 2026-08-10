@@ -8,13 +8,13 @@ separate and simulated.
 
 | Field | Value |
 |---|---|
-| Starting NAV | $25,000 |
-| Current cash (simulated) | $25,000 |
-| Current NAV (simulated) | $25,000 |
+| Starting NAV | $10,000 |
+| Current cash (simulated) | $10,000 |
+| Current NAV (simulated) | $10,000 |
 | Realized P&L (all-time) | $0 |
 | Today's realized P&L | $0 |
 | Trading halted today? | No |
-| Last updated | 2026-08-10 05:15 UTC (premarket run — data blackout, no changes) |
+| Last updated | 2026-08-10 (account size finalized to $10,000, see gates.md; zero trades/P&L to date so no historical inconsistency) |
 
 ## Open positions — equity
 
@@ -40,6 +40,11 @@ consistent with what was actually decided at entry. `R-target reached?`
 is a one-way flag, same semantics as the equity table.
 
 ## NAV history (append one row every run — needed for future performance metrics)
+
+> Note: the 2026-08-10 05:15 UTC row below predates the account-size
+> finalization (was $25,000, now $10,000 — see `gates.md`). Left as-is
+> rather than edited, since no trades/P&L occurred under the old number;
+> all NAV figures from this point forward are based on $10,000.
 
 | Date | Run type | NAV | Cash | Realized P&L (that run) | Halted that day? |
 |---|---|---|---|---|---|
