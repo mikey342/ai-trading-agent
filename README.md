@@ -48,9 +48,36 @@ Holding period target: ~5-15 trading days (swing, not day trading).
   movers and any obvious catalyst, purely as context for the 9:30am morning
   run. Never opens, sizes, or decides a trade. Writes `premarket_notes.md`
   (overwritten fresh each morning).
+- `daily_report_instructions.md` — a fourth playbook, once daily at
+  4:15pm ET after the close: summarizes the day's runs, fills, exits,
+  rejections, and data-quality problems into `daily_report.md`
+  (overwritten each day). Read-only everywhere else; takes no trading
+  action.
+
+## Schedule
+
+| Time (ET) | Routine | Role |
+|---|---|---|
+| 9:15am | Premarket watchlist | Gap/catalyst context. Informational only. |
+| 9:30am · 2:30pm · 3:30pm | Scan | Full funnel, both directions. Can open positions and adapt `strategy.md`. |
+| 10am–4pm, hourly | Position monitor | Exits only. Costs nothing when the book is empty. |
+| 4:15pm | Daily report | Writes `daily_report.md`. No trading action. |
+
+All trading runs sit inside regular market hours — never pre-open (stale
+or thin quotes), never post-close (a decision that could not be filled
+until the next session).
 
 ## Status
 
-Paper trading. Not connected to real order execution (equity or options).
-Review the placeholder values in `gates.md` before relying on this for
-anything. No backtest has been run yet — see `framework.md`.
+**Paper trading only.** `MODE: PAPER` in `gates.md` is a hard rule every
+routine checks first; no real order-placement tool is ever called. Short
+selling and margin are both disabled outright — bearish exposure is a
+*long* position in an inverse ETF.
+
+Risk parameters are finalized (not placeholders): $10,000 paper account,
+15% max position, 0.4% risk per trade, −2% daily loss halt, 6 max
+positions, 1 max counter-trend.
+
+**Not yet validated:** no backtest of this synthesis exists — see
+`framework.md` for an honest audit of which parts rest on peer-reviewed
+evidence and which are practitioner heuristics.

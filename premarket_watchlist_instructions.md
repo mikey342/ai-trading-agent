@@ -12,10 +12,15 @@ completely different situation at the open than one that's flat — this
 routine's only purpose is making that visible before the real analysis
 runs, not deciding anything itself.
 
-## 1. Gather the watchlist
+## 1. Gather the universe
 
-Read the seed watchlist from `strategy.md`, plus pull `TOP_GAINERS_LOSERS`
-(Alpha Vantage — cheap, one call) for opportunistic names.
+Call `run_scan` with `scan_id: de1b1994-b5db-472a-9b79-c052f1215193` —
+the same screener the 9:30am scan routine uses, so these notes stay
+relevant to the names that will actually be evaluated. There is **no
+hardcoded watchlist**; the scan is the universe. (This replaced an
+earlier `TOP_GAINERS_LOSERS`-based approach, which both cost Alpha
+Vantage quota and covered a different set of names than the scan run
+would look at.)
 
 ## 2. Check premarket movement
 

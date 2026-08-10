@@ -9,12 +9,14 @@ Each run should add one entry using the template below.
 
 ## Template
 
-### YYYY-MM-DD HH:MM UTC — [morning|midday|close] run
+### YYYY-MM-DD HH:MM UTC — [morning|midday|pre-close] run
 
 **Market status:** (open/closed, per `MARKET_STATUS`)
 **Account:** NAV $X, cash $X, halted: yes/no
 
-**Scouted:** (symbols considered this run and why, e.g. from `TOP_GAINERS_LOSERS`)
+**Scouted:** (Tier 0 scan total match count, and the top-15 taken into
+Tier 1 with their ADX / relative options volume)
+**Direction mode:** LONG or SHORT (SPY vs its SMA(200), with values)
 
 **Decisions:**
 
@@ -32,7 +34,9 @@ mandatory, not optional, and the same values must also go into
   - **Catalyst:** news sentiment = X (or `UNAVAILABLE` — never guessed),
     earnings in X days, recent EPS surprise history
   - **Risk:** ATR14 = X → stop $Y (Z% away), R-target $W, position sized
-    to risk $V (1% of NAV)
+    to risk $V (0.4% of NAV with-trend, 0.2% counter-trend), position
+    $P (cap: 15% of NAV)
+  - **Direction:** bullish/bearish, and with-trend or counter-trend
   - **If options:** strike, expiration, delta, IV, DTE, and why an option
     beat plain equity for this specific signal
   - **One-sentence thesis:** why this trade, in plain language

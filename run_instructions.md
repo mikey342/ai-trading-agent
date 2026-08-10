@@ -280,8 +280,9 @@ blind to everything that happened today.
   whole run, prioritize finishing the position-review step over scouting
   new ones, and note the degradation in the journal. Specifically:
   - `MARKET_STATUS` → time-based fallback (see step 1).
-  - `TOP_GAINERS_LOSERS` → skip opportunistic candidates, still screen the
-    `strategy.md` watchlist normally.
+  - `run_scan` (Robinhood, no AV quota involved) → if it fails, fall back
+    to screening a small diversified set of liquid large-caps and flag
+    the run as degraded in the journal.
   - `NEWS_SENTIMENT` → **do not drop the candidate.** Record
     `news_sentiment: UNAVAILABLE` and proceed if every other check passes
     (see `strategy.md`'s graceful-degradation rule). A hard block here

@@ -30,7 +30,7 @@
 | Stop-loss floor | Every open equity position must have a stop no wider than 3% from entry | `strategy.md` may use a tighter ATR-derived stop; never wider than this. |
 | Max new trades per run | 2 | Across equity and options combined. |
 | Max open positions | 6 | Across equity and options combined. |
-| Universe | Seed watchlist in `strategy.md` + top 3-5 from `TOP_GAINERS_LOSERS` | No penny stocks (<$5), no crypto. |
+| Universe | The Tier 0 screener — `run_scan`, scan_id `de1b1994-b5db-472a-9b79-c052f1215193` | There is **no hardcoded watchlist**; the saved scan is the universe (~96 matches at last check). Its own filters already enforce price > $5 and market cap > $2B. No crypto. |
 | Symbol exclusions | None yet | Add tickers here to hard-block them. |
 | Risk per trade (target) | **0.4% of NAV** with-trend, **0.2%** counter-trend | The number ATR-based sizing aims at. Chosen so it and the position cap are mutually reachable — see below. |
 | Regime filter (classifies, not gates) | SPY above its 200-day SMA → bullish setups are **with-trend**, bearish are **counter-trend**. SPY below → reversed. | Both templates are tested on every candidate every run; the regime decides which passes face the strict counter-trend gates below. Existing positions are reviewed/exited regardless. |
@@ -38,7 +38,7 @@
 | Counter-trend ADX floor | **ADX(14) > 30** (vs 25 baseline) | The counter-direction trend must be unusually well established, not marginal. |
 | Counter-trend relative-strength bar | ≤ **0.25** of 52-week range (bearish) / ≥ **0.75** (bullish) | Stricter than the 0.4 / 0.6 used for with-trend setups. |
 | Counter-trend data requirement | **No degraded inputs — `news_sentiment` must not be `UNAVAILABLE`** | If the Alpha Vantage quota is exhausted, no counter-trend trade is taken that run. A bet against the primary trend, made blind to news, is the trade most likely to sit on the wrong side of a catalyst. |
-| Counter-trend position size | **0.5% of NAV risk** (vs 1%) | Half size. |
+| Counter-trend position size | **0.2% of NAV risk** (vs 0.4% with-trend) | Half size. Same 15% position cap applies. |
 | Index sleeve direction | **Always regime-aligned; never counter-trend** | 2x index ETFs follow the regime only — long-side above SMA(200), inverse-side below. Betting the index against its own primary trend is categorically worse than identifying one broken company inside a healthy market. |
 | **Short stock / margin** | **Both forbidden, absolutely** | Never short an equity outright and never borrow on margin, in any mode, for any reason. Short selling carries unbounded loss, borrow cost, and recall risk; margin adds forced liquidation. A system reviewing positions a few times a day cannot manage either. Bearish exposure is taken **only** by *buying* a 2x inverse index ETF (SDS/QID) with cash, where max loss is the amount paid. |
 
