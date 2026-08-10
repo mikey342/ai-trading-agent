@@ -25,8 +25,13 @@ list:
   row. No extra per-symbol calls needed at this stage.
 - **Filters:** market cap > $2B, price > $5 (matches `gates.md`'s
   penny-stock exclusion), 30-day average volume > 1M shares (liquidity),
-  **ADX(14) > 25** (a real trend exists — direction-agnostic), RSI(14)
-  between 35-70 (not already blown off).
+  **ADX(14) > 25** (a real trend exists — direction-agnostic, so this
+  serves both long and short modes), RSI(14) between 25-75 (deliberately
+  wide enough to surface oversold short-mode candidates as well as
+  long-mode pullbacks), **relative options volume > 0.5** (ensures the
+  name has a live options market — required for the options overlay —
+  and surfaces the `Relative options volume` column for ranking).
+- **Verified live 2026-08-10:** 96 matches under this filter set.
 
 **Why this replaced the old hardcoded ~19-name watchlist:** verified live
 2026-08-10, the screen returned **266 qualifying names**, and most of the
@@ -38,12 +43,17 @@ didn't meet the strategy's own criteria. It also made the
 relative-strength ranking nearly meaningless: ranking 19 pre-selected
 mega-caps against each other is not a cross-sectional signal.
 
-**Narrowing for the funnel:** 266 is far more than Tier 1 can process.
-Rank the scan results by `Average directional index (14)` descending —
-strongest trends first, computed client-side from data the scan already
-returned, costing nothing — and take the **top 15** into Tier 1. If the
-scan returns fewer than 15, use them all. Log the scan's total match
-count in the journal so the universe's breadth on a given day is visible.
+**Narrowing for the funnel:** ~96 is far more than Tier 1 can process.
+Rank the scan results client-side (free — the scan already returned these
+columns) by a blend of `Average directional index (14)` (trend strength)
+and `Relative options volume` (unusual positioning — a public,
+exchange-derived early-interest signal), then take the **top 15** into
+Tier 1. Weight ADX primarily; use relative options volume as the
+tiebreaker rather than the main sort, since unusual options activity is
+suggestive, not directional on its own — it can precede a move either
+way, and it is not a substitute for the trend template. If the scan
+returns fewer than 15, use them all. Log the scan's total match count in
+the journal so the universe's breadth on a given day is visible.
 
 If `run_scan` fails, fall back to the previous behavior (screen a small
 diversified set of liquid large-caps) and say so explicitly in the
@@ -71,6 +81,37 @@ Vantage is reserved for the handful of things only it provides.
 | `TIME_SERIES_DAILY_ADJUSTED`, `MACD` (Alpha Vantage) | Alpha Vantage | **Blocked** — premium-only on the current plan. Never call either; Robinhood's `get_equity_technical_indicators` (type=macd) covers the MACD need if it's ever wanted again. |
 | `INSTITUTIONAL_HOLDINGS`, `INSIDER_TRANSACTIONS`, `EARNINGS_CALL_TRANSCRIPT`, `EARNINGS_ESTIMATES` | Alpha Vantage | Not used in the regular funnel — reserved for occasional, deliberate deep-dives on a specific name, never a full-universe pull. |
 
+## Direction mode — set once per run, before Tier 1
+
+The regime filter decides **which direction the run hunts in**, rather
+than simply gating whether it trades at all:
+
+| SPY vs its 200-day SMA | Mode | New entries allowed |
+|---|---|---|
+| SPY **above** SMA(200) | **LONG mode** | Long equity (stock sleeve) + optionally a 2x long index ETF (SSO/QLD) |
+| SPY **below** SMA(200) | **SHORT mode** | **2x inverse index ETF only (SDS/QID)** — no individual-name shorts |
+
+**Never short a stock, and never use margin — in any mode, for any
+reason.** Both are disabled outright in `gates.md`. Short selling has
+unbounded loss (a squeeze can run indefinitely) plus borrow cost and
+recall risk, and a system that reviews positions a few times a day cannot
+manage that. Bearish exposure is taken **only** by *buying* a 2x inverse
+ETF with cash, where max loss is the amount paid.
+
+In SHORT mode the **stock-selection funnel is skipped entirely** — the
+only bearish expression is the index sleeve. Rationale: single-name
+bearish bets would need puts, and at a $10,000 NAV the 3% cap allows just
+$300 of premium, which rarely buys a sensible contract (a verified JPM
+~45 DTE ATM call was $970). Rather than pretend that path is usable at
+this account size, SHORT mode trades the index directly. Options remain
+permitted by `gates.md` and become practical at a larger NAV.
+
+Both modes use identical machinery — trend template, entry triggers, ATR
+sizing, R-targets, trailing stops — just mirrored. Everything below is
+written for LONG mode; the SHORT mode mirror is stated alongside each
+rule. The mirrored Tier 1/2 rules below apply to the **index** (SPY/QQQ)
+in SHORT mode, since that's the only thing being traded then.
+
 ## Tier 1 — Trend template (top 15 from the Tier 0 scan)
 
 Pull `get_equity_quotes` (all 15 in one batched call) +
@@ -83,6 +124,7 @@ time, which is why Tier 0 narrows to 15 first. A candidate survives Tier 1
 only if **all** of (Minervini-style trend template, adapted to available
 fields):
 
+**LONG mode:**
 1. Current price > SMA(50) > SMA(200)
 2. Current price within 25% of `high_52_weeks`
 3. Current price at least 25% above `low_52_weeks`
@@ -91,12 +133,21 @@ fields):
    range — a cheap stand-in for a true relative-strength-vs-SPY line,
    which would need a full historical series for every candidate; see
    `framework.md` limitations)
-5. Also pull `get_equity_quotes` for SPY once per run (not per candidate)
-   and `get_equity_technical_indicators` (SPY, sma, period=200,
-   output=latest) to confirm SPY's price > its 200-day SMA — this is the
-   regime filter from `gates.md`. If it fails, skip Tier 2/3 entirely for
-   new entries this run (existing positions are still reviewed per the
-   exit rules below).
+
+**SHORT mode (exact mirror — a confirmed *downtrend*, not merely a
+long-mode failure):**
+1. Current price < SMA(50) < SMA(200)
+2. Current price within 25% of `low_52_weeks`
+3. Current price at least 25% below `high_52_weeks`
+4. Relative-weakness proxy: `(price - low_52_weeks) / (high_52_weeks -
+   low_52_weeks)` ≤ 0.4 (lower 40% of its 52-week range)
+
+A name that merely fails the long template does **not** thereby qualify
+as a short — it must independently pass the full short template. Most
+candidates will qualify for neither, which is correct.
+
+(The SPY regime check that sets the mode happens once per run, before
+Tier 1 — see "Direction mode" above and step 1 of `run_instructions.md`.)
 
 ### Value tiebreaker and Tier 2 cap
 
@@ -106,11 +157,18 @@ combined with value outperforms momentum alone. So among Tier 1 survivors,
 rank by a composite of `0.6 × relative-strength proxy (from #4 above) +
 0.4 × (1 / pe_ratio, ranked cross-sectionally within this run's candidate
 set — lower P/E ranks higher)` (from `get_equity_fundamentals`; Robinhood
-doesn't expose PEG, so this uses raw P/E relative to peers in the same
-run rather than growth-adjusted P/E — a cruder value signal, noted as a
-limitation, not silently upgraded to something it isn't). This is a
-prioritization, not an additional pass/fail gate — it decides which
-survivors advance to the more expensive Tier 2, capped at the **top 8**.
+doesn't expose PEG in this endpoint, so this uses raw P/E relative to
+peers in the same run rather than growth-adjusted P/E — a cruder value
+signal, noted as a limitation, not silently upgraded to something it
+isn't). This is a prioritization, not an additional pass/fail gate — it
+decides which survivors advance to the more expensive Tier 2, capped at
+the **top 8**.
+
+**In SHORT mode, invert both terms**: rank by `0.6 × (1 −
+relative-strength proxy) + 0.4 × (pe_ratio ranked cross-sectionally —
+*higher* P/E ranks higher)`. The same research logic runs in reverse:
+expensive, weak names are the better short candidates, just as cheap,
+strong ones are the better longs.
 
 ## Tier 2 — Entry trigger (shortlist from Tier 1 only)
 
@@ -119,6 +177,7 @@ and EMA (period=8 and period=21, output="last:5") for Tier 1 survivors —
 `output` trims the response server-side, no extraction step needed. A
 candidate qualifies if **either**:
 
+**LONG mode:**
 - **Breakout trigger** (Turtle-style): price within 2% of `high_52_weeks`
   AND EMA8 > EMA21
 - **Pullback trigger** (Connors-style): RSI(14) between 35-45 AND price
@@ -126,22 +185,32 @@ candidate qualifies if **either**:
   AND EMA21 is flat-to-rising over the last 5 values (trend not rolling
   over)
 
+**SHORT mode (mirrored):**
+- **Breakdown trigger**: price within 2% of `low_52_weeks` AND EMA8 <
+  EMA21
+- **Rally-to-resistance trigger**: RSI(14) between 55-65 AND price still
+  < SMA(50) (a bounce inside an intact downtrend, not a genuine reversal)
+  AND EMA21 is flat-to-falling over the last 5 values
+
 ## Tier 3 — Confirmation (finalists only, cap at 3 per run per gates.md)
 
 For candidates passing Tier 2:
 
 1. **Momentum confirmation**: EMA8/EMA21 spread (already pulled in Tier 2 —
    no new call needed) is widening over its last 5 values, i.e. momentum
-   is accelerating, not just present. `MACD` (Alpha Vantage) was the
+   is accelerating, not just present. In LONG mode that means the EMA8−
+   EMA21 spread growing more positive; in SHORT mode, more negative.
+   `MACD` (Alpha Vantage) was the
    original design for this check but is **permanently premium-gated on
    the current Alpha Vantage plan** (confirmed live, not a transient
    rate-limit — see `gates.md`). Robinhood's `get_equity_technical_
    indicators` (type=macd) is a working substitute if a second, redundant
    momentum check is ever wanted — but the EMA-spread check alone is
    sufficient and must not be treated as incomplete confirmation.
-2. `NEWS_SENTIMENT` (Alpha Vantage, limit 5-10, this symbol): sentiment
-   not negative. The one step in this whole funnel that still needs
-   Alpha Vantage — Robinhood has no news/sentiment tool.
+2. `NEWS_SENTIMENT` (Alpha Vantage, limit 5-10, this symbol): in LONG
+   mode, sentiment not negative; in SHORT mode, mirrored — sentiment not
+   *positive* (don't short into good news). The one step in this whole
+   funnel that still needs Alpha Vantage — Robinhood has no news tool.
    **Graceful degradation (important):** if this call fails because the
    Alpha Vantage daily quota is exhausted, do **not** drop the candidate
    and do **not** invent a sentiment value. Proceed with the trade if
@@ -211,15 +280,37 @@ simulated. Two rules to keep this honest:
 5. `R-target = entry_price + 2 × stop_distance` (2R) — not an automatic
    exit; see the trailing-stop rule below.
 
+**SHORT mode sizing** is identical arithmetic with the signs flipped:
+the stop sits **above** entry (`entry_price + stop_distance`) and the
+R-target **below** (`entry_price − 2 × stop_distance`). `stop_distance`
+itself, the 1%-of-NAV risk budget, and the `gates.md` ceilings are
+unchanged. Note that in SHORT mode the position is *always* expressed as
+long puts or a put debit spread — so the actual capital at risk is the
+premium, and these underlying levels are the trigger prices used to
+decide when to close, exactly as described in the options overlay below.
+
 ## Options overlay (defined-risk only — see gates.md for hard limits)
 
 Used only to express a signal that already passed Tiers 1-3, when it makes
 the trade more capital-efficient. Never a standalone signal source.
 
 - Only long calls, long puts, or vertical debit spreads. Never short/naked.
+  In LONG mode use calls / call debit spreads; in SHORT mode use puts /
+  put debit spreads — and in SHORT mode options are the **only** allowed
+  expression, since shorting stock is forbidden outright.
 - Minimum 30 days to expiration, target ~45 DTE for a swing hold of up to
   20 trading days (never buy less time than you expect to need).
-- Target delta 0.40-0.60 (near-the-money to slightly OTM).
+- Target delta 0.40-0.60 in absolute value (puts quote negative delta —
+  a −0.50 put satisfies the same gate a +0.50 call does).
+- **Affordability at the current account size:** with a $10,000 NAV and
+  `gates.md`'s 3% cap, max premium per position is **$300**. A single
+  near-the-money contract on a $200+ underlying routinely costs more than
+  that (a verified JPM ~45 DTE ATM call was $970). So in practice the
+  workable expressions here are **debit spreads** (the short leg cuts net
+  debit substantially) or contracts on lower-priced underlyings. If
+  nothing fits within the premium cap, use equity in LONG mode — and in
+  SHORT mode, **take no trade at all**, since equity shorting is
+  forbidden. Do not loosen the cap to make an options trade fit.
 - Liquidity gate (hard, see `gates.md`): adequate open interest, bid-ask
   spread within limit.
 - **Tool flow is three steps** (verified 2026-08-10, see
@@ -249,12 +340,70 @@ the trade more capital-efficient. Never a standalone signal source.
   the option's DTE at entry has elapsed with the R-target not yet reached
   — whichever comes first.
 
-## Leverage overlay
+## Index sleeve — leveraged ETFs (no margin, ever)
 
-If used, funds an equity position (never options — options are already
-leveraged instruments) partially on margin, up to gates.md's max leverage
-ratio. Same stop-loss/target/time-stop rules apply unchanged; leverage only
-changes funding, not risk discipline.
+**Margin and short selling are both disabled entirely.** Leveraged
+exposure comes exclusively from *buying* 2x ETFs with cash. Max loss is
+what you paid; there is no borrowing, no margin call, no forced
+liquidation, no borrow fee, and no squeeze risk.
+
+| Mode | Instrument | Exposure |
+|---|---|---|
+| LONG | **SSO** (S&P 500) or **QLD** (Nasdaq-100) | 2x long |
+| SHORT | **SDS** (S&P 500) or **QID** (Nasdaq-100) | 2x inverse |
+
+All four verified live and liquid on 2026-08-10 (see
+`tool_verification.md`). This sleeve is a **market-direction** bet and is
+separate from the stock-selection funnel — different signal source,
+different rules.
+
+### Signal source
+Apply the **same trend template** to the underlying index (SPY for
+SSO/SDS, QQQ for QLD/QID) — not to the leveraged ETF itself, whose own
+moving averages are distorted by leverage and daily resets. SPY's price
+and SMA(200) are already fetched for the regime check, so this costs
+little extra.
+
+- LONG mode: SPY (or QQQ) passes the long trend template and an entry
+  trigger fires → buy **SSO** (or QLD).
+- SHORT mode: the index passes the *inverted* template and a short
+  trigger fires → buy **SDS** (or QID).
+
+### Hard rules for this sleeve
+- **At most one index position open at a time.** Never hold a long and an
+  inverse ETF simultaneously — they are direct opposites and would simply
+  cancel while paying two expense ratios.
+- **Size off the ETF's own ATR**, not the index's. A 2x ETF's ATR is
+  roughly double the index's in percentage terms, so ATR-based sizing
+  automatically halves the position — which is the correct behavior, not
+  something to override.
+- **Counts double toward gross exposure.** A 3%-of-NAV position in a 2x
+  ETF carries ~6% of effective market exposure; account for it that way
+  against `gates.md` limits.
+- **Tighter time-stop: 10 trading days**, versus 20 for ordinary stock
+  positions. See the decay note below — time is a materially larger enemy
+  here.
+
+### Volatility decay — why the time-stop is tighter
+Every one of these funds targets **2x the *daily*** return, and resets
+each day. Over a multi-day hold, the realized return is path-dependent
+and is *not* 2x the period return. If the index rises 10% then falls
+9.09% (net flat), the 2x fund returns +20% then −18.18% — ending at
+**−1.8%**. Choppy, directionless markets bleed these instruments even
+when the index goes nowhere.
+
+The flip side: in a sustained trend, daily compounding works strongly in
+your favor. Observed 2026-08-10 — SSO ran from its March low of $48.63 to
+$71.68 (**+47%**) during the uptrend, while SDS fell from $80.50 to
+$53.35 (**−34%**) over the same stretch and set its 52-week low three
+days ago.
+
+Two consequences the rules encode: (1) this sleeve is only used when
+ADX-style trend confirmation is present — never in chop, which is exactly
+what these instruments punish; (2) inverse leveraged ETFs decay
+structurally in a rising market, so a SHORT-mode index position is a
+tactical position with a short leash, never something to sit in and wait
+on.
 
 ## Exit rules (all positions, checked every run)
 
@@ -267,22 +416,26 @@ take-profit with a state flag per position, tracked in `positions.md`:
   `stop_distance` stop from entry. Nothing else moves it.
 - **The instant price reaches the R-target:** record in `positions.md`
   that this position has "reached R-target" — this is a one-way flag, it
-  never resets. From this point on, the exit stop becomes the rising
-  EMA21 (equity: pulled fresh via `EMA` for open positions during the
-  review step) instead of the original fixed stop. Never lower this
-  trailing stop once set, and never let it fall below the original fixed
-  stop even if EMA21 dips under it.
+  never resets. From this point on, the exit stop becomes the EMA21
+  (pulled fresh during the review step) instead of the original fixed
+  stop. The trailing stop only ever moves in the favorable direction —
+  in a LONG it ratchets **up** and never down; in a SHORT it ratchets
+  **down** and never up — and it never moves past the original fixed
+  stop in the unfavorable direction, even if EMA21 does.
 
 Close a position if **any** of:
 1. Price hits the current exit stop (fixed stop pre-R-target, or trailing
-   EMA21 stop post-R-target, per above)
-2. Price closes back below SMA(50) (trend template broken —
-   the premise for the trade no longer holds). This always exits,
-   regardless of R-target/trailing-stop state.
-3. Held > 20 trading days without reaching the R-target (time-stop —
-   RSI(14) > 75 pre-R-target is a signal to watch more closely, not an
-   automatic exit on its own; the time-stop and trend-template rules
-   above are what actually close a stalled position)
+   EMA21 stop post-R-target, per above). LONG: price falls to the stop.
+   SHORT: price rises to it.
+2. The trend template breaks — LONG: price closes back **below** SMA(50);
+   SHORT: price closes back **above** SMA(50). The premise for the trade
+   no longer holds. This always exits, regardless of R-target/trailing-
+   stop state.
+3. Held > 20 trading days without reaching the R-target (time-stop — an
+   extreme RSI reading pre-R-target, >75 in a LONG or <25 in a SHORT, is
+   a signal to watch more closely, not an automatic exit on its own; the
+   time-stop and trend-template rules above are what actually close a
+   stalled position)
 4. For options specifically: 21 days-to-expiration reached, OR 50% of the
    DTE at entry has elapsed with no progress toward the R-target —
    whichever comes first (see the options overlay section for the full

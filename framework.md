@@ -144,6 +144,28 @@ breakout systems specifically perform worse in broad downtrends. This lives
 in `gates.md`, not here, because it's a hard portfolio-level control, not a
 tunable preference.
 
+## Direction: long and short, via cash-bought instruments only
+
+The regime filter sets direction rather than merely gating activity: SPY
+above its 200-day SMA → LONG mode; below → SHORT mode. This lets the
+system stay useful in a downtrend instead of sitting idle for months.
+
+Two hard constraints shape *how* direction is expressed: **no margin and
+no short selling, ever.** Both introduce failure modes an unattended
+system checking positions a few times a day cannot manage — unbounded
+loss and squeezes on the short side, forced liquidation on the margin
+side. Instead, bearish exposure is a *long* position in a 2x inverse
+index ETF (SDS/QID), and leveraged bullish exposure is a long position in
+a 2x ETF (SSO/QLD). Both are bought with cash; max loss is the amount
+paid.
+
+The cost of that safety is **volatility decay**: these funds target 2x
+the *daily* return and reset each day, so a flat round-trip in the index
+still loses money (index +10% then −9.09% → 2x fund −1.8%). They reward
+sustained trends and punish chop, which is why the index sleeve only
+fires with trend confirmation present and carries a 10-day time-stop
+rather than 20.
+
 ## Options and leverage: same signal, different instrument
 
 Options and leverage are **not a separate strategy** — they're an alternate
@@ -155,25 +177,32 @@ character. Concretely:
   and vertical debit spreads. Max loss is always known and capped at the
   premium paid at entry. Naked/undefined-risk options (short calls, short
   puts, uncovered spreads) are explicitly out of scope — see `gates.md`.
-- Leverage (margin) is capped at a low ratio (see `gates.md`) applied on
-  top of the same equity signal — it doesn't change what's being traded,
-  just the funding of it.
-- Neither options nor leverage removes the need for the stop-loss/time-stop
-  discipline in `strategy.md` — if anything, theta decay makes the time-stop
-  *more* binding for options than for the equivalent stock position.
+- Leverage never comes from margin (disabled outright) — only from
+  *buying* a 2x ETF with cash, as described in the section above.
+- Neither options nor leveraged ETFs remove the need for the
+  stop-loss/time-stop discipline in `strategy.md` — if anything, theta
+  decay (options) and daily-reset volatility decay (leveraged ETFs) make
+  the time-stop *more* binding than for a plain stock position.
 
 ## What's deliberately not here (yet)
 
 - **No backtest.** Every methodology cited above has a published track
   record *in its original form, on its original universe and era*. None of
-  that validates this specific synthesis, on this specific ~15–20 stock
-  universe, using Alpha Vantage's data, starting now. Recommended next step
-  before trusting this beyond paper trading.
+  that validates this specific synthesis, on this universe, with this
+  data, starting now. Recommended next step before trusting this beyond
+  paper trading — `get_equity_historicals` (20 years of OHLCV) is the
+  path, see `DATA_SCHEMA.md`.
 - **No options Greeks modeling.** Delta is used as a rough strike-selection
   heuristic (see `strategy.md`), but theta/vega/gamma exposure isn't
   tracked or limited beyond the DTE floor and defined-risk-only rule.
-- **No transaction costs, slippage, or margin interest** in the paper P&L.
-- **Small, hand-picked universe** (~15–20 large/liquid names), not a real
-  cross-sectional universe (e.g., full S&P 500) — constrained by API
-  budget. Relative strength and trend-template filtering are directionally
-  useful here but statistically noisier than they'd be on a larger universe.
+- **No modeling of leveraged-ETF decay.** The 10-day time-stop is a blunt
+  guard against it, not a model of it. Realized decay depends on the
+  actual volatility path and isn't projected anywhere.
+- **No transaction costs or slippage** in the paper P&L (margin interest
+  is moot — margin is disabled). Leveraged ETF expense ratios (~0.9%/yr)
+  are also unmodeled.
+- **Universe is now the Tier 0 screener** (~96 names at last check), not
+  the old hand-picked list — a real improvement, though the funnel still
+  only carries the top 15 into Tier 1 for wall-clock reasons, so the
+  cross-sectional ranking is computed over a narrow slice rather than the
+  full market.

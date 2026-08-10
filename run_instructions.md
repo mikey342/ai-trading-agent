@@ -47,9 +47,13 @@ executable price — not an approximation.)
    a holiday, log a one-line journal entry and end the run.
 2. Call `get_equity_quotes` (Robinhood) for **SPY**, and
    `get_equity_technical_indicators` (Robinhood, SPY, type=sma, period=200,
-   interval=day, output=latest) to get SPY's 200-day SMA. Check SPY price
-   > SMA(200). Record the result — this gates all *new* entries this run
-   (existing positions are still reviewed regardless).
+   interval=day, output=latest) to get SPY's 200-day SMA. This sets the
+   **direction mode for the whole run**: SPY > SMA(200) → **LONG mode**
+   (long equity, calls, call debit spreads); SPY < SMA(200) → **SHORT
+   mode** (long puts / put debit spreads **only** — never short stock,
+   see `gates.md`). Record the mode explicitly in the journal.
+   Existing positions are reviewed and exited in either mode, regardless
+   of which way the regime currently points.
 
 ## 2. Review existing positions first (always, regardless of regime)
 
@@ -79,12 +83,22 @@ For every row in `positions.md` (equity and options separately):
   compute realized P&L), update `positions.md`, and log it in
   `trade_journal.md` with the specific rule that triggered it.
 
-## 3. New entries — only if the regime filter passed in step 1
+## 3. New entries — direction depends on the mode set in step 1
 
-If SPY failed the regime check, skip to step 7 (journal update) — do not
-scout or open new positions this run, but say so explicitly in the journal.
+### If SHORT mode (SPY below its SMA(200))
+**Skip the entire stock-selection funnel** (Tiers 0-3 below). The only
+bearish expression is the index sleeve: check whether SPY (or QQQ) passes
+the *inverted* trend template and a short trigger fires per `strategy.md`;
+if so, buy **SDS** (or QID) — a 2x inverse ETF, bought with cash. Never
+short a stock and never use margin. Then continue to step 5 (gates).
+Say explicitly in the journal that the stock funnel was skipped because
+of SHORT mode, so a quiet run isn't mistaken for a broken one.
 
-Otherwise, run the funnel from `strategy.md`:
+### If LONG mode
+Run the stock-selection funnel below. Additionally, consider **one**
+index-sleeve position (SSO or QLD) if SPY/QQQ itself passes the long
+trend template and a trigger fires — subject to the max-1-index-position
+rule and the 2x exposure accounting in `gates.md`.
 
 ### Tier 0 — universe (one call)
 Call `run_scan` with `scan_id: de1b1994-b5db-472a-9b79-c052f1215193`
@@ -154,7 +168,12 @@ Before simulating any entry, in order:
    (equity + options combined)?
 5. Does the stop-loss respect the `gates.md` floor?
 6. (Options only) Does it pass DTE / delta / OI / spread gates?
-7. (Leverage, if used) Within the max leverage ratio and max gross exposure?
+7. (Leveraged ETF only) Is this the *only* index-sleeve position (never a
+   long and an inverse ETF at once)? Does gross exposure stay within
+   limits **after applying the 2x multiplier** to this position? Is it
+   sized off the **ETF's own** ATR rather than the index's?
+8. Confirm no margin is involved and nothing is being sold short — both
+   are disabled outright in `gates.md`.
 
 Any failure → do not open the position. Log it under "Rejected by gates"
 with the specific reason — this is the system working as intended, not a

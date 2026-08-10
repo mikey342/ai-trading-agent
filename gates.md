@@ -2,7 +2,7 @@
 
 > **Finalized 2026-08-10.** These are real, deliberately-chosen numbers
 > (Conservative risk profile, $10,000 paper account, leverage enabled at
-> 1.2x) — not assistant-invented placeholders. They can still be revisited
+> margin disabled) — not assistant-invented placeholders. They can still be revisited
 > as the paper track record develops, but any change should be a
 > deliberate decision, logged here, not a drift.
 
@@ -32,26 +32,31 @@
 | Max open positions | 6 | Across equity and options combined. |
 | Universe | Seed watchlist in `strategy.md` + top 3-5 from `TOP_GAINERS_LOSERS` | No penny stocks (<$5), no crypto. |
 | Symbol exclusions | None yet | Add tickers here to hard-block them. |
-| Regime filter | SPY must be above its 200-day SMA for any new long entry (equity or options) | Existing positions still get reviewed/exited even when this fails. Grounded in `framework.md`'s trend-following basis — don't open new longs against the broad trend. |
+| Regime filter (sets direction) | SPY above its 200-day SMA → **LONG mode** (long equity, calls, call debit spreads). SPY below → **SHORT mode** (long puts / put debit spreads **only**). | Existing positions are reviewed/exited in either mode. Grounded in `framework.md`'s trend-following basis — never open new longs against the broad trend, and never open new shorts with the broad trend against you. |
+| **Short stock / margin** | **Both forbidden, absolutely** | Never short an equity outright and never borrow on margin, in any mode, for any reason. Short selling carries unbounded loss, borrow cost, and recall risk; margin adds forced liquidation. A system reviewing positions a few times a day cannot manage either. Bearish exposure is taken **only** by *buying* a 2x inverse index ETF (SDS/QID) with cash, where max loss is the amount paid. |
 
 ## Options gates
 
 | Parameter | Value | Notes |
 |---|---|---|
-| Allowed structures | Long calls, long puts, vertical debit spreads **only** | Naked/short calls, naked/short puts, uncovered spreads, calendars, and diagonals are **not permitted** under any circumstance — undefined/large risk, out of scope for this system. |
+| Allowed structures | Long calls, long puts, vertical debit spreads **only** | Naked/short calls, naked/short puts, uncovered spreads, calendars, and diagonals are **not permitted** under any circumstance — undefined/large risk, out of scope for this system. Calls in LONG mode, puts in SHORT mode. |
+| Effective premium cap at current NAV | **$300** per position ($10,000 × 3%) | Consequence worth knowing: a near-the-money contract on a $200+ underlying often exceeds this (a verified JPM ~45 DTE ATM call was $970). Debit spreads and lower-priced underlyings are the workable expressions. Never raise the cap to make a trade fit. |
 | Max premium at risk per position | 3% of current NAV | Same ceiling as equity max position size — for a defined-risk long option or debit spread, premium paid *is* the max loss, so this single number fully bounds the downside. |
 | Minimum days to expiration at entry | 30 days | Target ~45 DTE for a swing hold of up to 20 trading days. Never buy less time than the position might need. |
 | Target delta range | 0.40 - 0.60 | Near-the-money to slightly OTM. |
 | Minimum open interest | 500 contracts | Liquidity floor — illiquid options are how you get a terrible fill or can't exit. |
 | Max bid-ask spread | 10% of the option's mid price | Second liquidity check. |
 
-## Leverage gates
+## Leverage gates — margin disabled, leveraged ETFs only
 
 | Parameter | Value | Notes |
 |---|---|---|
-| Max leverage ratio | 1.2x | Applies to margin-funded equity positions only — options are already a leveraged instrument and are never additionally margined. Enabled (not disabled) per user decision 2026-08-10, at the Conservative profile's ratio. |
-| Max portfolio gross exposure | 1.1x of NAV | Total long exposure (cash + margin-funded) across all open equity positions. |
-| Margin interest | Not modeled in paper P&L | Real cost if this ever goes live — flagged in `framework.md`. |
+| **Margin / borrowing** | **Disabled (1.0x)** | Per user decision 2026-08-10: no margin, no borrowing, ever. Every position is bought with cash. Removes margin calls, forced liquidation, and margin interest from the system entirely. |
+| Leveraged exposure method | **Buying 2x ETFs with cash only** | LONG: SSO (S&P) / QLD (Nasdaq). SHORT: SDS (S&P) / QID (Nasdaq). All verified liquid 2026-08-10. Max loss is the amount paid — these cannot go below zero or generate a liability. |
+| Max open index-sleeve positions | **1** | Never hold a long and an inverse ETF at once — they are direct opposites and would cancel while paying two expense ratios. |
+| Leveraged ETF exposure accounting | **Counts 2x toward gross exposure** | A 3%-of-NAV position in a 2x ETF is ~6% of effective market exposure. Count it that way, not at face value. |
+| Max portfolio gross exposure | 1.1x of NAV | Computed with the 2x multiplier above applied to any leveraged ETF position. |
+| Leveraged ETF time-stop | **10 trading days** (vs 20 for ordinary stock) | These target 2x the *daily* return and reset daily, so multi-day holds are path-dependent and decay in chop — a flat round-trip in the index still loses money. Short leash by design. See `strategy.md`. |
 
 ## Operational notes (not risk limits, but load-bearing for the routine)
 

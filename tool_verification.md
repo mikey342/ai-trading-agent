@@ -66,6 +66,30 @@ degradation rules in `strategy.md` and `run_instructions.md` — those
 paths must never hard-block trading, or a free-tier quota limit silently
 becomes a permanent no-trade bug.
 
+### Leveraged ETFs verified (2026-08-10)
+All four quote and return fundamentals normally through the standard
+equity tools — no special handling needed. Their own descriptions confirm
+the exposure, including the load-bearing word *daily*:
+
+| Symbol | Description (verbatim from `get_equity_fundamentals`) | Price | 30d avg vol |
+|---|---|---|---|
+| SSO | "2x **daily** leveraged exposure" to the S&P 500 | $71.68 | 3.0M |
+| SDS | "2x inverse exposure" to the S&P 500 | $53.35 | 2.7M |
+| QLD | "2x leveraged exposure" to the Nasdaq-100 | $92.23 | 4.7M |
+| QID | "2x inverse exposure" to the Nasdaq-100 | $13.94 | 16.1M |
+
+Spreads are tight (SSO bid/ask $71.90/$71.91). Note `pe_ratio` and
+`pb_ratio` are **null** for all of them — the value tiebreaker in
+`strategy.md` cannot be computed for ETFs, which is fine because the
+index sleeve is signaled off the underlying index's trend, not off the
+cross-sectional value ranking.
+
+Decay evidence captured the same day, useful for judging holding period:
+SSO ran +47% off its March low ($48.63 → $71.68) while SDS fell −34%
+($80.50 → $53.35) and printed its 52-week low three days prior. Daily
+compounding rewards sustained trends and punishes chop — hence the
+tighter 10-day time-stop in `gates.md`.
+
 ### Scanner filters available but not yet used
 The screener exposes an **options-flow filter group** that nothing in the
 current strategy touches: `FILTER_TYPE_RELATIVE_OPTIONS_VOLUME` (unusual

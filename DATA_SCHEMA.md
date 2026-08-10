@@ -29,8 +29,13 @@ specific rule is actually earning its place).
 | `run_type` | all | `morning` / `midday` / `close` / `monitor`. |
 | `action` | all | `open` / `close` / `reject`. |
 | `symbol` | all | Underlying ticker. |
-| `instrument` | all | `equity` or `option`. |
+| `sleeve` | all | `stock` (individual name from the Tier 0-3 funnel) or `index` (2x ETF market-direction bet). |
+| `instrument` | all | `equity`, `leveraged_etf`, or `option`. |
+| `mode` | all | `LONG` or `SHORT` — the direction mode the run was in, set by SPY vs its SMA(200). |
 | `qty` | open/close | Shares, or contracts for options. |
+| `effective_exposure` | open/close | Notional **after** applying the 2x multiplier for leveraged ETFs; equals `notional` otherwise. This is what gross-exposure limits are checked against. |
+| `adx14` | all | Trend strength from the Tier 0 scan. |
+| `rel_options_volume` | all | Relative options volume from the Tier 0 scan — unusual-positioning signal, used as a ranking tiebreaker, never as a directional signal on its own. |
 | `fill_price` | open/close | Simulated fill. Options use `high_fill_rate_buy_price`/`sell_price`, not mark (see `strategy.md`). |
 | `notional` | open/close | `qty × fill_price` (× 100 for options). |
 | `stop`, `r_target` | open | Fixed at entry, never recomputed later. |
@@ -43,7 +48,7 @@ specific rule is actually earning its place).
 | `earnings_days_away` | all | Days to next earnings report; blackout is <3. |
 | `regime` | all | `risk-on` / `risk-off` — SPY vs its 200-day SMA. |
 | `strike`, `expiration`, `delta_at_entry`, `iv_at_entry`, `dte_at_entry`, `underlying_price` | options only | Blank for equity rows. |
-| `exit_rule` | close | Which rule fired: `stop`, `trailing_stop`, `trend_break`, `time_stop`, `dte_21`, `dte_50pct`. |
+| `exit_rule` | close | Which rule fired: `stop`, `trailing_stop`, `trend_break`, `time_stop`, `dte_21`, `dte_50pct`. Index-sleeve positions use a 10-day time-stop rather than 20. |
 | `realized_pnl` | close | Dollars. |
 | `r_multiple` | close | `realized_pnl / (initial risk in dollars)`. The single most useful performance number — a system with a 30% win rate is fine if winners average +3R. |
 | `nav_after` | open/close | NAV following this action. |
