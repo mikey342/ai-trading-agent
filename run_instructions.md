@@ -145,11 +145,13 @@ to screening a small diversified set of liquid large-caps and flag it in
 the journal as degraded operation.
 
 ### Tier 1 — trend template (top 15 from Tier 0)
-Pull `get_equity_quotes` (one batched call for all 15) and
+First, **one** `get_earnings_calendar` call (days=7) — drop any candidate
+reporting within 3 calendar days before spending anything else on it.
+Then pull `get_equity_quotes` (one batched call for all 15) and
 `get_equity_fundamentals` (2 batched calls), then per-symbol
 `get_equity_technical_indicators` (sma, period=50 and period=200,
-output=latest). Apply the Tier 1 trend-template checklist. Drop anything
-that fails.
+output=latest). Apply the Tier 1 trend-template checklist **in both
+directions** (long and inverted). Drop anything that passes neither.
 
 ### Tier 2 — shortlist
 For Tier 1 survivors (capped at top 8 by the value/momentum tiebreaker —
@@ -220,8 +222,12 @@ minutes across the full universe). Then, in order:
 1. Apply `strategy.md`'s **chase-protection** check against this fresh
    price; if it fails, drop the trade and log it — don't force it through
    at a worse price than what was actually evaluated.
-2. Apply the **spread sanity check**: if bid-ask exceeds 0.5% of mid for
-   an equity/ETF, skip and log it.
+2. Apply the **two-part liquidity check**: (a) if bid-ask exceeds 0.5% of
+   mid for an equity/ETF, skip and log it; (b) call
+   `get_equity_price_book` and confirm the resting size at the best
+   ask/bid is at least the order quantity — a tight-looking top-of-book
+   price backed by almost no size means the order walks the book. Skip
+   and log if depth is insufficient.
 3. Record the fill as a **marketable limit order**, priced per
    `strategy.md`'s "Order entry" section — **buys at the `ask_price`,
    sells at the `bid_price`** (options: `high_fill_rate_buy_price` /

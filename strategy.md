@@ -182,6 +182,16 @@ long-mode failure):**
 4. Relative-weakness proxy: `(price - low_52_weeks) / (high_52_weeks -
    low_52_weeks)` ≤ 0.4 (lower 40% of its 52-week range)
 
+**Earnings blackout runs here, not at Tier 3.** Make **one**
+`get_earnings_calendar` call (Robinhood, `days=7`, no market-cap filter)
+at the start of Tier 1 and drop any candidate reporting within the next 3
+calendar days. This replaces the old per-finalist `get_earnings_results`
+blackout check: one market-wide call covers everything, and filtering here
+means no expensive Tier 2/3 work is ever spent on a name about to report.
+`get_earnings_results` is still called at Tier 3 for finalists, but now
+only for its 8-quarter actual-vs-estimate surprise history (the PEAD
+catalyst read), not for the blackout.
+
 **Test every candidate against both templates.** A name that merely fails
 the long template does **not** thereby qualify as a short — it must
 independently pass the full short template. Most candidates will qualify
@@ -265,11 +275,12 @@ For candidates passing Tier 2:
    protection against bad-news names. This is a real, accepted reduction
    in safety, which is exactly why it must be logged every time rather
    than passed over silently.
-3. `get_earnings_results` (Robinhood, this symbol): no earnings report
-   scheduled in the next 3 calendar days (blackout — event risk, not a
-   rule this system is trying to trade). Also gives 8 quarters of
+3. `get_earnings_results` (Robinhood, this symbol): 8 quarters of
    actual-vs-estimate EPS — a consistent beat streak is a soft positive
-   for the PEAD catalyst read, a miss streak a soft negative.
+   for the PEAD catalyst read, a miss streak a soft negative. (The
+   earnings *blackout* already ran at Tier 1 via one market-wide
+   `get_earnings_calendar` call, so this is purely the surprise-history
+   read.)
 4. `get_equity_technical_indicators` (Robinhood, type=atr, period=14,
    output=latest): needed for sizing and the stop below.
 
@@ -329,12 +340,24 @@ for a rounding error of execution cost. Wide spreads are instead handled
 *dynamically* by the 0.5% spread check below, which skips a specific bad
 fill rather than avoiding an entire time window.
 
-**Liquidity sanity check before any entry:** if the bid-ask spread
-exceeds **0.5% of the mid price** for an equity or ETF, skip the trade
-and log it. A spread that wide on a name that passed a liquidity screen
-usually means something is wrong — a halt, a news event, or stale data —
-and the cost of crossing it eats a meaningful fraction of the expected
-edge on a 2R trade.
+**Liquidity sanity check before any entry — two parts:**
+
+1. **Spread width.** If the bid-ask spread exceeds **0.5% of the mid
+   price** for an equity or ETF, skip the trade and log it. A spread that
+   wide on a name that passed a liquidity screen usually means something
+   is wrong — a halt, a news event, or stale data — and crossing it eats
+   a meaningful fraction of the expected edge on a 2R trade.
+2. **Depth.** Call `get_equity_price_book` (Robinhood, Level 2, up to 4
+   symbols) and confirm the resting size at the best ask (for a buy, or
+   best bid for a sell) is **at least the order quantity**. Spread width
+   alone is not sufficient: a book can show a tight-looking top-of-book
+   price backed by almost no size, and an order larger than that size
+   walks up the book to materially worse prices. Verified example
+   (2026-08-10, market closed): JPM's best bid was $356.10 for **1
+   share** against a $367.39 ask — a 3.1% effective spread that a
+   quote-only check could easily have waved through, while SSO showed
+   679/779 shares at a $0.02 spread. If depth at the top level is
+   insufficient, skip the trade rather than accepting the slippage.
 2. **Chase-protection**: if `entry_price` has already moved more than
    `0.5 × stop_distance` (see sizing below) beyond `signal_price` in the
    favorable direction since Tier 3 confirmed the setup, **do not chase

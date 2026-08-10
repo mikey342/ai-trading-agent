@@ -22,6 +22,8 @@ Last verified: **2026-08-10**.
 | `get_option_chains` | ✅ | Returns chain id + all expiration dates. |
 | `get_option_instruments` | ✅ | **Required middle step** — chains do not contain contracts. Filter by expiration/type/strike. |
 | `get_option_quotes` | ✅ | Takes instrument UUIDs. Returns delta, open_interest, bid/ask, mark, full Greeks, IV. **Confirms every options gate in `gates.md` is actually enforceable.** |
+| `get_equity_price_book` | ✅ | Level 2 depth, up to 4 symbols. **Now used in the entry liquidity check** — spread width alone is not enough. Verified 2026-08-10 (market closed): JPM best bid $356.10 for **1 share** vs a $367.39 ask (3.1% effective spread), while SSO showed 679/779 shares at $0.02. A quote-only check would have passed JPM. |
+| `get_earnings_calendar` | ✅ | Market-wide, up to a 31-day window, optional `high_market_cap` filter. **Now used for the Tier 1 earnings blackout** — one call replaces per-finalist `get_earnings_results` checks and filters candidates *before* expensive per-symbol work. |
 | `get_scanner_filter_specs` | ✅ | Full filter catalog — fundamental, price/volume, technical, and options-flow groups. |
 | `create_scan` / `run_scan` | ✅ | Real market-wide screener. Created `de1b1994-b5db-472a-9b79-c052f1215193`; returned **266 live matches**, with ADX/RSI/volume/market-cap/price per row. **Replaced the hardcoded watchlist as the candidate source** — see `strategy.md` Tier 0. |
 
