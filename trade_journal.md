@@ -101,3 +101,56 @@ entry backfilled to preserve the analysis.
 
 _(Further runs will be appended below by the scheduled routine, once
 GitHub push access is fixed.)_
+
+---
+
+### 2026-08-10 05:15 UTC — premarket run
+
+**Market status:** Unknown — `MARKET_STATUS` call itself failed (see below).
+Could not confirm via `MARKET_STATUS`.
+
+**Account:** NAV $25,000, cash $25,000, halted: no (no open positions, no
+prior trades)
+
+**gates.md MODE check:** `PAPER` — confirmed, run proceeds under normal
+paper-trading rules.
+
+**Position review:** No open equity or options positions in `positions.md`
+— nothing to review this run regardless of data availability.
+
+**Data availability:** Total Alpha Vantage blackout. `MARKET_STATUS`,
+`GLOBAL_QUOTE` (SPY), and `COMPANY_OVERVIEW` (SPY) all returned the same
+error: `"our standard API rate limit is 25 requests per day"`. Retried
+`MARKET_STATUS` once after a 5-second pause with an identical result,
+confirming this is the persistent daily quota (already exhausted,
+likely by the earlier 2026-08-10 ~03:20 UTC manual test run's ~17+ calls
+against the same key), not a transient per-second burst limit. No Alpha
+Vantage call of any kind is possible for the remainder of today's quota
+window.
+
+**Regime filter:** Could not be evaluated — SPY quote/200DMA unavailable.
+
+**Scouted:** None. With the regime filter itself unconfirmable and zero
+budget for Tier 1 `COMPANY_OVERVIEW`/`GLOBAL_QUOTE` calls, no candidate
+screening was possible. Per `run_instructions.md`'s error-handling section
+("never fall back to guessing a value — skip the candidate instead") and
+`gates.md`'s operational notes, no scouting was attempted rather than
+proceeding on stale or fabricated data.
+
+**Decisions:** No new positions opened. No positions closed (none open).
+
+**Rejected by gates:** N/A — no candidates reached the gating step; the
+blocker was data availability, not a gate.
+
+**Strategy adaptation this run:** None. Adaptation policy requires
+reviewing the last 10 closed trades in `trade_journal.md`; there are zero
+closed trades on record to date, so there is nothing to evaluate.
+
+**Infrastructure note:** This is a recurring risk for this system on the
+free Alpha Vantage tier — a single manual/test run earlier in the same
+UTC day can exhaust the shared 25-request daily budget before the
+scheduled run executes, leaving the scheduled run with zero usable
+budget. Worth flagging to the human: either space out manual runs from
+scheduled ones, or upgrade the Alpha Vantage plan if same-day double
+runs become routine. Not something this agent can fix by editing
+`gates.md` or `strategy.md`.
