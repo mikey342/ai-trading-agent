@@ -27,6 +27,13 @@ full mapping.
 
 ## 1. Market context and regime filter
 
+This routine fires three times daily (9:30am ET market open, 2:30pm ET
+midday, 4:30pm ET close) — deliberately never before the open, so every
+run works with a real, live regular-session price rather than a stale
+prior-day close or a thin premarket quote. (The 4:30pm run uses the
+official last-completed-session close, which is likewise a real,
+executable price — not an approximation.)
+
 1. Call `MARKET_STATUS` (Alpha Vantage). If it fails (quota exhausted),
    don't abort the run — fall back to treating the market as open during
    normal US trading hours (9:30am-4pm ET, weekdays) based on the current
@@ -159,7 +166,7 @@ Follow `strategy.md`'s Adaptation policy. Most runs should NOT change
 ## 9. Commit and push
 
 Commit all changed files with a message like:
-`run: 2026-08-10 premarket — 1 opened (equity), 0 closed, 1 rejected by gates, regime: risk-on`
+`run: 2026-08-10 morning — 1 opened (equity), 0 closed, 1 rejected by gates, regime: risk-on`
 
 Push to `main`. If this step fails or is skipped, the next run starts
 blind to everything that happened today.

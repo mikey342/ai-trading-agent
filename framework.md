@@ -9,8 +9,10 @@ change relates to, it's probably not a change to make.
 ## Style: swing trading, not day trading
 
 Holding period target: **~5–15 trading days**, hard time-stop at **20
-trading days**. Two runs a day (premarket + close) are for monitoring and
-new-signal generation, not intraday scalping — nothing here is designed for
+trading days**. Three runs a day (morning at market open, midday 5 hours
+later, close — all using real, live regular-session prices, never a
+stale or thin premarket quote) are for monitoring and new-signal
+generation, not intraday scalping — nothing here is designed for
 sub-daily timeframes.
 
 ## Sources checked (2026-08-09 research pass)

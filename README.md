@@ -23,9 +23,9 @@ Holding period target: ~5-15 trading days (swing, not day trading).
 - `positions.md` — current simulated equity + options book, and NAV
   history.
 - `trade_journal.md` — append-only log of every run's decisions.
-- `run_instructions.md` — the step-by-step playbook the twice-daily
-  scheduled agent follows: full scan for new candidates plus position
-  review.
+- `run_instructions.md` — the step-by-step playbook the scheduled scan
+  agent follows (3x/day: market open, midday, close): full scan for new
+  candidates plus position review.
 - `position_monitor_instructions.md` — a second, lightweight playbook for
   an hourly (market-hours-only) routine that only reviews existing open
   positions for exits — shrinks the gap between "a stop is hit" and "the

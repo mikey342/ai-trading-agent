@@ -9,7 +9,7 @@ Each run should add one entry using the template below.
 
 ## Template
 
-### YYYY-MM-DD HH:MM UTC — [premarket|close] run
+### YYYY-MM-DD HH:MM UTC — [morning|midday|close] run
 
 **Market status:** (open/closed, per `MARKET_STATUS`)
 **Account:** NAV $X, cash $X, halted: yes/no

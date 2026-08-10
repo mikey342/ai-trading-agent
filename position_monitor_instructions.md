@@ -2,14 +2,14 @@
 
 You are a scheduled cloud agent running **hourly, market hours only**,
 against a fresh clone of this repo. Your job is narrow and different from
-the twice-daily `run_instructions.md` routine: **review existing open
+the `run_instructions.md` scan routine: **review existing open
 positions and exit anything that crosses a threshold. Nothing else.**
 
 Do NOT: scout new candidates, open new positions, run any part of the
 Tier 1/2/3 funnel, or touch `strategy.md`'s Adaptation policy. Those are
-the twice-daily routine's job. This routine exists purely to shrink the
+the scan routine's job. This routine exists purely to shrink the
 gap between "a stop is hit" and "the system notices," since the
-twice-daily routine can leave a position unreviewed for 8-16 hours.
+scan routine can leave a position unreviewed for 8-16 hours.
 
 `gates.md` overrides anything here or in `strategy.md` if they ever
 conflict.
@@ -19,7 +19,7 @@ conflict.
 Read `gates.md`. If `MODE` is not exactly `PAPER`, stop immediately — no
 data calls, no journal entry, just end the run silently. (This routine
 fires hourly; a journal entry every single skipped run would be noise —
-only the twice-daily routine needs to log a MODE-mismatch note.)
+only the scan routine needs to log a MODE-mismatch note.)
 
 Read `positions.md`. **If there are zero open equity and zero open
 options positions, end the run immediately — no API calls, no commit, no
@@ -66,7 +66,7 @@ directly, every exit rule can be checked here.
 If **no** position hit any exit condition and **no** R-target flag
 flipped: end the run here. **Do not commit.** An hourly routine
 committing "checked, nothing happened" 7 times a day would bloat
-`trade_journal.md` with zero-information entries — the twice-daily
+`trade_journal.md` with zero-information entries — the scan
 routine already logs a full state summary every run.
 
 If something did trigger:
@@ -74,12 +74,12 @@ If something did trigger:
   simulate the close (exit price/premium, realized P&L), update
   `positions.md` (remove from open, update cash/NAV), and append a short
   `trade_journal.md` entry — just what closed and which rule fired, not
-  the full twice-daily template.
+  the full scan template.
 - **R-target flag flipped from No to Yes** (but nothing closed): update
   `positions.md`'s flag and `Current exit stop`. This alone doesn't need a
   journal entry — it's routine state-tracking, not a decision — but the
   `positions.md` change itself must still be committed so the next run
-  (hourly or twice-daily) sees the correct trailing-stop state.
+  (hourly or scan) sees the correct trailing-stop state.
 
 ## 4. Commit and push (only if step 3 found something)
 
@@ -88,7 +88,7 @@ Commit message format:
 `monitor: 2026-08-10 15:00 UTC — AAPL R-target reached, now trailing`
 
 Push to `main`. If this fails, the position state change is lost for the
-next run — same risk as the twice-daily routine.
+next run — same risk as the scan routine.
 
 ## Hard rules, restated
 
