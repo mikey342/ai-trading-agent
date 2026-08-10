@@ -253,10 +253,21 @@ For candidates passing Tier 2:
    Tier 2 — no new call needed) must show momentum *accelerating*, not
    merely present.
 
-   **Precise test — the latest spread must be the widest of the five.**
-   Compute `|EMA8 − EMA21|` for each of the last 5 sessions; the most
-   recent value must be strictly greater than all four prior values.
-   Anything else fails.
+   **This test applies to BREAKOUT entries only — never to pullback
+   entries.** For a breakout, compute `|EMA8 − EMA21|` for each of the
+   last 5 sessions; the most recent value must be strictly greater than
+   all four prior values. Anything else fails.
+
+   **For a pullback entry, this test is skipped entirely, and running it
+   would be a logic error.** A pullback *is* a narrowing spread — EMA8
+   falling back toward EMA21 is the definition of the setup — so
+   requiring the spread to be at a 5-session maximum would reject every
+   pullback that ever occurs. The equivalent confirmation for a pullback
+   is already performed at Tier 2: EMA21 must be flat-to-rising over its
+   last 5 values, which is what establishes the trend is intact rather
+   than rolling over. Confirmed as a real defect on 2026-08-10, when the
+   strict test rejected 4 of 4 Tier 2 survivors and would have
+   permanently blocked the pullback path had one fired.
 
    This wording replaces an earlier "spread is widening over its last 5
    values," which was ambiguous enough to be unusable: on real BAC data
@@ -490,11 +501,25 @@ separate from the stock-selection funnel — different signal source,
 different rules.
 
 ### Signal source
-Apply the **same trend template** to the underlying index (SPY for
-SSO/SDS, QQQ for QLD/QID) — not to the leveraged ETF itself, whose own
-moving averages are distorted by leverage and daily resets. SPY's price
-and SMA(200) are already fetched for the regime check, so this costs
-little extra.
+Apply the trend template to the underlying index (SPY for SSO/SDS, QQQ
+for QLD/QID) — not to the leveraged ETF itself, whose own moving averages
+are distorted by leverage and daily resets. SPY's price and SMA(200) are
+already fetched for the regime check, so this costs little extra.
+
+**Use the index-adjusted template below, not the stock one.** Required:
+price > SMA(50) > SMA(200), price within **10%** of its 52-week high, and
+a relative-strength proxy ≥ 0.6. The stock template's "at least 25% above
+the 52-week low" rule is **deliberately dropped here.**
+
+Why: that rule comes from Minervini's template, which was built for
+*individual stocks* — names that routinely travel 40%+ in a year. A broad
+index does not. Verified 2026-08-10: SPY's entire 52-week range was only
+~19–23% top to bottom, so the 25%-above-low test was **mathematically
+unsatisfiable** and blocked the index sleeve on every single run the
+system made. Applying a single-stock rule unmodified to an index is a
+category error, not a strict filter. For an index, trading above both
+major moving averages and near its 52-week high is already sufficient
+trend evidence.
 
 - LONG mode: SPY (or QQQ) passes the long trend template and an entry
   trigger fires → buy **SSO** (or QLD).
@@ -673,3 +698,25 @@ Every run, after updating the journal:
   trading framework grounded in Turtle/Minervini/O'Neil/Connors/PEAD
   methodologies, per user request. Not yet run — no track record to
   evaluate yet.
+- **2026-08-10 (first live-market day, 0 trades, 4 logged rejects).** Two
+  defects fixed, both found by the system's own logging rather than by
+  reasoning about the rules:
+  1. *Tier 3 momentum test now applies to breakout entries only.* As
+     written it required the EMA spread to be at a 5-session maximum,
+     which a pullback entry can never satisfy — a pullback is a narrowing
+     spread by definition. It would have permanently blocked one of the
+     two entry paths. Today's 4 rejects were all breakouts and were all
+     genuinely decelerating, so the breakout test itself is **left
+     unchanged**: one day is not evidence to loosen a rule, and doing so
+     would be exactly the overfitting the adaptation policy forbids.
+  2. *Index sleeve now uses an index-adjusted trend template.* The
+     stock template's 25%-above-52-week-low rule was unsatisfiable for
+     SPY (whose full-year range is ~19–23%) and blocked the index sleeve
+     on every run.
+
+  Watch next: whether the breakout momentum test keeps rejecting
+  everything once more sessions accumulate. A sustained 100% kill rate
+  would mean the breakout trigger (price near a 52-week high) and the
+  acceleration test are systematically at odds — plausible, since spreads
+  often peak *before* price reaches the high. Needs several days of data,
+  not one.

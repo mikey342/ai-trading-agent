@@ -26,7 +26,7 @@ specific rule is actually earning its place).
 |---|---|---|
 | `trade_id` | all | Stable id; reuse the same id on the `close` row that matches an `open`. Format: `SYMBOL-YYYYMMDD-N`. |
 | `timestamp_utc` | all | ISO-8601 UTC. |
-| `run_type` | all | `morning` / `midday` / `close` / `monitor`. |
+| `run_type` | all | `morning` / `midday` / `pre-close` / `monitor`. |
 | `action` | all | `open` / `close` / `reject`. |
 | `symbol` | all | Underlying ticker. |
 | `sleeve` | all | `stock` (individual name from the Tier 0-3 funnel) or `index` (2x ETF market-direction bet). |
