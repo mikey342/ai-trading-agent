@@ -18,9 +18,14 @@ separate and simulated.
 
 ## Open positions — equity and leveraged ETFs
 
-| Symbol | Sleeve | Qty | Entry price | Entry date | Original stop | R-target | R-target reached? | Current exit stop | Current price | Unrealized P&L | Notes |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| _(none yet)_ | | | | | | | | | | | |
+| Symbol | Sleeve | Direction | Counter-trend? | Qty | Entry price | Entry date | Original stop | R-target | R-target reached? | Current exit stop | Current price | Unrealized P&L | Notes |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| _(none yet)_ | | | | | | | | | | | | | |
+
+`Direction` is `bullish` or `bearish` (a bearish position is a *long*
+position in an inverse ETF — never a short). `Counter-trend?` marks a
+setup taken against the SPY regime; **at most one may be open at a time**,
+and it is sized at half risk. Check this column before opening another.
 
 `Sleeve` is `stock` (individual name from the Tier 0-3 funnel) or `index`
 (a 2x ETF: SSO/QLD long, SDS/QID inverse). Index-sleeve positions are

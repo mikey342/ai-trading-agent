@@ -146,9 +146,22 @@ tunable preference.
 
 ## Direction: long and short, via cash-bought instruments only
 
-The regime filter sets direction rather than merely gating activity: SPY
-above its 200-day SMA → LONG mode; below → SHORT mode. This lets the
-system stay useful in a downtrend instead of sitting idle for months.
+Every candidate is tested against both a bullish and a bearish template
+on every run — so a broken company can be identified inside a healthy
+market, and vice versa. The SPY regime doesn't decide which direction
+gets examined; it decides which passes count as **counter-trend** and
+therefore face much stricter gates (one position maximum, half size,
+higher ADX bar, and no trading on degraded data).
+
+That split reflects a genuine tension in the evidence. Cross-sectional
+momentum (Jegadeesh & Titman) is inherently long *and* short at once, so
+purely regime-gated trading leaves documented edge on the table. But that
+research operates across hundreds of names per side; a six-slot book
+taking a concentrated bet against the market's structural upward drift is
+a different and worse proposition. Allowing counter-trend trades but
+capping them at one, at half size, is the compromise — and the
+`counter_trend` column in `trade_log.csv` exists specifically so this
+allowance can be judged on its own record later rather than on argument.
 
 Two hard constraints shape *how* direction is expressed: **no margin and
 no short selling, ever.** Both introduce failure modes an unattended

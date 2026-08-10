@@ -31,7 +31,9 @@ specific rule is actually earning its place).
 | `symbol` | all | Underlying ticker. |
 | `sleeve` | all | `stock` (individual name from the Tier 0-3 funnel) or `index` (2x ETF market-direction bet). |
 | `instrument` | all | `equity`, `leveraged_etf`, or `option`. |
-| `mode` | all | `LONG` or `SHORT` — the direction mode the run was in, set by SPY vs its SMA(200). |
+| `direction` | all | `bullish` or `bearish` — which template the setup passed. |
+| `counter_trend` | all | `true` if the setup ran against the SPY regime (bearish while SPY > SMA(200), or bullish while below), `false` otherwise. Counter-trend trades are capped at 1 open, sized at half risk, and require undegraded data — so this column is the key one for later checking whether that allowance earned its place or just added losses. |
+| `mode` | all | `LONG` or `SHORT` — the SPY regime at the time, set by SPY vs its SMA(200). Note this no longer gates which direction is *examined* (both always are); it determines which passes count as counter-trend. |
 | `qty` | open/close | Shares, or contracts for options. |
 | `effective_exposure` | open/close | Notional **after** applying the 2x multiplier for leveraged ETFs; equals `notional` otherwise. This is what gross-exposure limits are checked against. |
 | `adx14` | all | Trend strength from the Tier 0 scan. |

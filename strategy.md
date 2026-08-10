@@ -86,23 +86,64 @@ Vantage is reserved for the handful of things only it provides.
 The regime filter decides **which direction the run hunts in**, rather
 than simply gating whether it trades at all:
 
-| SPY vs its 200-day SMA | Mode | New entries allowed |
+**Every candidate is evaluated against *both* templates, every run.** A
+stock cannot pass both (they are mutually exclusive — price cannot be
+simultaneously above and below its own moving-average stack), and most
+pass neither, which is correct. What the SPY regime determines is not
+*whether* a direction is examined, but how much freedom a setup gets once
+it passes:
+
+| Setup direction vs. SPY regime | Classification | Treatment |
 |---|---|---|
-| SPY **above** SMA(200) | **LONG mode** | Stock sleeve (plain equity, or a bull single-stock ETF) + optionally a 2x long index ETF (SSO/QLD) |
-| SPY **below** SMA(200) | **SHORT mode** | Stock sleeve via **bear single-stock ETFs** + optionally a 2x inverse index ETF (SDS/QID) |
+| Bullish setup while SPY **>** SMA(200) | **with-trend** | Normal rules |
+| Bearish setup while SPY **<** SMA(200) | **with-trend** | Normal rules |
+| Bearish setup while SPY **>** SMA(200) | **counter-trend** | Strict extra gates below |
+| Bullish setup while SPY **<** SMA(200) | **counter-trend** | Strict extra gates below |
+
+Rationale for allowing counter-trend at all: classic cross-sectional
+momentum (Jegadeesh & Titman — Tier A evidence, see `framework.md`) is
+inherently long *and* short simultaneously, and genuinely broken stocks
+exist in bull markets. Rationale for constraining it hard: that research
+assumes hundreds of names per side, while this book has six slots. A
+concentrated counter-trend bet is not the diversified factor the research
+validates, and shorting into a market with a structural upward drift has
+negative expected value on average.
+
+### Counter-trend gates (all required, on top of every normal check)
+
+1. **At most one counter-trend position open at a time**, out of the
+   6-position book.
+2. **ADX(14) > 30** (versus the baseline 25) — the counter-direction
+   trend must be unusually well established, not marginal.
+3. **A more extreme relative-strength reading**: ≤ **0.25** of the
+   52-week range for a counter-trend bearish setup (vs. 0.4 normally),
+   ≥ **0.75** for a counter-trend bullish setup (vs. 0.6).
+4. **No degraded data.** Every Tier 3 check must return real values —
+   in particular, `news_sentiment` must **not** be `UNAVAILABLE`. If the
+   Alpha Vantage quota is exhausted, no counter-trend trade is taken that
+   run, full stop. A counter-trend bet made blind to news is exactly the
+   trade most likely to be on the wrong side of a catalyst.
+5. **Half size**: `risk_per_trade = 0.5% of NAV` rather than 1%.
+
+If any of these fails, the setup is not downgraded to a normal trade —
+it is dropped, and logged as a counter-trend rejection.
+
+### The index sleeve is never counter-trend
+
+The 2x index ETFs (SSO/QLD/SDS/QID) always follow the regime: long-side
+only while SPY is above its SMA(200), inverse-side only while below.
+Buying SDS in a confirmed uptrend is a bet against the primary trend
+itself, which is a categorically worse proposition than identifying one
+broken company inside a healthy market. Counter-trend applies to
+individual stocks — idiosyncratic breakdowns — never to the index.
 
 **Never short a stock, and never use margin — in any mode, for any
 reason.** Both are disabled outright in `gates.md`. Short selling has
 unbounded loss (a squeeze can run indefinitely) plus borrow cost and
 recall risk, and a system that reviews positions a few times a day cannot
 manage that. Bearish exposure is taken **only** by *buying* an inverse
-ETF with cash, where max loss is the amount paid.
-
-**The stock-selection funnel runs in both modes.** In SHORT mode it hunts
-for names passing the *inverted* trend template, and expresses each one
-by buying that name's bear ETF (see the mapping table below) — subject to
-that ETF clearing the liquidity floor. If a qualifying name has no
-sufficiently liquid bear ETF, take no trade on it; do not substitute a
+ETF with cash, where max loss is the amount paid. If a qualifying name has
+no sufficiently liquid bear ETF, take no trade on it; do not substitute a
 different instrument or reach for a thin one.
 
 Both modes use identical machinery — trend template, entry triggers, ATR
@@ -141,9 +182,12 @@ long-mode failure):**
 4. Relative-weakness proxy: `(price - low_52_weeks) / (high_52_weeks -
    low_52_weeks)` ≤ 0.4 (lower 40% of its 52-week range)
 
-A name that merely fails the long template does **not** thereby qualify
-as a short — it must independently pass the full short template. Most
-candidates will qualify for neither, which is correct.
+**Test every candidate against both templates.** A name that merely fails
+the long template does **not** thereby qualify as a short — it must
+independently pass the full short template. Most candidates will qualify
+for neither, which is correct. Any that passes is then classified
+with-trend or counter-trend per the table above, and counter-trend
+setups must additionally clear all five counter-trend gates.
 
 (The SPY regime check that sets the mode happens once per run, before
 Tier 1 — see "Direction mode" above and step 1 of `run_instructions.md`.)
@@ -312,7 +356,8 @@ edge on a 2R trade.
    Use 1.5x by default; 1.0x is the tighter end of the range used by
    contemporary breakout swing traders (see `framework.md`, Qullamaggie)
    and is the adaptive knob to tighten if stops are proving too loose.
-2. `risk_per_trade = 1% of current NAV` (adaptive — this is the number to
+2. `risk_per_trade = 1% of current NAV` for a with-trend setup, or
+   **0.5% for a counter-trend setup** (adaptive — this is the number to
    tune if position sizing needs revisiting, not the gates.md ceiling).
 3. `shares = floor(risk_per_trade_dollars / stop_distance)`
 4. `position_dollar_size = shares × entry_price`, capped at gates.md's max
@@ -560,6 +605,11 @@ Close a position if **any** of:
 
 Every run, after updating the journal:
 - Look at the last 10 closed trades in `trade_journal.md`.
+- **Check the `counter_trend` column specifically.** If counter-trend
+  trades are consistently losing while with-trend trades are not, say so
+  plainly in the journal and propose tightening or suspending them — that
+  allowance was made on a contested argument and should be judged on its
+  own record. The reverse also holds: if they are clearly working, note it.
 - If a specific, named parameter above (RSI pullback band, EMA periods,
   ATR stop multiplier, risk-per-trade %, relative-strength threshold, DTE/
   delta targets) is associated with a losing pattern across ≥5 of the last

@@ -98,26 +98,36 @@ For every row in `positions.md` (equity and options separately):
 
 ## 3. New entries — direction depends on the mode set in step 1
 
-**The stock-selection funnel runs in both modes** — only the direction of
-its tests and the instrument used to express a pass are mirrored.
+**Test every candidate against BOTH the long and short templates** — the
+regime does not decide which direction to look for, only how strictly a
+passing setup is treated. A stock cannot pass both; most pass neither.
 
-### If LONG mode
-Run the funnel with the long trend template and long triggers. Express a
-pass as plain equity, or as that name's **bull** single-stock ETF if the
-leveraged-ETF gates in `gates.md` are met. Additionally consider **one**
-index-sleeve position (SSO or QLD) if SPY/QQQ itself passes.
+For each pass, classify it:
+- **with-trend** — bullish while SPY > SMA(200), or bearish while below
+- **counter-trend** — bearish while SPY > SMA(200), or bullish while below
 
-### If SHORT mode
-Run the same funnel with the **inverted** trend template and short
-triggers (see `strategy.md`). Express a pass by buying that name's
-**bear** ETF — checking the mapping table in `strategy.md` and confirming
-via `get_equity_fundamentals` both that the ETF clears the 1M-share
-liquidity floor and **what its actual leverage is** (several are −1x, not
-−2x). If a qualifying name has no sufficiently liquid bear ETF, take no
-trade on it. Additionally consider one inverse index-sleeve position
-(SDS or QID) if SPY/QQQ passes the inverted template.
+**With-trend setups** follow the normal rules. Express a bullish pass as
+plain equity or that name's **bull** ETF; a bearish pass by buying that
+name's **bear** ETF.
 
-Never short a stock and never use margin, in either mode.
+**Counter-trend setups** must additionally clear *all five* gates in
+`strategy.md` / `gates.md`: at most 1 counter-trend position open, ADX(14)
+> 30, a more extreme 52-week-range reading (≤0.25 bearish / ≥0.75
+bullish), **no degraded data — `news_sentiment` must not be
+`UNAVAILABLE`** — and half size (0.5% NAV risk). If any fails, drop the
+setup and log it as a counter-trend rejection. Never downgrade a failed
+counter-trend setup into a normal trade.
+
+For any bear ETF, confirm via `get_equity_fundamentals` both that it
+clears the 1M-share liquidity floor and **what its actual leverage is**
+(several are −1x, not −2x — never infer it from the bull-side ticker).
+
+**Index sleeve — regime-aligned only.** Consider **one** index position:
+SSO/QLD if SPY > SMA(200) and the index passes the long template, or
+SDS/QID if SPY < SMA(200) and it passes the inverted one. The index
+sleeve is never counter-trend.
+
+Never short a stock and never use margin, in any circumstance.
 
 ### Tier 0 — universe (one call)
 Call `run_scan` with `scan_id: de1b1994-b5db-472a-9b79-c052f1215193`
@@ -186,7 +196,8 @@ Before simulating any entry, in order:
 3. Has the daily loss halt already triggered today (check `positions.md`
    NAV history for today's row, if one exists from an earlier run today)?
 4. Would this exceed max new trades this run, or max open positions
-   (equity + options combined)?
+   (all sleeves combined)? If counter-trend, would it exceed the
+   **1 counter-trend position** limit?
 5. Does the stop-loss respect the `gates.md` floor?
 6. (Options only) Does it pass DTE / delta / OI / spread gates?
 7. (Leveraged ETF only) Is this the *only* index-sleeve position (never a
