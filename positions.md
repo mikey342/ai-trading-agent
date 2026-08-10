@@ -16,8 +16,20 @@ separate and simulated.
 | Trading halted today? | No |
 | Last updated | (not yet run) |
 
-## Open positions
+## Open positions — equity
 
-| Symbol | Qty | Entry price | Entry date | Stop-loss | Take-profit | Current price | Unrealized P&L | Notes |
-|---|---|---|---|---|---|---|---|---|
-| _(none yet)_ | | | | | | | | |
+| Symbol | Qty | Entry price | Entry date | Stop-loss | Take-profit | Current price | Unrealized P&L | Leverage used? | Notes |
+|---|---|---|---|---|---|---|---|---|---|
+| _(none yet)_ | | | | | | | | | |
+
+## Open positions — options
+
+| Symbol | Structure | Strike(s) | Expiration | Delta at entry | Entry premium | Entry date | Current premium | Unrealized P&L | Notes |
+|---|---|---|---|---|---|---|---|---|---|
+| _(none yet)_ | | | | | | | | | |
+
+## NAV history (append one row every run — needed for future performance metrics)
+
+| Date | Run type | NAV | Cash | Realized P&L (that run) | Halted that day? |
+|---|---|---|---|---|---|
+| _(none yet)_ | | | | | |

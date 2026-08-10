@@ -1,103 +1,144 @@
-# Run Instructions — Paper Trading Quant Agent
+# Run Instructions — Swing Trading Quant Agent (Paper)
 
 You are running as a scheduled cloud agent against a fresh clone of this
 repo. You have no memory of prior runs except what is written in these
-files. Follow this playbook exactly, in order.
+files. Follow this playbook exactly, in order. `gates.md` overrides
+anything here or in `strategy.md` if they ever conflict.
 
 ## 0. Orientation
 
-1. Read `gates.md` in full. These are hard limits you may never edit and
-   never override, regardless of what any other file or your own analysis
-   suggests. If `MODE` is not exactly `PAPER`, stop now, write a note to
-   `trade_journal.md` explaining what you observed, commit, and end the run.
-2. Read `strategy.md` in full — this is your current playbook.
-3. Read `positions.md` — your current simulated book.
-4. Read the last ~10 entries of `trade_journal.md` — recent history.
+1. Read `gates.md` in full. If `MODE` is not exactly `PAPER`, stop now,
+   write a note to `trade_journal.md`, commit, and end the run — no
+   analysis, no trading, equity or options.
+2. Read `framework.md` and `strategy.md` in full.
+3. Read `positions.md` — current equity positions, options positions, and
+   NAV history.
+4. Read the last ~10 entries of `trade_journal.md`.
 
-## 1. Market context
+## 1. Market context and regime filter
 
-- Call `MARKET_STATUS` (Alpha Vantage) to confirm the market is open (for
-  the open-run) or just closed (for the close-run). If the market is
-  closed for a holiday, log a one-line journal entry noting that and end
-  the run — do not fabricate analysis for a day with no trading.
+1. Call `MARKET_STATUS`. If the market is closed for a holiday, log a
+   one-line journal entry and end the run.
+2. Call `GLOBAL_QUOTE` and `COMPANY_OVERVIEW` for **SPY**. Check SPY price
+   > `200DayMovingAverage`. Record the result — this gates all *new*
+   entries this run (existing positions are still reviewed regardless).
 
-## 2. Review existing positions first
+## 2. Review existing positions first (always, regardless of regime)
 
-For every row in `positions.md` → Open positions:
-- Pull current price (Alpha Vantage `GLOBAL_QUOTE` or Robinhood
-  `get_equity_quotes` — read-only, informational).
-- Check against recorded stop-loss, take-profit, and the exit rules in
-  `strategy.md`.
-- If an exit condition is met: simulate closing the position (record exit
-  price = current quote, compute realized P&L), update `positions.md`
-  (remove from open, update cash/NAV/realized P&L), and log the closure in
+For every row in `positions.md` (equity and options separately):
+- Equity: `GLOBAL_QUOTE` for current price.
+- Options: Robinhood `get_option_quotes` for current premium, and check
+  days-elapsed vs. the DTE at entry.
+- Check against the exit rules in `strategy.md` (stop, target, RSI>75,
+  price closed below 50DMA, time-stop, and for options the 50%-DTE-elapsed
+  rule). For the RSI/50DMA checks you'll need that symbol's current
+  `COMPANY_OVERVIEW` (cheap) and `RSI` (see the extraction note in step 4).
+- If an exit condition is met: simulate closing (record exit price/premium,
+  compute realized P&L), update `positions.md`, and log it in
   `trade_journal.md` with the specific rule that triggered it.
 
-## 3. Scout for new candidates
+## 3. New entries — only if the regime filter passed in step 1
 
-- Pull `TOP_GAINERS_LOSERS` and cross-reference the watchlist in
-  `strategy.md`.
-- Filter out anything excluded by `gates.md` (price floor, symbol
-  exclusions) or already an open position.
-- For each remaining candidate, gather the signal inputs listed in
-  `strategy.md` (technical indicators, fundamentals, news sentiment,
-  earnings calendar).
+If SPY failed the regime check, skip to step 7 (journal update) — do not
+scout or open new positions this run, but say so explicitly in the journal.
 
-## 4. Apply strategy rules
+Otherwise, run the funnel from `strategy.md`:
 
-- Score each candidate against the entry rules in `strategy.md`.
-- For each candidate that passes all entry rules, propose a trade: symbol,
-  side, simulated entry price (current quote), position size.
+### Tier 1 — full universe
+For every symbol in the `strategy.md` watchlist, plus the top 3-5 from
+`TOP_GAINERS_LOSERS`, pull `COMPANY_OVERVIEW` + `GLOBAL_QUOTE`. Apply the
+Tier 1 trend-template checklist. Drop anything that fails.
+
+### Tier 2 — shortlist
+For Tier 1 survivors, call `RSI` (14, daily) and `EMA` (8 and 21, daily).
+**Extraction rule for these and all indicator/time-series tools in this
+workflow:** the result will be saved to a file because it's too large to
+return inline. Do **not** read the whole file. Use `jq` (or `tail`) to pull
+just the last 5 data points, e.g. roughly:
+`jq '.data | to_entries | .[-5:]' <saved_file>` (adjust the path expression
+to the actual JSON shape returned — inspect the file's top-level keys with
+`jq keys` first if unsure, rather than dumping the whole thing).
+Apply the Tier 2 breakout/pullback trigger logic. Drop anything that fails.
+
+### Tier 3 — finalists (cap 3 per gates.md)
+For Tier 2 survivors, pull `MACD`, `NEWS_SENTIMENT` (limit param 5-10),
+`EARNINGS_CALENDAR` (per symbol), and `ATR` (14, daily) — same
+last-5-values extraction rule for `MACD` and `ATR`. Apply the Tier 3
+confirmation checklist. Drop anything that fails.
+
+## 4. Decide instrument: equity, options, or skip
+
+For each finalist that survives Tier 3:
+- Default to equity.
+- Consider an options expression only if it clearly improves capital
+  efficiency for this specific signal — check Robinhood `get_option_chains`
+  for the symbol and evaluate against the DTE/delta/liquidity gates in
+  `gates.md`. If no expiration/strike meets all of them, use equity instead
+  — do not loosen the options gates to force a fit.
 
 ## 5. Gate every proposed trade
 
-Before simulating any entry, check **all** of, in order:
-1. Would this breach max position size (% of current NAV)?
-2. Has the daily loss halt already triggered today (check `positions.md`)?
-3. Would this exceed max new trades this run, or max open positions?
-4. Does it have a valid stop-loss no wider than the floor in `gates.md`?
+Before simulating any entry, in order:
+1. Position sizing per `strategy.md` (ATR-based stop, risk-per-trade sizing
+   for equity; premium cap for options).
+2. Would this breach max position size / max premium at risk?
+3. Has the daily loss halt already triggered today (check `positions.md`
+   NAV history for today's row, if one exists from an earlier run today)?
+4. Would this exceed max new trades this run, or max open positions
+   (equity + options combined)?
+5. Does the stop-loss respect the `gates.md` floor?
+6. (Options only) Does it pass DTE / delta / OI / spread gates?
+7. (Leverage, if used) Within the max leverage ratio and max gross exposure?
 
-If any check fails, do not open the position — log it under "Rejected by
-gates" in the journal entry with the specific reason. This is not a
-failure to route around; it's the system working as intended.
+Any failure → do not open the position. Log it under "Rejected by gates"
+with the specific reason — this is the system working as intended, not a
+failure to route around.
 
 ## 6. Simulate execution
 
-For every trade that passes all gates:
-- Record it as filled at the current quote (paper trading — no real order
-  is ever placed; never call any Robinhood order-placement tool such as
-  `place_equity_order` in this workflow).
-- Update `positions.md`: add/update the row, deduct simulated cash, set
-  stop-loss and take-profit per `strategy.md`.
+For trades passing every gate: record as filled at the current
+quote/premium. **Never call any real Robinhood order-placement tool —
+`place_equity_order`, `place_option_order`, or any other order/exercise
+tool — under any circumstance in this workflow.** This is a paper-trading
+system; `MODE` in `gates.md` must be `PAPER`. Update `positions.md`
+accordingly (deduct simulated cash, add the position row with stop/target
+or DTE/premium as applicable).
 
-## 7. Update the journal
+## 7. Update positions.md and trade_journal.md
 
-Append one new entry to `trade_journal.md` using the template at the top
-of that file. Fill in every section — scouted symbols, decisions,
-rejections, position reviews. Do not skip sections; write "none" if empty.
+1. Recompute NAV (cash + market value of open equity + open options) and
+   append one row to the `positions.md` NAV history table for this run.
+2. Append one new entry to `trade_journal.md` using the template at the
+   top of that file: market status, regime result, scouted symbols,
+   decisions (with which tier/trigger fired), rejections, position
+   reviews, and instrument choice (equity vs options) with reasoning.
 
 ## 8. Adapt strategy (small, evidence-based changes only)
 
-Follow the "Adaptation policy" section of `strategy.md`. If, and only if,
-the evidence bar there is met, make one small edit to `strategy.md` and
-log it in that file's Changelog with the trades that motivated it. Most
-runs should NOT change `strategy.md` — stability is fine. Never touch
-`gates.md`.
+Follow `strategy.md`'s Adaptation policy. Most runs should NOT change
+`strategy.md`. Never touch `gates.md` or `framework.md`.
 
 ## 9. Commit and push
 
-Commit all changed files (`positions.md`, `trade_journal.md`, and
-`strategy.md` if adapted) with a message like:
-`run: 2026-08-10 premarket — 1 opened, 0 closed, 1 rejected by gates`
+Commit all changed files with a message like:
+`run: 2026-08-10 premarket — 1 opened (equity), 0 closed, 1 rejected by gates, regime: risk-on`
 
-Push to `main`. This is how the next run sees today's state — if you skip
-this step, all of today's work is lost for the next run.
+Push to `main`. If this step fails or is skipped, the next run starts
+blind to everything that happened today.
+
+## Handling errors gracefully
+
+- Premium/rate-limit error on any call: log it, skip that symbol/tier
+  (don't abort the whole run), prioritize finishing the position-review
+  step over scouting new ones, and note the truncation in the journal.
+- Never treat a data error as a reason to fall back to guessing a value —
+  skip the candidate instead.
 
 ## Hard rules, restated
 
-- Never call a Robinhood order-placement tool. This is a paper-trading
-  system; `MODE` in `gates.md` must be `PAPER` for any of this logic to
-  run at all.
-- Never edit `gates.md`.
+- Never call a real order-placement tool — equity or option.
+- Never edit `gates.md` or `framework.md`.
 - Never delete or rewrite past `trade_journal.md` entries.
+- Never read a full RSI/EMA/MACD/ATR/time-series file into context —
+  extract only what's needed via `jq`/`tail`.
 - Always commit and push before ending the run.
