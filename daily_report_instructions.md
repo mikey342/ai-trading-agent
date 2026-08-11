@@ -72,8 +72,11 @@ is how systematic data problems get noticed.
 `strategy.md` carries a pre-registered decision rule on the breakout
 momentum test. Each day, count the cumulative `action=reject` rows in
 `trade_log.csv` where `trigger=breakout` and the notes cite the momentum
-test, alongside the total breakout candidates that reached Tier 3. Report
-both as a running tally (e.g. "momentum test: 4 of 4 breakout candidates
+test — **deduplicated by (symbol, date)**, never raw rows. A name
+evaluated at more than one run in a day produces identical rejections,
+because daily-bar indicators don't move intraday; counting rows would
+reach the threshold on a fraction of the intended evidence. Report as a
+running tally (e.g. "momentum test: 3 of 3 distinct breakout candidates
 rejected, across 1 session"). State plainly whether the pre-registered
 threshold — ≥15 candidates over ≥10 sessions with ≥90% rejected — has
 been met. Do **not** propose changing the rule before it is met; that

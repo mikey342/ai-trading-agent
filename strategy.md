@@ -746,6 +746,14 @@ rationalization:
   least 10 trading sessions, **and** the momentum test rejects ≥ 90% of
   them. (Both conditions; a small sample or a short window does not
   count.)
+- **Count distinct symbol-days, never raw CSV rows.** A name evaluated at
+  the morning, midday, and pre-close runs produces up to three identical
+  rejections, because daily-bar indicators do not change intraday — only
+  price does. Counting rows would reach 15 in roughly five sessions of
+  duplicates and fire this rule on a third of the evidence it specifies.
+  Confirmed 2026-08-10: TECH was logged twice with byte-identical
+  indicator values, and the day's honest count is **3 distinct names**
+  (TECH, TXG, IMAX), not 4 rows.
 - **If triggered, the replacement is already chosen:** confirm breakouts
   with **volume expansion** instead of spread acceleration — require
   `Relative volume ≥ 1.5` from the Tier 0 scan, which costs nothing extra
@@ -759,4 +767,28 @@ rationalization:
   breakouts may be doing exactly its job.
 
 Track this by counting `action=reject` rows in `trade_log.csv` whose
-`trigger` is `breakout` and whose `notes` cite the momentum test.
+`trigger` is `breakout` and whose `notes` cite the momentum test —
+**deduplicated by (symbol, date)**.
+
+### Daily indicators do not move intraday — plan around it
+
+Confirmed 2026-08-10: TECH returned byte-identical EMA8, EMA21, RSI, ADX
+and ATR at both the 18:42 and 19:41 runs. Daily-interval indicators are
+computed from *completed* daily bars, so during a session they reflect
+data through the prior close and cannot change until the day closes.
+
+Two consequences the funnel should respect:
+
+1. **A candidate rejected on a daily-bar-only criterion earlier today
+   will be rejected again, deterministically.** The momentum test, RSI
+   band, and EMA-ordering checks all fall in this category. Re-running
+   them the same day cannot produce a different answer — it only burns
+   wall-clock time and writes duplicate rejection rows that corrupt the
+   tally above. Before advancing a candidate to Tier 2/3, check whether
+   `trade_log.csv` already holds a reject row for that symbol today
+   citing a daily-bar criterion; if so, skip it and do not log it again.
+2. **Price-based checks *do* change intraday** and remain worth
+   re-running: proximity to the 52-week high, price versus SMA(50), the
+   regime check, and every exit rule on open positions. This is what the
+   midday and pre-close runs are genuinely for — not re-deriving
+   indicators that cannot have moved.

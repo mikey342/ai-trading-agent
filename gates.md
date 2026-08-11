@@ -120,7 +120,15 @@ are a set; changing one alone re-breaks the coherence.
   session using this key — manual test runs and scheduled runs draw from
   the same pool)** caused a full data blackout on 2026-08-10: a scheduled
   run got zero usable Alpha Vantage calls because manual test runs earlier
-  the same day had exhausted it. Fix applied the same day: Robinhood's own
+  the same day had exhausted it.
+  **Budget check (2026-08-11):** a normal unattended day should use only
+  ~13 of the 25 — 1 premarket call per notable mover, plus 1
+  `MARKET_STATUS` and ≤3 `NEWS_SENTIMENT` on each of the three scan runs.
+  The blackout was caused by four manual triggers fired before the open,
+  not by the schedule. **Do not manually trigger routines on a trading
+  day**; each one can starve the real runs. The consequence is not
+  cosmetic: counter-trend trades require undegraded data, so an exhausted
+  quota disables that entire feature for the day. Fix applied the same day: Robinhood's own
   data tools (`get_equity_quotes`, `get_equity_fundamentals`,
   `get_equity_technical_indicators`, `get_earnings_results`) now cover
   almost the entire funnel with no observed daily cap — see `strategy.md`'s
