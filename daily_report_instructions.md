@@ -61,6 +61,17 @@ Any degraded inputs today — Alpha Vantage quota exhaustion, unavailable
 news sentiment, failed calls, market-closed fallbacks. Be specific; this
 is how systematic data problems get noticed.
 
+## Open-question tracking (include when relevant)
+`strategy.md` carries a pre-registered decision rule on the breakout
+momentum test. Each day, count the cumulative `action=reject` rows in
+`trade_log.csv` where `trigger=breakout` and the notes cite the momentum
+test, alongside the total breakout candidates that reached Tier 3. Report
+both as a running tally (e.g. "momentum test: 4 of 4 breakout candidates
+rejected, across 1 session"). State plainly whether the pre-registered
+threshold — ≥15 candidates over ≥10 sessions with ≥90% rejected — has
+been met. Do **not** propose changing the rule before it is met; that
+threshold exists precisely to stop a small sample from driving a change.
+
 ## Watch items
 Anything a human should look at: a position near its stop, a counter-trend
 trade in progress, a rule that behaved unexpectedly, a strategy.md

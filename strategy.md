@@ -715,8 +715,48 @@ Every run, after updating the journal:
      on every run.
 
   Watch next: whether the breakout momentum test keeps rejecting
-  everything once more sessions accumulate. A sustained 100% kill rate
-  would mean the breakout trigger (price near a 52-week high) and the
-  acceleration test are systematically at odds — plausible, since spreads
-  often peak *before* price reaches the high. Needs several days of data,
-  not one.
+  everything once more sessions accumulate. See the pre-registered
+  decision rule below.
+
+### Open question — breakout trigger vs. momentum acceleration
+
+There is a plausible structural conflict between Tier 2's breakout
+trigger and Tier 3's acceleration test, and it should be resolved by
+data rather than argument.
+
+**The mechanism.** `EMA8 − EMA21` is a rate-of-change proxy (the same
+construction as MACD). It widens when price *accelerates*, flattens when
+price rises at a steady rate, and narrows when price rises but
+decelerates — so it peaks *before* price peaks. Tier 2 fires on a level
+condition (price within 2% of a 52-week high); Tier 3 demands a
+derivative condition (rate of change at a 5-session maximum). Those
+coincide only in a violent thrust. In the common pattern — a grind up
+into old resistance, a pause, then a break — price sets new highs while
+the spread compresses.
+
+Observed 2026-08-10: all three distinct names (TECH, TXG, IMAX) were at
+or near new 52-week highs with decelerating spreads. Rejections were
+individually correct; the question is whether the combination is
+*systematically* unsatisfiable.
+
+**Pre-registered decision rule** — fixed in advance to prevent post-hoc
+rationalization:
+
+- **Trigger for change:** ≥ 15 breakout candidates reach Tier 3 across at
+  least 10 trading sessions, **and** the momentum test rejects ≥ 90% of
+  them. (Both conditions; a small sample or a short window does not
+  count.)
+- **If triggered, the replacement is already chosen:** confirm breakouts
+  with **volume expansion** instead of spread acceleration — require
+  `Relative volume ≥ 1.5` from the Tier 0 scan, which costs nothing extra
+  since the scan already returns it. This is what O'Neil and Qullamaggie
+  actually use to confirm a breakout ("volume surge on the upside break")
+  — a better-grounded criterion than a momentum oscillator for this
+  specific setup. The acceleration test would then be retired for
+  breakouts and remain retired for pullbacks.
+- **If not triggered:** change nothing. A low pass rate is not by itself
+  a defect — a selective filter that only admits genuinely accelerating
+  breakouts may be doing exactly its job.
+
+Track this by counting `action=reject` rows in `trade_log.csv` whose
+`trigger` is `breakout` and whose `notes` cite the momentum test.
