@@ -9,6 +9,7 @@ missing row means a page nobody can find.
 
 | Date | Report page | Headline |
 |---|---|---|
+| 2026-08-11 | [daily_report_2026-08-11](https://claude.ai/code/artifact/42c742e7-71bf-4d5f-94ad-10d2354c93fe) | First-ever fills — ACAD and PAYO opened, NAV -0.09%; index sleeve 5-for-5 blocked on volume |
 | 2026-08-10 | [daily_report_2026-08-10](https://claude.ai/code/artifact/8b49b5e6-578a-4789-90d1-2333f48e1584) | First live session — 0 trades, 4 Tier-3 rejections, 2 design bugs found |
 
 ---
