@@ -50,7 +50,9 @@ Holding period target: ~5-15 trading days (swing, not day trading).
   (overwritten fresh each morning).
 - `daily_report_instructions.md` — a fourth playbook, once daily at
   4:15pm ET after the close: summarizes the day's runs, fills, exits,
-  rejections, and data-quality problems into `daily_report.md`
+  rejections, and data-quality problems into a dated
+  `reports/daily_report_YYYY-MM-DD.md`, publishes it as its own
+  permanent page, and indexes the link in `reports/INDEX.md`
   (overwritten each day). Read-only everywhere else; takes no trading
   action.
 
@@ -61,7 +63,10 @@ Holding period target: ~5-15 trading days (swing, not day trading).
 | 9:15am | Premarket watchlist | Gap/catalyst context. Informational only. |
 | 9:30am · 2:30pm · 3:30pm | Scan | Full funnel, both directions. Can open positions and adapt `strategy.md`. |
 | 10am–4pm, hourly | Position monitor | Exits only. Costs nothing when the book is empty. |
-| 4:15pm | Daily report | Writes `daily_report.md`. No trading action. |
+| 4:15pm | Daily report | Writes a dated report to `reports/`, publishes it, indexes the link. No trading action. |
+
+**Reading the reports:** `reports/INDEX.md` is the map — one row per
+trading day, newest first, each linking to that day's permanent page.
 
 All trading runs sit inside regular market hours — never pre-open (stale
 or thin quotes), never post-close (a decision that could not be filled

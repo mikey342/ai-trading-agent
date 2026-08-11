@@ -6,8 +6,9 @@ to summarize what the system did today. **You take no trading action of
 any kind** — no scouting, no funnel, no positions opened or closed, no
 exits evaluated. Those belong to the scan and monitor routines.
 
-You write exactly one file: `daily_report.md`, overwritten fresh each
-day.
+You write one **dated** report per trading day into the `reports/`
+directory, plus a row in that directory's index. Nothing is ever
+overwritten — each day's report is permanent.
 
 ## 1. Gather today's activity
 
@@ -22,10 +23,16 @@ Read, and pull out only entries dated **today**:
 If there was no activity at all today (no runs logged, market holiday),
 say so in one line and stop — do not manufacture content.
 
-## 2. Write daily_report.md
+## 2. Write reports/daily_report_YYYY-MM-DD.md
 
-Overwrite the file with this structure. Keep it factual and short;
-this is a record, not an essay.
+Create a **new** file named for today's date in US/Eastern — e.g.
+`reports/daily_report_2026-08-11.md`. Use the trading day's date, not the
+UTC date: the 4:15pm ET slot is the same calendar day in both zones, but
+never assume that, and never overwrite a previous day's file. The
+filename becomes the published page's title, which is why it carries the
+date.
+
+Keep it factual and short; this is a record, not an essay.
 
 ```
 # Daily Report — YYYY-MM-DD
@@ -86,46 +93,48 @@ figures for a real account:
 > expense ratios, and dividends; expect live results to run modestly
 > worse. See `DATA_SCHEMA.md`.
 
-## 3. Publish the report as an Artifact
+## 3. Publish it as its own Artifact, then index it
 
-After writing `daily_report.md`, publish it as a shareable page — but
-treat this as **best-effort**: it must never block or fail the run.
+Each day gets a **permanent page of its own** — never update a previous
+day's page. Publishing is still **best-effort** and must never block or
+fail the run.
 
-1. Read `artifact_url.txt`. If it contains a URL, that is the existing
-   report page.
-2. Call the `Artifact` tool with `file_path` set to `daily_report.md`,
-   and — **critically** — pass that stored URL as the `url` parameter.
-   Without it, every run mints a brand-new link, because each scheduled
-   run is a separate session that didn't publish the original. Passing
-   `url` updates the same page in place so the human keeps one stable
-   bookmark.
+1. Call the `Artifact` tool with `file_path` set to today's file
+   (`reports/daily_report_YYYY-MM-DD.md`). **Do not pass a `url`
+   parameter** — omitting it is what mints a fresh page. Passing one
+   would overwrite a previous day's report, destroying the archive.
    - `description`: a one-line summary of the day (e.g. "2 positions
      opened, 1 closed, NAV +0.4%").
-   - `favicon`: keep it **stable** at `📊` across every run. A changing
-     favicon reads as a different page.
-3. If the call succeeds and returns a URL different from the stored one,
-   overwrite `artifact_url.txt` with the new URL so tomorrow's run
-   updates the right page.
-4. If `artifact_url.txt` is missing or empty, publish without `url` and
-   write the returned URL into that file.
+   - `favicon`: keep it **stable** at `📊` across every run, so all
+     reports are recognizable as the same series.
+2. Take the returned URL and **prepend a row to the table in
+   `reports/INDEX.md`** (newest first): the date, a markdown link titled
+   `daily_report_YYYY-MM-DD`, and a short headline for the day. Without
+   this row the page is effectively unfindable — the index is the only
+   map to the archive.
+3. Never edit or remove existing rows in `reports/INDEX.md`.
 
-**If the `Artifact` tool is unavailable in this environment**, or the
-call errors for any reason: do not retry in a loop and do not fail the
-run. Add one line to the report's Watch items noting that publishing was
-unavailable, then continue to the commit step. The committed
-`daily_report.md` is the source of truth; the artifact is a convenience
-layer on top of it.
+**If the `Artifact` tool is unavailable** or the call errors: do not
+retry in a loop and do not fail the run. Add one line to the report's
+Watch items noting that publishing was unavailable, add the index row
+with `(not published)` in place of the link, and continue to the commit
+step. The committed markdown is the source of truth; the artifact is a
+convenience layer on top of it.
 
 ## 4. Commit and push
 
 Commit as `report: YYYY-MM-DD daily summary` and push to `main` —
-including `artifact_url.txt` if it changed.
+including the new `reports/daily_report_YYYY-MM-DD.md` and the updated
+`reports/INDEX.md`.
 
 ## Hard rules
 
 - Never call any order-placement tool.
 - Never open, close, or size a position.
 - Never edit `gates.md`, `framework.md`, `strategy.md`, `positions.md`,
-  `trade_log.csv`, or `trade_journal.md` — this routine is read-only
-  everywhere except `daily_report.md` and `artifact_url.txt`.
+  `trade_log.csv`, or `trade_journal.md` — this routine may only create
+  today's `reports/daily_report_YYYY-MM-DD.md` and prepend a row to
+  `reports/INDEX.md`.
+- Never overwrite a previous day's report file or republish over a
+  previous day's page. The archive is permanent.
 - Never invent activity. An empty day is a valid, useful report.
