@@ -53,15 +53,25 @@ and 3:30pm ET** — all of them *inside* regular market hours:
    normal US trading hours (9:30am-4pm ET, weekdays) based on the current
    time, and note the fallback in the journal. If the market is closed for
    a holiday, log a one-line journal entry and end the run.
-2. Call `get_equity_quotes` (Robinhood) for **SPY**, and
-   `get_equity_technical_indicators` (Robinhood, SPY, type=sma, period=200,
-   interval=day, output=latest) to get SPY's 200-day SMA. This sets the
-   **direction mode for the whole run**: SPY > SMA(200) → **LONG mode**
-   (stock sleeve via equity or bull ETFs, plus optionally a 2x long index
-   ETF); SPY < SMA(200) → **SHORT mode** (stock sleeve via bear ETFs, plus
-   optionally an inverse index ETF). Never short a stock, never use
-   margin, in either mode — see `gates.md`. Record the mode explicitly in
-   the journal.
+2. **Set direction.** Call `get_equity_quotes` for **SPY** and
+   `get_equity_technical_indicators` (SPY, sma, period=200, output=latest).
+   SPY > SMA(200) → **LONG mode**; SPY < SMA(200) → **SHORT mode**.
+   **Require 3 consecutive daily closes on the far side before flipping**
+   an established direction — pull `output="last:5"` on the SMA and
+   compare against recent closes rather than flipping on today alone.
+   Never short a stock, never use margin, in either mode.
+
+3. **Set risk level** (independent of direction — see `strategy.md`):
+   - `get_equity_technical_indicators` (SPY, sma, period=50, output=latest)
+   - `get_indexes` for VIX (id `3b912aa2-88f9-4682-8ae3-e39520bdf4db`),
+     then `get_index_quotes` for its current level
+   - **NORMAL** (SPY > 50DMA and VIX < 20) → full rules
+   - **CAUTION** (SPY < 50DMA **or** VIX 20-25) → max **1** new trade this
+     run, no new index-sleeve entries, **counter-trend disabled**
+   - **STRESSED** (VIX ≥ 25) → **no new entries at all**; still review and
+     exit existing positions normally
+   Take the **worse** of the two readings. Record both direction and risk
+   level explicitly in the journal.
    Existing positions are reviewed and exited in either mode, regardless
    of which way the regime currently points.
 
@@ -144,8 +154,10 @@ anything below **$20M/day**. Share volume alone is a poor liquidity
 measure across price levels; see `strategy.md`.
 
 Rank client-side (free) primarily by `Average directional index (14)`
-descending, using `Relative options volume` as a tiebreaker, and take the
-**top 15** into Tier 1. This is the entire candidate universe for the run
+descending, using `Relative options volume` as a tiebreaker. **Multiply
+the score by 1.15 for any symbol listed in `ai_theme.md`** — a tilt, not
+a filter; non-AI names still displace AI names when they rank higher.
+Take the **top 15** into Tier 1. This is the entire candidate universe for the run
 — there is no hardcoded watchlist anymore. If `run_scan` fails, fall back
 to screening a small diversified set of liquid large-caps and flag it in
 the journal as degraded operation.
@@ -212,9 +224,15 @@ Before simulating any entry, in order:
 2. Would this breach max position size / max premium at risk?
 3. Has the daily loss halt already triggered today (check `positions.md`
    NAV history for today's row, if one exists from an earlier run today)?
-4. Would this exceed max new trades this run, or max open positions
+4. Would this exceed max new trades this run (**1 if risk level is
+   CAUTION**, 2 if NORMAL, **0 if STRESSED**), or max open positions
    (all sleeves combined)? If counter-trend, would it exceed the
-   **1 counter-trend position** limit?
+   **1 counter-trend position** limit — and is counter-trend even
+   permitted at the current risk level?
+4b. **Sector concentration:** would this make a 4th position in the same
+   sector? Max 3 of 6 per sector (`sector` from `get_equity_fundamentals`).
+   Correlated positions don't stop out independently, and the risk math
+   assumes they roughly do.
 5. Does the stop-loss respect the `gates.md` floor?
 6. (Options only) Does it pass DTE / delta / OI / spread gates?
 7. (Leveraged ETF only) Is this the *only* index-sleeve position (never a

@@ -33,7 +33,10 @@ specific rule is actually earning its place).
 | `instrument` | all | `equity`, `leveraged_etf`, or `option`. |
 | `direction` | all | `bullish` or `bearish` — which template the setup passed. |
 | `counter_trend` | all | `true` if the setup ran against the SPY regime (bearish while SPY > SMA(200), or bullish while below), `false` otherwise. Counter-trend trades are capped at 1 open, sized at half risk, and require undegraded data — so this column is the key one for later checking whether that allowance earned its place or just added losses. |
-| `mode` | all | `LONG` or `SHORT` — the SPY regime at the time, set by SPY vs its SMA(200). Note this no longer gates which direction is *examined* (both always are); it determines which passes count as counter-trend. |
+| `sector` | all | From `get_equity_fundamentals`. Drives the max-3-per-sector concentration cap, and lets performance be sliced by sector later. |
+| `ai_theme` | all | `true` if the symbol is in `ai_theme.md` (which grants a 1.15× ranking tilt), else `false`. **This is the column that settles whether the AI tilt earns its place** — compare win rate and average R for `true` vs `false` once enough trades close. Tilt on evidence, not conviction. |
+| `risk_level` | all | `NORMAL` / `CAUTION` / `STRESSED` at decision time — the worse of SPY-vs-50DMA and VIX. Records the conditions a trade was taken under, so a bad stretch can be checked against the regime it happened in. |
+| `mode` | all | `LONG` or `SHORT` — the SPY direction regime, set by SPY vs its SMA(200) with 3-day confirmation. Note this no longer gates which direction is *examined* (both always are); it determines which passes count as counter-trend. |
 | `qty` | open/close | Shares, or contracts for options. |
 | `effective_exposure` | open/close | Notional **after** applying the 2x multiplier for leveraged ETFs; equals `notional` otherwise. This is what gross-exposure limits are checked against. |
 | `adx14` | all | Trend strength from the Tier 0 scan. |

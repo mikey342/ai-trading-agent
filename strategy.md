@@ -63,12 +63,20 @@ didn't meet the strategy's own criteria. It also made the
 relative-strength ranking nearly meaningless: ranking 19 pre-selected
 mega-caps against each other is not a cross-sectional signal.
 
-**Narrowing for the funnel:** ~96 is far more than Tier 1 can process.
+**Narrowing for the funnel:** ~116 is far more than Tier 1 can process.
 Rank the scan results client-side (free — the scan already returned these
 columns) by a blend of `Average directional index (14)` (trend strength)
 and `Relative options volume` (unusual positioning — a public,
 exchange-derived early-interest signal), then take the **top 15** into
-Tier 1. Weight ADX primarily; use relative options volume as the
+Tier 1.
+
+**AI theme tilt.** Multiply the ranking score by **1.15** for any symbol
+listed in `ai_theme.md`. This is a tilt, not a filter: it makes AI names
+likelier to reach the top 15 without excluding anything else, and a
+non-AI name still displaces an AI name if it ranks higher on merit. The
+boost is deliberately modest — large enough to surface the theme, too
+small to promote a weak setup over a strong one. See `ai_theme.md` for
+why tilting beats filtering here. Weight ADX primarily; use relative options volume as the
 tiebreaker rather than the main sort, since unusual options activity is
 suggestive, not directional on its own — it can precede a move either
 way, and it is not a substitute for the trend template. If the scan
@@ -100,6 +108,64 @@ Vantage is reserved for the handful of things only it provides.
 | `MARKET_STATUS` | Alpha Vantage | Cheap, used once per run for the open/closed check. If Alpha Vantage's daily quota is exhausted, treat the market as open during normal US trading hours as a fallback rather than skipping the run entirely — this check doesn't need Alpha Vantage specifically. |
 | `TIME_SERIES_DAILY_ADJUSTED`, `MACD` (Alpha Vantage) | Alpha Vantage | **Blocked** — premium-only on the current plan. Never call either; Robinhood's `get_equity_technical_indicators` (type=macd) covers the MACD need if it's ever wanted again. |
 | `INSTITUTIONAL_HOLDINGS`, `INSIDER_TRANSACTIONS`, `EARNINGS_CALL_TRANSCRIPT`, `EARNINGS_ESTIMATES` | Alpha Vantage | Not used in the regular funnel — reserved for occasional, deliberate deep-dives on a specific name, never a full-universe pull. |
+
+## Regime: two independent dimensions
+
+Direction and risk level are separate questions and are measured
+separately. **Direction** says which way to hunt; **risk level** says how
+much to commit.
+
+### Direction — SPY vs its 200-day SMA, 3-day confirmed
+
+Unchanged as the primary signal, and deliberately slow. This answers
+"what is the market's structural regime?" — not "when do I enter," which
+the 8/21 EMAs and the momentum test already handle. Faber's 10-month SMA
+model (≈200 days) cut maximum drawdown from 46% to under 13% while
+staying invested ~70% of the time at under one round trip per year; that
+is the benchmark this filter is drawn from.
+
+**New: require 3 consecutive daily closes on the far side before
+flipping.** A single close through the 200DMA is the classic whipsaw, and
+published work on 200DMA timing finds 3-5 days of confirmation the right
+balance between cutting false flips and arriving too late. Confirmation
+applies *only* to the direction flip, never to the risk levels below —
+those should react immediately.
+
+### Risk level — SPY vs its 50-day SMA, and VIX
+
+The 200DMA's weakness is lag: SPY can fall 10-15% before crossing it, and
+for that entire window the system would still treat bullish setups as
+with-trend and make bearish ones *harder*. That is backwards during a
+decline. The risk level catches deterioration far earlier without
+flipping the regime on noise.
+
+| Level | Trigger (worst of the two applies) | Effect |
+|---|---|---|
+| **NORMAL** | SPY > SMA(50) **and** VIX < 20 | Full rules |
+| **CAUTION** | SPY < SMA(50), **or** VIX 20–25 | Max **1** new trade this run; no new index-sleeve entries; **counter-trend disabled** |
+| **STRESSED** | VIX ≥ 25 | **No new entries of any kind.** Existing positions are still reviewed and exited normally |
+
+Always take the **worse** of the two readings. Existing positions are
+managed identically at every level — risk level gates *new* commitment
+only, never exits.
+
+**VIX thresholds are calibrated to observed distribution, not guessed.**
+Measured over the 12 months to 2026-08-11: VIX spent most weeks at
+14–20, ran 20–24 in three elevated stretches, and reached 26–31 (peak
+35.3) in the March 2026 selloff. Current level 15.46.
+
+**The March 2026 episode is why this layer exists.** VIX crossed 25 in
+early March — roughly *three weeks before* SPY bottomed on 3/30. SPY fell
+about 17%, so the 200DMA cross fired too, but considerably later. VIX
+gave the earlier warning, which is precisely the lag the direction signal
+cannot fix on its own.
+
+**Honest caveat:** these thresholds are conventions fitted to one year of
+data, not backtested parameters. 20 and 25 are round numbers that match
+the observed regimes; they are not optimized. If VIX's own baseline
+shifts materially — a sustained high-volatility era where 22 is the new
+normal — these need revisiting, since a fixed threshold would then read
+"caution" permanently and disable counter-trend for months.
 
 ## Direction mode — set once per run, before Tier 1
 
@@ -744,6 +810,13 @@ Every run, after updating the journal:
   plainly in the journal and propose tightening or suspending them — that
   allowance was made on a contested argument and should be judged on its
   own record. The reverse also holds: if they are clearly working, note it.
+- **Check the `ai_theme` column the same way.** The 1.15× tilt was added
+  on a plausible thesis (AI names are high-beta and high-ADX, which suits
+  momentum), not on evidence from this system. Once ≥10 trades have
+  closed on each side, compare win rate and average R for `true` vs
+  `false`. If AI names are not outperforming, say so and propose removing
+  the tilt — a theme bet that isn't paying is just concentration risk
+  with extra steps.
 - If a specific, named parameter above (RSI pullback band, EMA periods,
   ATR stop multiplier, risk-per-trade %, relative-strength threshold, DTE/
   delta targets) is associated with a losing pattern across ≥5 of the last
