@@ -86,9 +86,40 @@ figures for a real account:
 > expense ratios, and dividends; expect live results to run modestly
 > worse. See `DATA_SCHEMA.md`.
 
-## 3. Commit and push
+## 3. Publish the report as an Artifact
 
-Commit as `report: YYYY-MM-DD daily summary` and push to `main`.
+After writing `daily_report.md`, publish it as a shareable page — but
+treat this as **best-effort**: it must never block or fail the run.
+
+1. Read `artifact_url.txt`. If it contains a URL, that is the existing
+   report page.
+2. Call the `Artifact` tool with `file_path` set to `daily_report.md`,
+   and — **critically** — pass that stored URL as the `url` parameter.
+   Without it, every run mints a brand-new link, because each scheduled
+   run is a separate session that didn't publish the original. Passing
+   `url` updates the same page in place so the human keeps one stable
+   bookmark.
+   - `description`: a one-line summary of the day (e.g. "2 positions
+     opened, 1 closed, NAV +0.4%").
+   - `favicon`: keep it **stable** at `📊` across every run. A changing
+     favicon reads as a different page.
+3. If the call succeeds and returns a URL different from the stored one,
+   overwrite `artifact_url.txt` with the new URL so tomorrow's run
+   updates the right page.
+4. If `artifact_url.txt` is missing or empty, publish without `url` and
+   write the returned URL into that file.
+
+**If the `Artifact` tool is unavailable in this environment**, or the
+call errors for any reason: do not retry in a loop and do not fail the
+run. Add one line to the report's Watch items noting that publishing was
+unavailable, then continue to the commit step. The committed
+`daily_report.md` is the source of truth; the artifact is a convenience
+layer on top of it.
+
+## 4. Commit and push
+
+Commit as `report: YYYY-MM-DD daily summary` and push to `main` —
+including `artifact_url.txt` if it changed.
 
 ## Hard rules
 
@@ -96,5 +127,5 @@ Commit as `report: YYYY-MM-DD daily summary` and push to `main`.
 - Never open, close, or size a position.
 - Never edit `gates.md`, `framework.md`, `strategy.md`, `positions.md`,
   `trade_log.csv`, or `trade_journal.md` — this routine is read-only
-  everywhere except `daily_report.md`.
+  everywhere except `daily_report.md` and `artifact_url.txt`.
 - Never invent activity. An empty day is a valid, useful report.
