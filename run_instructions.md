@@ -234,24 +234,52 @@ check later whether it actually predicted anything.
 Drop anything failing the remaining checks. `MACD` (Alpha Vantage) is
 permanently premium-gated and must never be called.
 
-## 4. Decide instrument: equity, options, or skip
+## 4. Decide instrument: equity, leveraged ETF, or options
 
-For each finalist that survives Tier 3:
-- Default to equity.
-- Consider an options expression only if it clearly improves capital
-  efficiency for this specific signal. The lookup is **three steps**
-  (verified — see `tool_verification.md`): `get_option_chains`
-  (chain + expirations) → `get_option_instruments` (contract UUIDs for
-  the chosen expiration/type/strike) → `get_option_quotes` (delta,
-  open_interest, bid/ask, Greeks). Evaluate against the DTE/delta/
-  liquidity gates in `gates.md`. If no expiration/strike meets all of
-  them, use equity instead — do not loosen the options gates to force a
-  fit.
+**This is mechanical — do not treat it as a judgement call.** See
+`strategy.md`, "Instrument selection," for the reasoning.
+
+Compute both share counts (you need them for sizing anyway):
+
+```
+shares_risk = floor(risk_budget / stop_distance)   # 0.4% NAV, 0.2% counter-trend
+shares_cap  = floor(0.15 x NAV / price)            # the 15% position cap
+```
+
+**If `shares_risk <= shares_cap` → PLAIN EQUITY.** The risk budget binds,
+so the position already carries its intended risk. Leverage would
+overshoot the target and add decay for nothing. This is the default and
+the common case.
+
+**If `shares_risk > shares_cap` → the cap binds and the position is
+under-risked. A leveraged ETF may be used**, but only if every one holds:
+- a mapped ETF exists for the name, clears the 100K-share floor, and the
+  order is ≤ 1% of its 30-day ADV
+- the underlying's **ATR ≤ 4% of price** (decay gate)
+- its leverage is **verified per instrument** (several bear ETFs are −1x)
+- gross exposure stays ≤ 1.3x NAV after the 2x multiplier
+- sizing uses the **ETF's own ATR**, not the underlying's
+
+If any fails, use plain equity and accept the under-risked position. An
+under-risked position is a smaller win; a wrong instrument is a new way
+to lose.
+
+**Options — only when the premium actually fits** the 3%-of-NAV cap
+($300 at current NAV), which on a $200+ underlying it usually will not.
+The reason to choose them is **gap protection**: max loss is the premium
+regardless of how far price gaps, whereas a stock can gap through its
+stop. Not for leverage — the ETF path is simpler with no expiration to
+manage. Lookup is **three steps** (see `tool_verification.md`):
+`get_option_chains` → `get_option_instruments` → `get_option_quotes`.
+Evaluate against the DTE/delta/liquidity gates in `gates.md`; if nothing
+fits, use equity rather than loosening a gate.
 - If choosing options: compute the underlying stop/R-target using the same
-  ATR-based math as equity (see `strategy.md`), and record them in
-  `positions.md`'s `Underlying stop`/`Underlying R-target` columns at
-  entry — this is what future runs will check against, not a
-  recalculation.
+  ATR-based math as equity, and record them in `positions.md`'s
+  `Underlying stop`/`Underlying R-target` columns at entry — that is what
+  future runs check against, never a recalculation.
+
+**In SHORT mode there is no choice:** shorting stock is forbidden, so a
+bearish signal is a bear ETF or no trade.
 
 ## 5. Gate every proposed trade
 

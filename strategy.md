@@ -687,6 +687,79 @@ long puts or a put debit spread — so the actual capital at risk is the
 premium, and these underlying levels are the trigger prices used to
 decide when to close, exactly as described in the options overlay below.
 
+## Instrument selection — which vehicle expresses the signal
+
+Once a candidate clears Tier 3, decide *how* to express it. This is a
+mechanical rule, not a judgement call.
+
+**The governing insight: under ATR-based sizing, leverage does not
+increase your risk — it increases your capital efficiency.** A 2x ETF has
+roughly 2x the ATR, so `stop_distance` doubles and the share count
+halves. Same dollar risk, half the capital. Leverage therefore only earns
+its place when **the 15% position cap prevents reaching the risk
+target** — never as a way to "bet bigger."
+
+### The decision procedure
+
+Compute both share counts first (you already do this for sizing):
+
+```
+shares_risk = floor(risk_budget / stop_distance)      # 0.4% NAV (0.2% counter-trend)
+shares_cap  = floor(0.15 x NAV / price)               # the 15% position cap
+```
+
+**1. If `shares_risk <= shares_cap` → PLAIN EQUITY.**
+The risk budget binds, meaning the position already reaches its intended
+risk within the cap. Leverage here would *overshoot* the risk target,
+and adds decay and an extra failure mode for nothing. This is the common
+case and the default.
+
+**2. If `shares_risk > shares_cap` → the cap is binding and the position
+is under-risked. Consider a leveraged ETF**, but only if *all* hold:
+   - A mapped ETF exists for that name (see the table below) clearing
+     the 100K-share floor, with the order ≤ 1% of its 30-day ADV
+   - Underlying **ATR ≤ 4% of price** (the decay gate in `gates.md`)
+   - Leverage **verified per instrument** — several bear ETFs are −1x,
+     not −2x
+   - Gross exposure stays ≤ 1.3x NAV after applying the 2x multiplier
+   - Size off the **ETF's own ATR**, not the underlying's
+
+   If any fails, fall back to plain equity and accept being under-risked.
+   An under-risked position is a smaller win; a badly chosen instrument
+   is a new way to lose.
+
+**3. Options — only when the premium genuinely fits.**
+At the current $10,000 NAV the 3% premium cap is **$300**, and a
+near-the-money contract on a $200+ underlying routinely costs $900+, so
+this path is usually unavailable rather than unattractive. When it does
+fit (debit spreads, lower-priced underlyings), the reason to prefer it is
+specific: **an option's maximum loss is the premium regardless of gaps**,
+whereas a stock can gap straight through its stop. That is the only thing
+options offer here that the other two do not. Use them when gap risk is
+the concern, not for leverage — the ETF path is simpler and has no
+expiration to manage.
+
+**SHORT mode has no choice to make.** Shorting stock is forbidden, so a
+bearish signal is either a bear ETF or no trade at all.
+
+### Worked example (2026-08-11 dry run)
+
+| Symbol | `shares_risk` | `shares_cap` | Binding | Instrument |
+|---|---|---|---|---|
+| NTAP | 6 | 7 | risk budget | **plain equity** |
+| BFLY | 137 | 154 | risk budget | **plain equity** |
+| ACA* | 29 | 10 | **position cap** | leverage candidate |
+
+*ACA did not pass Tier 2, but illustrates the case: its ATR is 0.62% of
+price, so reaching a 0.4% risk target needs a ~42%-of-NAV position. The
+cap holds it to 15%, landing at 0.14% risk — a third of target. That is
+precisely the situation leverage is for.
+
+Note the pattern: **low-volatility names are the ones that want
+leverage**, because a tight stop needs a large position to carry normal
+risk. High-volatility names never need it — and the ATR ≤ 4% decay gate
+independently blocks them, so the two rules agree rather than conflict.
+
 ## Options overlay (defined-risk only — see gates.md for hard limits)
 
 Used only to express a signal that already passed Tiers 1-3, when it makes
