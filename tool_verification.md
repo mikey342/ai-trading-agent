@@ -162,7 +162,63 @@ later:
 If a macro rule is ever added, pre-register it with a falsifiable trigger
 like every other change here.
 
-## Social sentiment (StockTwits / Reddit) — assessed, deprioritized
+## Stocktwits — connected 2026-08-11, scoped narrowly
+
+Connector added and verified live. Tools: `get_sentiment`,
+`get_sentiment_history`, `get_message_volume`, `get_symbol_pulse`,
+`get_trending_symbols`, `get_symbol_messages`. Read-only.
+
+**Coverage does not match this system's universe.** Measured on real
+candidates:
+
+| Symbol | Message volume ("now") | Sentiment | Verdict |
+|---|---|---|---|
+| NVDA | 93,317 | score 61, 78.9% bull, 658K watchers | Rich |
+| IMAX | 1,635 (1.7% of NVDA) | score 47 NEUTRAL — despite "100% bullish" | Marginal |
+| **TECH** | — | **empty data array** | **None** |
+
+TECH was the **#1-ranked candidate** on 2026-08-10 and has no Stocktwits
+data at all. This is structural: the Tier 0 screener selects for ADX > 25
+plus a $2B+ market cap, which surfaces mid-cap names in strong trends,
+while retail chatter concentrates in mega-caps and meme stocks. Roughly a
+third of a typical top-15 has meaningful coverage.
+
+**The `bullish_pct` field is a trap on thin names.** IMAX returned
+`bullish_pct: 100, bearish_pct: 0` — which reads as overwhelming
+consensus but is computed from a handful of tagged messages. The
+canonical `score` was 47 (neutral). The tool's own documentation calls
+`bullish_pct` a "retained legacy tagged-message metric." **Use `score`
+and `label`; never gate on `bullish_pct`.**
+
+### Where it is used
+
+1. **Premarket routine — catalyst identification.** This is the good fit.
+   That routine already hunts for *why* a name gapped, currently via
+   quota-limited Alpha Vantage news. Stocktwits posts answer that
+   directly, and a gapping stock is far likelier to have chatter than an
+   arbitrary screener hit. Also saves Alpha Vantage quota.
+2. **Tier 3 — logged, never gating.** Record `score`, `label`, and
+   message volume into `trade_log.csv` where coverage exists; write
+   `NO_COVERAGE` otherwise. This measures whether the signal predicts
+   anything before it is allowed to influence anything.
+
+### Where it is deliberately not used
+
+- **Not a gate, in either direction.** Coverage is too sparse and too
+  correlated with "is this a retail favorite," which is not a quality we
+  are trying to select for.
+- **Not `get_trending_symbols` as a universe source.** That would pull
+  the funnel toward meme names the market-cap, liquidity, and ADX filters
+  deliberately exclude.
+- **The hypothesis worth testing is contrarian.** Extreme bullish
+  sentiment plus extreme message volume on a stock already at a 52-week
+  high is a plausible distribution signature — the crowd arriving late.
+  If sentiment ever earns a gating role, that is the direction the
+  evidence would have to support. Wiring it as confirmation ("only buy
+  when the crowd is bullish") would risk making entries *worse* at
+  precisely the moments that matter.
+
+## Reddit — still unavailable, assessed and deprioritized
 
 The one capability neither connector provides. Three routes, all with real
 obstacles:

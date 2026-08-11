@@ -474,6 +474,15 @@ For candidates passing Tier 2:
    read.)
 4. `get_equity_technical_indicators` (Robinhood, type=atr, period=14,
    output=latest): needed for sizing and the stop below.
+5. **`get_sentiment` (Stocktwits) — logged, never gating.** Record
+   `score`, `label`, and message volume into `trade_log.csv`; write
+   `NO_COVERAGE` when the call returns an empty data array, which happens
+   for roughly two-thirds of candidates. **This never blocks or approves
+   a trade.** Coverage correlates with "is this a retail favorite," which
+   is not a quality this system selects for — TECH, the top-ranked
+   candidate on 2026-08-10, had no coverage at all. Use `score`/`label`,
+   never `bullish_pct` (see `tool_verification.md` for why that field
+   lies on thin names).
 
 A candidate that fails any Tier 3 check is dropped, not force-fit.
 
@@ -878,6 +887,15 @@ Every run, after updating the journal:
   compare its win rate and average R against the other triggers. If it
   underperforms, remove it — a trigger that only adds trades is worse
   than no trigger.
+- **Check the `social_*` columns once coverage accumulates.** These are
+  logged and never gate anything. The hypothesis worth testing is
+  **contrarian**: extreme bullish sentiment *plus* extreme message volume
+  on a stock already at a 52-week high is a plausible distribution
+  signature — the crowd arriving late. If a gating role is ever proposed,
+  the evidence must support that direction. Wiring it as confirmation
+  ("only enter when the crowd is bullish") would risk making entries
+  worse exactly when it matters most. Expect ~2/3 of rows to read
+  `NO_COVERAGE`; that is a property of the universe, not a bug.
 - **Check the `ai_theme` column the same way.** The 1.15× tilt was added
   on a plausible thesis (AI names are high-beta and high-ADX, which suits
   momentum), not on evidence from this system. Once ≥10 trades have

@@ -50,6 +50,9 @@ specific rule is actually earning its place).
 | `composite_rank` | all | The value+momentum tiebreaker score from `strategy.md`. |
 | `trigger` | open/reject | Which entry rule fired. LONG: `breakout_52w`, `breakout_20d`, `pullback`. SHORT: `breakdown_52w`, `breakdown_20d`, `rally_to_resistance`. When both breakout triggers qualify, record the stronger one (`breakout_52w`). **Slice performance by this column** — `breakout_20d` is the weaker level signal and was added to fill a coverage gap; if it underperforms the other two once trades close, it should be removed rather than kept on the argument that introduced it. |
 | `news_sentiment` | all | Score, or the literal `UNAVAILABLE` when the Alpha Vantage quota was exhausted (see `strategy.md`'s degradation rule). Never fabricate this. |
+| `social_score` | all | Stocktwits `sentiment.score` (0-100) at decision time, or `NO_COVERAGE`. **Never `bullish_pct`** — on thin names that reads as false consensus (IMAX showed "100% bullish" against a canonical score of 47). |
+| `social_label` | all | Stocktwits `sentiment.label` (Extremely Bearish … Extremely Bullish), or `NO_COVERAGE`. |
+| `social_msg_volume` | all | Stocktwits `message_volume.score` (0-100 normalized) — the "is anyone talking about this" measure. Expect `NO_COVERAGE` on roughly two-thirds of candidates; the screener selects mid-caps in strong trends, which is not where retail chatter lives. |
 | `earnings_days_away` | all | Days to next earnings report; blackout is <3. |
 | `regime` | all | `risk-on` / `risk-off` — SPY vs its 200-day SMA. |
 | `strike`, `expiration`, `delta_at_entry`, `iv_at_entry`, `dte_at_entry`, `underlying_price` | options only | Blank for equity rows. |

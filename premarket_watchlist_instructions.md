@@ -35,13 +35,26 @@ Flag a symbol as **notable** if `|gap_pct| >= 2%`.
 ## 3. Light catalyst check — notable movers only
 
 To keep this cheap, only do this for symbols flagged notable in step 2
-(not the whole universe):
-- `get_earnings_results` (Robinhood): did this symbol report earnings
-  this morning (report date = today)? If so, note actual vs. estimate.
-- `NEWS_SENTIMENT` (Alpha Vantage, limit=5, this symbol only): a quick
-  read on whether there's an obvious news catalyst. Use sparingly — this
-  is the one Alpha Vantage call in this routine, keep it to notable
-  movers only, not the full universe.
+(not the whole universe). Work in this order and stop as soon as the move
+is explained:
+
+1. `get_earnings_results` (Robinhood): did this symbol report earnings
+   this morning (report date = today)? If so, note actual vs. estimate.
+2. **`get_symbol_pulse` (Stocktwits)**: its recent posts usually state
+   *why* a stock is moving, which is exactly what this step needs — and a
+   gapping name is far likelier to have chatter than an arbitrary
+   screener hit. Costs **no Alpha Vantage quota**. If it returns an empty
+   data array, the symbol simply has no coverage; note that and move on.
+   That is common for mid-caps and is not an error.
+3. `NEWS_SENTIMENT` (Alpha Vantage, limit=5, this symbol only): **only if
+   steps 1-2 left the move unexplained.** This is the one Alpha Vantage
+   call in this routine, and the quota it draws from is shared with the
+   scan runs — preserve it.
+
+When quoting Stocktwits, use `sentiment.score` and `sentiment.label`, not
+`bullish_pct`. On thinly-covered names `bullish_pct` is computed from a
+handful of tagged messages and reads as false consensus — IMAX returned
+"100% bullish" against a canonical score of 47 (neutral) on 2026-08-11.
 
 If no clear catalyst is found, say so plainly ("gapping, no obvious
 catalyst found") rather than guessing one.
