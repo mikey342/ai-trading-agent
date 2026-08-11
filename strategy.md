@@ -245,6 +245,18 @@ candidate qualifies if **either**:
   < SMA(50) (a bounce inside an intact downtrend, not a genuine reversal)
   AND EMA21 is flat-to-falling over the last 5 values
 
+**The short mirror is "short the bounce," not "short the dip."** Note the
+RSI band for a short entry (55-65) sits *above* neutral, not below — the
+setup wants the stock to have rallied into resistance so the entry is
+against strength that is likely to fail. A weak RSI reading is
+explicitly *not* a short signal: selling something that has already
+fallen hard invites the snapback. Worked example, 2026-08-10: TSLA passed
+the bearish trend template but sat at RSI 41.4 and 15% above its 52-week
+low — too little bounce for a rally entry, too far off the low for a
+breakdown. Correctly declined. (41.4 would have been a valid *long*
+pullback reading, which is exactly the asymmetry: the mirror of buying a
+dip is shorting a rally, not shorting a decline.)
+
 ## Tier 3 — Confirmation (finalists only, cap at 3 per run per gates.md)
 
 For candidates passing Tier 2:

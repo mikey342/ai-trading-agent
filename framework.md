@@ -61,6 +61,18 @@ of pieces from each, not a pure implementation of any one:
    stop. The core idea we borrow: **volatility-normalized position sizing
    and stops**, not fixed percentages.
 
+   **Why specifically the 52-week high** (the level `strategy.md`'s
+   breakout trigger uses): at a 52-week high, essentially no one who
+   bought in the past year is underwater, so there is no reservoir of
+   trapped holders selling into strength just to get back to even —
+   overhead supply is thin. This is Tier A evidence, not just
+   practitioner lore: **George & Hwang (2004), "The 52-Week High and
+   Momentum Investing," *Journal of Finance*** found that nearness to the
+   52-week high predicts future returns *better than past returns
+   themselves*, making it one of the more robust momentum variants. The
+   2% window means the breakout is imminent or underway rather than
+   already extended.
+
 2. **Trend template / stage analysis (Minervini's SEPA)** — Mark
    Minervini's published methodology (*Trade Like a Stock Market Wizard*):
    a stock must be in a confirmed uptrend (price > 50DMA > 150/200DMA, DMAs
