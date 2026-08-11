@@ -119,7 +119,8 @@ setup and log it as a counter-trend rejection. Never downgrade a failed
 counter-trend setup into a normal trade.
 
 For any bear ETF, confirm via `get_equity_fundamentals` both that it
-clears the 1M-share liquidity floor and **what its actual leverage is**
+clears the 100K-share liquidity floor (and that the order is ≤ 1% of its
+30-day ADV) and **what its actual leverage is**
 (several are −1x, not −2x — never infer it from the bull-side ticker).
 
 **Index sleeve — regime-aligned only.** Consider **one** index position:
@@ -132,10 +133,15 @@ Never short a stock and never use margin, in any circumstance.
 ### Tier 0 — universe (one call)
 Call `run_scan` with `scan_id: de1b1994-b5db-472a-9b79-c052f1215193`
 ("Swing Agent - Trend Candidates"). This returns live market-wide results
-already filtered on market cap > $2B, price > $5, 30d avg volume > 1M,
+already filtered on market cap > $2B, price > $5, 30d avg volume > 250K,
 ADX(14) > 25, RSI(14) 25-75, and relative options volume > 0.5 — with all
 those values included per row, so no extra calls are needed to read them.
-Note the total match count in the journal (~96 at last check).
+Note the total match count in the journal (~116 at last check).
+
+**Then apply the dollar-volume screen client-side** (free — the data is
+already in the response): compute `Last × Average volume` and drop
+anything below **$20M/day**. Share volume alone is a poor liquidity
+measure across price levels; see `strategy.md`.
 
 Rank client-side (free) primarily by `Average directional index (14)`
 descending, using `Relative options volume` as a tiebreaker, and take the

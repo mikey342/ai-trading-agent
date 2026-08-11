@@ -24,14 +24,34 @@ list:
   `Average volume`, `Relative volume`, `% Change` already populated per
   row. No extra per-symbol calls needed at this stage.
 - **Filters:** market cap > $2B, price > $5 (matches `gates.md`'s
-  penny-stock exclusion), 30-day average volume > 1M shares (liquidity),
+  penny-stock exclusion), 30-day average volume > 250K shares (lowered
+  from 1M on 2026-08-11 — see the dollar-volume note below),
   **ADX(14) > 25** (a real trend exists — direction-agnostic, so this
   serves both long and short modes), RSI(14) between 25-75 (deliberately
   wide enough to surface oversold short-mode candidates as well as
   long-mode pullbacks), **relative options volume > 0.5** (ensures the
   name has a live options market — required for the options overlay —
   and surfaces the `Relative options volume` column for ranking).
-- **Verified live 2026-08-10:** 96 matches under this filter set.
+- **Verified live 2026-08-11:** 116 matches under this filter set (was 96
+  at the old 1M-share floor).
+
+### Liquidity: use dollar volume, not share volume
+
+Share volume is a poor liquidity measure across price levels — a $500
+stock trading 200K shares moves $100M/day, while a $10 stock trading 1M
+shares moves only $10M/day. The share-based filter passed the cheap one
+and rejected the far more liquid one.
+
+The scanner has no dollar-volume filter, but it returns both `Last` and
+`Average volume`, so **compute `Last × Average volume` client-side and
+drop anything below $20M/day.** Free, and a far better measure.
+
+Measured 2026-08-11: of the 116 matches, only **3** fall below $20M/day
+(TIMB $9M, EFXT $10M, TFSL $15M). The `market cap > $2B` filter was
+already doing nearly all the liquidity work — the 1M-share floor was
+excluding roughly 20 names while adding almost no protection. $20M/day is
+still ~13,000× the maximum position size, so this is a guard against
+genuinely illiquid names, not a binding constraint.
 
 **Why this replaced the old hardcoded ~19-name watchlist:** verified live
 2026-08-10, the screen returned **266 qualifying names**, and most of the
@@ -569,17 +589,21 @@ options. All verified live 2026-08-10 (30-day average volumes):
 | MSTR | — | — | **MSTZ** | 9.0M | −2x |
 | TSLA | TSLL | 76M | **TSLQ** | 5.9M | −2x |
 | MSFT | MSFU | 7.7M | **MSFD** | 1.7M | −1x |
-| AMD | — | — | **AMDD** | 1.07M | −1x (barely clears floor) |
-| META | METU | 5.4M | METD | 744K | ❌ below floor |
-| GOOGL | GGLL | 1.7M | GGLS | 368K | ❌ below floor |
-| MSTR | — | — | SMST | 223K | ❌ below floor (use MSTZ) |
-| COIN | CONL | 18.6M | CONI | 144K | ❌ below floor |
-| NFLX | — | — | NFXS | 44K | ❌ below floor |
+| AMD | — | — | **AMDD** | 1.07M | −1x |
+| META | METU | 5.4M | **METD** | 744K | −1x |
+| GOOGL | GGLL | 1.7M | **GGLS** | 368K | −1x |
+| MSTR | — | — | SMST | 223K | −2x (prefer MSTZ — deeper) |
+| COIN | CONL | 18.6M | **CONI** | 144K | −2x |
+| NFLX | — | — | NFXS | 44K | ❌ below the 100K floor |
 
-Verified 2026-08-10/11. **Nine names currently have a tradeable bear
-expression.** Re-verify volume before using any bear ETF not on this
-list — the bear side is consistently thinner than the bull side, and
-several plausible-looking tickers fail the floor outright.
+Verified 2026-08-10/11. **Thirteen names have a tradeable bear
+expression** under the 100K-share floor (lowered from 1M on 2026-08-11 —
+see `gates.md`, "Why 100K"). Only NFXS is excluded outright.
+
+Two things to still check per trade rather than assume: that the order is
+≤ 1% of that ETF's 30-day ADV, and that the spread and depth checks pass
+at entry. Those are the real liquidity guards now; the volume floor
+merely screens out moribund products.
 
 **3x inverse funds (SQQQ, SPXS) are out of scope**, despite being highly
 liquid (58M and 11M respectively). Daily-reset drag is `(L²−L)/2 × σ²`,
@@ -609,8 +633,9 @@ makes leveraged exposure worst.
    $51.45 → $25.17. Treat −2x single-stock funds as the most
    decay-prone instrument in this system.
 
-**Bear side is often much thinner.** Three of eight fail the 1M-share
-liquidity floor outright. If a name's bear ETF is below the floor, there
+**Bear side is consistently thinner than the bull side** — often by an
+order of magnitude — which is why the floor was recalibrated to 100K
+rather than kept at 1M. If a name's bear ETF is below the floor, there
 is simply no bearish expression for that name — take no trade rather than
 reaching for an illiquid one.
 
@@ -640,9 +665,10 @@ someone who holds through chop and doesn't honor the time-stop.
   out of the book.
 - **7-trading-day time-stop** — shorter than the index sleeve's 10, since
   drag is several times larger.
-- Requires 30-day average volume ≥ 1M shares (all listed above qualify;
-  re-check before using any ETF not on this list, since many single-stock
-  leveraged ETFs are thinly traded).
+- Requires 30-day average volume ≥ 100K shares **and** the order to be
+  ≤ 1% of that ETF's 30-day ADV (see `gates.md`). Re-check before using
+  any ETF not listed above — single-stock leveraged products vary enormously
+  in depth, and the bear side is routinely thinner than the bull side.
 - Counts **2x** toward gross exposure, same as the index sleeve.
 - The **signal still comes from the underlying stock** passing the full
   Tier 1-3 funnel. The ETF is only the expression — never screen or

@@ -30,7 +30,7 @@
 | Stop-loss floor | Every open equity position must have a stop no wider than 3% from entry | `strategy.md` may use a tighter ATR-derived stop; never wider than this. |
 | Max new trades per run | 2 | Across equity and options combined. |
 | Max open positions | 6 | Across equity and options combined. |
-| Universe | The Tier 0 screener — `run_scan`, scan_id `de1b1994-b5db-472a-9b79-c052f1215193` | There is **no hardcoded watchlist**; the saved scan is the universe (~96 matches at last check). Its own filters already enforce price > $5 and market cap > $2B. No crypto. |
+| Universe | The Tier 0 screener — `run_scan`, scan_id `de1b1994-b5db-472a-9b79-c052f1215193` | There is **no hardcoded watchlist**; the saved scan is the universe (~116 matches at last check). Its own filters enforce price > $5 and market cap > $2B. A client-side **$20M/day dollar-volume** screen is applied on top — see `strategy.md`. No crypto. |
 | Symbol exclusions | None yet | Add tickers here to hard-block them. |
 | Risk per trade (target) | **0.4% of NAV** with-trend, **0.2%** counter-trend | The number ATR-based sizing aims at. Chosen so it and the position cap are mutually reachable — see below. |
 | Regime filter (classifies, not gates) | SPY above its 200-day SMA → bullish setups are **with-trend**, bearish are **counter-trend**. SPY below → reversed. | Both templates are tested on every candidate every run; the regime decides which passes face the strict counter-trend gates below. Existing positions are reviewed/exited regardless. |
@@ -97,10 +97,40 @@ are a set; changing one alone re-breaks the coherence.
 | Index leveraged ETF time-stop | **10 trading days** (vs 20 for ordinary stock) | These target 2x the *daily* return and reset daily, so multi-day holds are path-dependent and decay in chop — a flat round-trip in the index still loses money. Short leash by design. See `strategy.md`. |
 | **Single-stock** leveraged ETF time-stop | **7 trading days** | Decay scales with σ², and single stocks are far more volatile than indices — roughly 36%/yr drag on a TSLA-like name, ~70%/yr on a COIN-like one, versus ~2.6%/yr on SPY. |
 | Single-stock leveraged ETF volatility gate | Underlying **ATR(14) ≤ 4% of price** | Hard gate. Above it, decay is too steep for the holding period — trade the plain stock instead (LONG mode) or take no trade (SHORT mode). Observed 2026-08-10: CONL (2x COIN) fell **92%** from its 52-week high while COIN itself did nothing remotely similar. |
-| Leveraged ETF liquidity floor | 30-day average volume ≥ 1M shares | Hard gate. Bear-side ETFs are frequently far thinner than their bull counterparts — METD (744K), GGLS (368K), CONI (144K) and TSLS (409K) all **fail** this. If a name's bear ETF is below the floor, there is no bearish expression for that name; take no trade rather than reaching for an illiquid one. |
+| Leveraged ETF liquidity floor | 30-day average volume ≥ **100K shares** | Lowered from 1M on 2026-08-11 — see "Why 100K" below. Excludes only genuinely moribund products (NFXS at 43K). |
+| **Order-size liquidity rule** | Order quantity ≤ **1% of 30-day ADV** | The rule that actually scales. At a $1,500 max position this binds on nothing, but it tightens automatically as NAV grows — so the floor never silently becomes too loose without anyone noticing. |
 | **Verify leverage per instrument** | Read the fund's own description before sizing | Bear ETFs do **not** reliably mirror their bull counterpart's leverage — AAPD, MSFD, AMZD and TSLS are **−1x**, while NVD and TSLQ are **−2x**. Never infer leverage from the ticker or from the bull side. |
 | **−2x inverse decay penalty** | Treat −2x single-stock funds as the highest-decay instrument permitted | Daily-reset drag is `(L²−L)/2 × σ²`, so **−2x carries 3× the drag of +2x** — identical to a +3x fund. Observed: CONI −2x COIN fell $141.65 → $52.64; TSLQ −2x TSLA fell $51.45 → $25.17. |
 | **3x funds (either direction)** | **Forbidden** | Includes SQQQ and SPXS despite their high liquidity. A −3x fund carries **6× σ²** of drag — double a −2x and six times a +2x. Over a multi-day hold that is fighting the instrument rather than the market. The index sleeve uses −2x (SDS/QID) only. |
+
+### Why 100K, not 1M
+
+The 1M-share floor was calibrated for a fund moving six figures. At a
+$1,500 maximum position it excluded opportunities for no benefit:
+
+| ETF | Our order | 30d ADV | Order as % of ADV |
+|---|---|---|---|
+| METD | 92 sh | 744K | 0.012% |
+| GGLS | 26 sh | 368K | 0.007% |
+| CONI | 28 sh | 144K | 0.019% |
+
+Market impact at those sizes is nil. More importantly, **volume was only
+ever a proxy** for the two things that actually matter — spread and
+depth — and both are now measured directly at entry: the 0.5%-of-mid
+spread check and the `get_equity_price_book` depth check. A crude
+threshold is redundant once you have the real measurement.
+
+What the remaining 100K floor still guards against: genuinely moribund
+products where spreads gap, halts are likelier, and fund closure is a
+live possibility. NFXS (43K ADV, $4.5M AUM) is the kind of thing it
+excludes.
+
+**Accepted trade-off, stated plainly:** fills on the thinnest permitted
+names will be marginally worse, and halt/closure risk is slightly higher
+than under the old floor. At this account size that is worth a wider
+opportunity set. The 1%-of-ADV rule is what keeps this honest as NAV
+grows — it re-tightens automatically rather than requiring someone to
+remember to raise the floor.
 
 ## Execution gates
 
