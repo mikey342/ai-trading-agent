@@ -35,6 +35,44 @@ list:
 - **Verified live 2026-08-11:** 116 matches under this filter set (was 96
   at the old 1M-share floor).
 
+### ⚠ The scan's ADX is not the same measure as a direct ADX call
+
+**Verified 2026-08-11.** The Tier 0 screener computes ADX with
+`session="all"` — its own filter expression is
+`adx(candlePeriod="1d", candleCount=14, session="all")` — which includes
+extended-hours bars. `get_equity_technical_indicators` defaults to
+`bounds="regular"`. The two disagree materially, in **both** directions:
+
+| Symbol | Scan ADX | Direct (regular) |
+|---|---|---|
+| TECH | 59.71 | 72.03 |
+| FTNT | 33.80 | 26.05 |
+
+**Rule: the scan's ADX may be used for screening and ranking; it must
+never satisfy a gate.**
+
+- **Screening / ranking (fine):** the `ADX > 25` scan filter and the
+  Tier 0 ranking. Both are relative and coarse, so a consistent
+  alternative measure is acceptable.
+- **Gates (must re-measure):** the counter-trend `ADX > 30` requirement,
+  and any future ADX-dependent threshold. Call
+  `get_equity_technical_indicators` (type=adx, period=14, interval=day,
+  output=latest) for that symbol and use *that* value.
+
+Why it matters concretely: FTNT clears the counter-trend ADX gate on the
+scan value (33.80) and fails it on the direct value (26.05) — the same
+stock, opposite decisions. Note also that TSLA was cleared through the
+counter-trend gates on 2026-08-10 using a scan-derived "ADX 30.56"; under
+a regular-session reading it may not have qualified. No trade resulted,
+so nothing needs unwinding, but it shows the gate was being evaluated on
+the wrong measure.
+
+There is a deeper reason to prefer regular-session here: this system
+trades only regular sessions, prices fills off regular-session quotes,
+and refuses to run pre-open precisely because extended-hours data is thin
+and unrepresentative. Letting extended-hours bars decide a trend-strength
+gate contradicts that choice.
+
 ### Liquidity: use dollar volume, not share volume
 
 Share volume is a poor liquidity measure across price levels — a $500
@@ -236,7 +274,11 @@ negative expected value on average.
 1. **At most one counter-trend position open at a time**, out of the
    6-position book.
 2. **ADX(14) > 30** (versus the baseline 25) — the counter-direction
-   trend must be unusually well established, not marginal.
+   trend must be unusually well established, not marginal. **Measure this
+   with a direct `get_equity_technical_indicators` call, never the Tier 0
+   scan's ADX column** — the two use different session bounds and
+   disagree by 7-12 points in both directions. See "The scan's ADX is not
+   the same measure" above.
 3. **A more extreme relative-strength reading**: ≤ **0.25** of the
    52-week range for a counter-trend bearish setup (vs. 0.4 normally),
    ≥ **0.75** for a counter-trend bullish setup (vs. 0.6).
@@ -245,7 +287,7 @@ negative expected value on average.
    Alpha Vantage quota is exhausted, no counter-trend trade is taken that
    run, full stop. A counter-trend bet made blind to news is exactly the
    trade most likely to be on the wrong side of a catalyst.
-5. **Half size**: `risk_per_trade = 0.5% of NAV` rather than 1%.
+5. **Half size**: `risk_per_trade = 0.2% of NAV` rather than 0.4%.
 
 If any of these fails, the setup is not downgraded to a normal trade —
 it is dropped, and logged as a counter-trend rejection.

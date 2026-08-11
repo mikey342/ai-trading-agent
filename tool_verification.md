@@ -113,6 +113,29 @@ high-volatility underlying compounds losses through chop far faster than
 an index does. This is why `gates.md` imposes an ATR ≤ 4% volatility gate
 and a 7-day time-stop on the single-stock variant.
 
+### ⚠ Scan indicators ≠ direct indicator calls (different session bounds)
+
+**Verified 2026-08-11.** The screener's generated expressions carry
+`session="all"` — e.g. `adx(candlePeriod="1d", candleCount=14,
+session="all")` — so its indicators include extended-hours bars.
+`get_equity_technical_indicators` defaults to `bounds="regular"`. Same
+symbol, same period, same day, materially different values:
+
+| Symbol | Scan ADX (`session="all"`) | Direct ADX (regular) |
+|---|---|---|
+| TECH | 59.71 | 72.03 |
+| FTNT | 33.80 | 26.05 |
+
+The gap runs in **both** directions, so it is not a constant offset that
+could be calibrated away. **FTNT clears the counter-trend `ADX > 30` gate
+on the scan value and fails it on the direct value.**
+
+Rule now recorded in `gates.md`, `strategy.md` and `run_instructions.md`:
+scan indicators are fine for **screening and ranking** (relative, coarse)
+but must **never satisfy a gate** — gates re-measure with a direct call.
+Assume the same session-bounds caveat applies to every other scan column
+(RSI, volume, relative volume), not just ADX.
+
 ### Scanner filters available but not yet used
 The screener exposes an **options-flow filter group** that nothing in the
 current strategy touches: `FILTER_TYPE_RELATIVE_OPTIONS_VOLUME` (unusual

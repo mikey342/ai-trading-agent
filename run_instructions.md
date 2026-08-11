@@ -124,12 +124,21 @@ plain equity or that name's **bull** ETF; a bearish pass by buying that
 name's **bear** ETF.
 
 **Counter-trend setups** must additionally clear *all five* gates in
-`strategy.md` / `gates.md`: at most 1 counter-trend position open, ADX(14)
-> 30, a more extreme 52-week-range reading (≤0.25 bearish / ≥0.75
-bullish), **no degraded data — `news_sentiment` must not be
-`UNAVAILABLE`** — and half size (0.5% NAV risk). If any fails, drop the
-setup and log it as a counter-trend rejection. Never downgrade a failed
-counter-trend setup into a normal trade.
+`strategy.md` / `gates.md`: at most 1 counter-trend position open,
+**ADX(14) > 30 measured by a direct `get_equity_technical_indicators`
+call** (type=adx, period=14, interval=day, output=latest) — **not** the
+Tier 0 scan's ADX column, a more extreme 52-week-range reading (≤0.25
+bearish / ≥0.75 bullish), **no degraded data — `news_sentiment` must not
+be `UNAVAILABLE`** — and half size (**0.2%** NAV risk vs 0.4%
+with-trend). If any fails, drop the setup and log it as a counter-trend
+rejection. Never downgrade a failed counter-trend setup into a normal
+trade.
+
+The ADX source is load-bearing: the scan computes it with `session="all"`
+while a direct call uses regular session, and the two disagree by 7-12
+points in both directions (FTNT: scan 33.80 vs direct 26.05 — passes this
+gate on one measure, fails on the other). Scan ADX is for screening and
+ranking only; every gate re-measures.
 
 For any bear ETF, confirm via `get_equity_fundamentals` both that it
 clears the 100K-share liquidity floor (and that the order is ≤ 1% of its
