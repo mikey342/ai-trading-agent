@@ -136,3 +136,58 @@ candidate), and `FILTER_TYPE_SECTOR` (sector-diversification caps).
 - Alpha Vantage deep-dive tools (`INSTITUTIONAL_HOLDINGS`,
   `INSIDER_TRANSACTIONS`, `EARNINGS_CALL_TRANSCRIPT`) — reserved for
   manual deep dives, not the automated funnel.
+
+## Macro data — available, deliberately not wired in
+
+**Verified 2026-08-11:** Alpha Vantage's macro series work and are **not**
+premium-gated — `TREASURY_YIELD` returned clean monthly data back to 1953.
+Also present: `CPI`, `FEDERAL_FUNDS_RATE`, `UNEMPLOYMENT`, `REAL_GDP`,
+`INFLATION`, `NONFARM_PAYROLL`, `RETAIL_SALES`. **This closes the "we need
+FRED" gap with no new connector.**
+
+It is still unused, for reasons worth recording so it doesn't get "fixed"
+later:
+
+- **Horizon mismatch.** Monthly series against a 5-15 day holding period.
+  Yield-curve inversion is a quarters-long recession signal; it says
+  nothing about the next two weeks.
+- **Already covered, better.** The regime layer (SPY vs 200DMA/50DMA plus
+  VIX) measures market stress directly and daily. Macro would be a slower,
+  noisier proxy for something already measured well.
+- **The one plausible use is unevidenced.** Daily 10-year yield spikes
+  plausibly pressure high-multiple growth names — much of `ai_theme.md` —
+  but any threshold would be invented, with *less* justification than the
+  VIX levels, which were at least fitted to an observed distribution.
+
+If a macro rule is ever added, pre-register it with a falsifiable trigger
+like every other change here.
+
+## Social sentiment (StockTwits / Reddit) — assessed, deprioritized
+
+The one capability neither connector provides. Three routes, all with real
+obstacles:
+
+1. **A claude.ai connector** is the only route that reaches the scheduled
+   routines, since they resolve data sources by `connector_uuid`. Needs
+   checking in claude.ai settings; existence unknown.
+2. **A locally-configured MCP server does not work.** It exists only in an
+   interactive session; cloud routines see only what is attached via
+   `mcp_connections`. Wiring one locally would make sentiment queryable by
+   hand while leaving every routine blind — a failure mode that looks like
+   success.
+3. **Direct HTTP from `Bash`** is possible in principle but blocked on
+   credentials: Reddit has required OAuth since 2023 and blocks
+   unauthenticated cloud IPs, StockTwits requires auth, and there is no
+   clean secret-holding mechanism for routines. Committing keys to the
+   repo is not an acceptable workaround.
+
+**Deprioritized on merit, not only access.** Social sentiment is the
+noisiest input in this stack, frequently contrarian, concentrated in meme
+names the market-cap and ADX filters already exclude, and pitched at a
+far shorter horizon than a 5-15 day swing.
+
+**The binding constraint is the Alpha Vantage quota, not the absence of
+social data.** The more reliable news sentiment already exists and went
+dark on every Tier 3 candidate on 2026-08-10 — which also silently
+disables counter-trend trading, since those require undegraded inputs.
+Upgrading that plan buys more than either new source would.
