@@ -569,3 +569,119 @@ All 4 (under the top-15 cap) advance to Tier 1.
 **Rejected by gates:** TSLA dropped at the counter-trend ADX gate (logged to `trade_log.csv`, `TSLA-20260811-1`). PBF, DK dropped at Tier 2 (no entry trigger fired, not logged per schema scope). RKLB dropped at Tier 1 (broken trend stack). SSO/index sleeve dropped at the Tier 2 volume-confirmation gate (not logged — same scope rule as the stock funnel's Tier 2 declines).
 
 **Strategy adaptation this run:** None. Zero closed trades on record; the adaptation policy requires reviewing closed-trade history, which still doesn't exist. Worth flagging as an observation only (not a rule change): today's Tier 0 universe was extremely thin (4 names) for the second time in two trading days' worth of runs — not yet a pattern requiring action, just noted for visibility.
+
+---
+
+### 2026-08-11 18:45 UTC — midday run
+
+**gates.md MODE check:** `PAPER` — confirmed, run proceeds under normal paper-trading rules.
+
+**Market status:** `MARKET_STATUS` (Alpha Vantage) succeeded — US equity markets `open`. Corroborated via Robinhood `get_equity_quotes` (SPY): live regular-session trade at 2026-08-11T18:37:54Z (14:37 ET) — a few minutes past the 2:30pm ET slot, the midday run.
+
+**Account (before this run):** NAV $10,000, cash $10,000, halted: no (no open positions).
+
+**Position review:** `positions.md` showed zero open equity/options positions at the start of this run — nothing to review.
+
+**Regime filter:**
+- **Direction:** SPY $770.065 > SMA(200) $703.48 → **LONG mode**. SMA(200) has climbed steadily all week (last-5 values 701.39→703.48) with price far above it throughout — an established regime, 3-close confirmation trivially satisfied.
+- **Risk level:** SPY $770.065 > SMA(50) $747.56 ✓, VIX 15.34 < 20 ✓ → **NORMAL**. Full rules: up to 2 new trades this run, index sleeve permitted, counter-trend permitted.
+
+**Scouted (Tier 0):** `run_scan` (scan_id de1b1994...) returned **396 total matches** (200 rows returned) — a much broader universe than either run yesterday morning or this morning's thin 4-name pull. After the $20M/day dollar-volume screen client-side (`Last × Average volume`), **190 of the 200 returned rows** cleared. Ranked by ADX(14) desc (scan column, screening-only), with the 1.15× `ai_theme.md` tilt applied (KLAC and CRWD were the only top-20 AI names — both fell out further down the funnel):
+
+| Rank | Symbol | ADX(14) (scan) | AI tilt | Score | Rel. options vol |
+|---|---|---|---|---|---|
+| 1 | TECH | 59.80 | no | 59.80 | 0.098 |
+| 2 | CDNA | 55.78 | no | 55.78 | 0.673 |
+| 3 | OGN | 54.51 | no | 54.51 | 1.864 |
+| 4 | KLAC | 46.59 | **yes** | 53.57 | 0.278 |
+| 5 | FBP | 52.49 | no | 52.49 | 0.014 |
+| 6 | PAY | 50.73 | no | 50.73 | 0.056 |
+| 7 | ATAI | 50.44 | no | 50.44 | 0.078 |
+| 8 | PAYO | 47.86 | no | 47.86 | 0.050 |
+| 9 | LIND | 46.98 | no | 46.98 | 0.008 |
+| 10 | EAT | 46.61 | no | 46.61 | 0.709 |
+| 11 | PYPL | 45.39 | no | 45.39 | 0.400 |
+| 12 | ACAD | 45.36 | no | 45.36 | 0.326 |
+| 13 | CRWD | 39.44 | **yes** | 45.35 | 0.700 |
+| 14 | SAIA | 45.12 | no | 45.12 | 0.073 |
+| 15 | LXP | 44.63 | no | 44.63 | 0.000 |
+
+**Earnings blackout (Tier 1, one `get_earnings_calendar` days=7 call):** EAT reports tomorrow, 2026-08-12 (am) — dropped. 14 candidates proceed: TECH, CDNA, OGN, KLAC, FBP, PAY, ATAI, PAYO, LIND, PYPL, ACAD, CRWD, SAIA, LXP.
+
+**Tier 1 — trend template, both directions, all 14:**
+- **TECH** ($72.125, SMA50 $65.2101, SMA200 $59.9526, 52wk $43.195–$72.39): stack ✓; pct_52w_range=0.9909 ✓. **PASS LONG.**
+- **CDNA** ($47.80, SMA50 $31.3034, SMA200 $21.9036, 52wk $11.272–$49.76): stack ✓; pct_52w_range=0.9491 ✓. **PASS LONG.**
+- **OGN** ($13.65, new 52wk high today, SMA50 $13.4858, SMA200 $9.6757, 52wk $5.69–$13.65): stack ✓ (barely above SMA50); pct_52w_range=1.0 ✓. **PASS LONG.**
+- **KLAC** ($198.91, SMA50 $221.4321, SMA200 $164.9992): price<SMA50 → fails LONG. SMA50>SMA200 → not a descending stack → fails SHORT. **FAIL both.**
+- **FBP** ($29.10, SMA50 $26.674, SMA200 $22.9163, 52wk $19.16–$29.415): stack ✓; pct_52w_range=0.9693 ✓. **PASS LONG.**
+- **PAY** ($40.5572, SMA50 $27.4308, SMA200 $28.2315): SMA50<SMA200 → fails LONG stack (50-day below 200-day, not genuinely established). price not < SMA50 → fails SHORT. **FAIL both.**
+- **ATAI** ($7.245, SMA50 $5.5307, SMA200 $4.4481, 52wk $3.265–$7.26): stack ✓; pct_52w_range=0.9962 ✓. **PASS LONG.**
+- **PAYO** ($7.09, SMA50 $6.7955, SMA200 $5.7023, 52wk $4.0801–$7.18): stack ✓; pct_52w_range=0.9710 ✓. **PASS LONG.**
+- **LIND** ($32.98, SMA50 $26.8095, SMA200 $19.104, 52wk $11.3694–$34.95): stack ✓; pct_52w_range=0.9165 ✓. **PASS LONG.**
+- **PYPL** ($59.005, SMA50 $48.7852, SMA200 $51.8438): SMA50<SMA200 → fails LONG stack. price not < SMA50 → fails SHORT. **FAIL both.**
+- **ACAD** ($29.48, new 52wk high today, SMA50 $24.4579, SMA200 $23.8482, 52wk $19.69–$29.76): stack ✓; pct_52w_range=0.9722 ✓. **PASS LONG.**
+- **CRWD** ($220.89, SMA50 $187.0618, SMA200 $135.3128, 52wk $85.68–$226.90): stack ✓; pct_52w_range=0.9575 ✓. **PASS LONG.**
+- **SAIA** ($358.10, SMA50 $426.7272, SMA200 $377.9155): price<SMA50 → fails LONG. SMA50>SMA200 → not a descending stack → fails SHORT. **FAIL both.**
+- **LXP** ($60.68, SMA50 $56.0896, SMA200 $50.9313, 52wk $39.325–$61.61): stack ✓; pct_52w_range=0.9583 ✓. **PASS LONG.**
+
+**Tier 1 survivors (10, all bullish/with-trend since SPY regime is LONG):** TECH, CDNA, OGN, FBP, ATAI, PAYO, LIND, ACAD, CRWD, LXP. (KLAC, PAY, PYPL, SAIA failed both directions — checked explicitly, none qualified as counter-trend either.)
+
+**Value/momentum composite ranking (0.6×pct_52w_range + 0.4×value-rank; negative-PE names ranked below all positive-PE names, ordered least-negative-first; top 8 advance):** ACAD (0.983), FBP (0.937), OGN (0.911), CDNA (0.836), PAYO (0.805), LXP (0.753), TECH (0.728), ATAI (0.687), LIND (0.594), CRWD (0.575) — **LIND and CRWD cut** (both carry deeply negative P/E — LIND -88.96, CRWD -4780.47 — which rank worst on the value leg despite decent trend strength). Top 8 to Tier 2: ACAD, FBP, OGN, CDNA, PAYO, LXP, TECH, ATAI.
+
+**Tier 2 — entry trigger, top 8** (RSI/EMA last:5, Donchian last:3; volume confirmation = last completed session (Aug 10) volume ÷ 30d avg, computed from `get_equity_fundamentals`, never the scan's `session="all"` column):
+
+| Symbol | vs 52wk high | breakout_52w price cond | EMA8>EMA21 | relative_volume | Volume conf (≥1.4) | RSI(14) | Trigger |
+|---|---|---|---|---|---|---|---|
+| TECH | 0.37% off | ✓ | ✓ | 0.920 | ✗ | 72.22 | **none** |
+| CDNA | 3.94% off | ✗ | ✓ | 0.907 | ✗ | 73.62 | **none** |
+| OGN | 0% off (today's high) | ✓ | ✓ | 0.604 | ✗ | 66.88 | **none** |
+| FBP | 1.07% off | ✓ | ✓ | 0.935 | ✗ | 64.08 | **none** |
+| ATAI | 0.21% off | ✓ | ✓ | 0.174 | ✗ | 73.88 | **none** |
+| PAYO | 1.25% off | ✓ | ✓ | **1.513** | ✓ | 58.92 | **breakout_52w** |
+| LXP | 1.51% off | ✓ | ✓ | 0.761 | ✗ | 69.97 | **none** |
+| ACAD | 0.94% off | ✓ | ✓ | **1.565** | ✓ | 73.76 | **breakout_52w** |
+
+None of the 8 had RSI in the 35-45 pullback band (all 59-74 — these are all high-ADX momentum names by construction), so no `pullback` triggers were possible. `breakout_20d` (price vs. the prior bar's Donchian upper) fired for none beyond what `breakout_52w` already covered. This run is a clean demonstration of the 2026-08-11 volume-confirmation gate doing real work: 6 of 8 candidates had the *price* condition for a breakout but were declined for insufficient participation — exactly the "footprints of big money" O'Neil's rule is meant to require.
+
+**Tier 2 survivors: ACAD, PAYO** (both `breakout_52w`, both volume-confirmed, well under the Tier 3 cap of 3).
+
+**Tier 3 — finalists:**
+
+- **ACAD** — `NEWS_SENTIMENT` (Alpha Vantage, 10 most recent articles): ticker-specific sentiment scores averaged **+0.293** (Somewhat-Bullish band), no negative articles in the sample — clearly **not negative**, passes. `get_earnings_results`: beat estimates in 5 of the last 7 quarters, **including the most recent** (2026-08-04: actual $0.18 vs est $0.04, a ~350% surprise) — a strong PEAD tailwind, consistent with the stock's run to a new 52-week high today. `get_sentiment` (Stocktwits): **unavailable** — the connector is not authenticated this session (not a data gap on Stocktwits' end); logged `NO_COVERAGE`. ATR14 = 0.9532. Momentum test (logged, non-gating): EMA8−EMA21 spread widened every session Aug4→Aug10 (0.555, 0.861, 1.014, 1.202, **1.334**) — most recent **is** the widest — `momentum_test_would_pass=true`.
+- **PAYO** — `NEWS_SENTIMENT`: ticker-specific scores averaged **-0.002** across the 10 most recent articles — technically lands in AV's Neutral bucket (-0.15 to +0.15), so it clears the literal "not negative" gate, but the average masks a real skew: 3 of the 10 are explicitly **Somewhat-Bearish**, clustered immediately after the 2026-08-06 earnings reaction, with zero bullish coverage since. `get_earnings_results`: **soft-negative PEAD read** — missed estimates in 6 of the last 7 quarters, including the most recent and largest miss (2026-08-06: actual **-$0.01** vs est $0.06, swinging to a loss). `get_sentiment`: unavailable (same connector issue), logged `NO_COVERAGE`. ATR14 = 0.0541. Momentum test (logged, non-gating): EMA8−EMA21 spread **narrowed** every session Aug4→Aug10 (0.0665, 0.0589, 0.0509, 0.0430, **0.0352**) — most recent is the narrowest — `momentum_test_would_pass=false`, consistent with the mixed catalyst picture.
+
+Both cleared every gating check (the news-sentiment gate is literal — average not negative — and correctly does not block PAYO), so both proceed. But the two names are not equally strong: ACAD stacks a fresh 52-week high, confirmed volume, positive news, accelerating momentum, and a strong earnings beat; PAYO clears the same mechanical bars on a stale (not-today) high, decelerating momentum, a borderline-neutral news average with a bearish-leaning tail, and a recent earnings miss. This asymmetry is exactly what `momentum_test_would_pass` and the sentiment/PEAD notes exist to let a future review measure — PAYO is the more interesting test case for whether the retired momentum test or the sentiment nuance should have been weighted more heavily.
+
+**Decisions — two positions opened (first fills this system has made):**
+
+- **ACAD — opened — equity — 45 shares @ $29.49** (`trade_log.csv`: `ACAD-20260811-1`)
+  - **Trigger:** `breakout_52w` — price within 0.94% of a new 52-week high ($29.76) set today, EMA8 > EMA21, volume-confirmed.
+  - **Trend:** $29.48 > SMA50 $24.4579 > SMA200 $23.8482 (Tier 1 snapshot).
+  - **Momentum:** RSI(14)=73.76, EMA8=27.9609, EMA21=26.6271; EMA8−EMA21 spread widening (most recent widest of last 5) — momentum test would pass (logged only).
+  - **Relative strength:** pct_52w_range=0.9722; composite rank 0.983, #1 of 10 Tier 1 survivors.
+  - **Valuation:** P/E=11.66 — the cheapest positive P/E in this run's candidate set (ranked #1 on the value leg).
+  - **Catalyst:** news sentiment +0.293 (Somewhat-Bullish, not negative); beat EPS estimates 5 of last 7 quarters incl. most recent (+350% surprise 2026-08-04); no earnings within 85 days.
+  - **Risk:** ATR14=0.9532 → stop_distance=min(1.5×ATR=1.4298, 3%-floor=0.8847)=**0.8847** (the 3% floor bound, tighter than ATR) → stop **$28.6053** (3.00% away), R-target **$31.2594** (2R). Sized to risk $39.81 (0.398% of NAV, essentially on-target for the 0.4% with-trend budget). Position $1,327.05 (13.27% of NAV, under the 15% cap and under `shares_cap`=50, so the risk budget bound — plain equity per the mechanical instrument rule).
+  - **Direction:** bullish, with-trend (SPY regime is LONG).
+  - **Execution:** signal_price $29.48 → fresh entry_price (ask) $29.49 — moved $0.01, well inside the $0.44 chase-protection threshold. Spread $29.48/$29.49 = 0.034% of mid (well under the 0.5% cap). Depth: 368 shares resting at the best ask vs. a 45-share order. Filled as a marketable limit at the ask, $29.49.
+  - **Sector:** Health Technology — 1 of 3 allowed, no conflict (0 prior positions).
+  - **Thesis:** A fresh 52-week-high breakout on confirmed above-average volume, backed by the cheapest valuation and the strongest recent earnings beat in this run's candidate set — the cleanest with-trend long the funnel has produced since paper trading began.
+
+- **PAYO — opened — equity — 211 shares @ $7.10** (`trade_log.csv`: `PAYO-20260811-1`)
+  - **Trigger:** `breakout_52w` — price within 1.25% of its 52-week high ($7.18, set 2026-07-28 — not a fresh high), EMA8 > EMA21, volume-confirmed.
+  - **Trend:** $7.09 > SMA50 $6.7955 > SMA200 $5.7023 (Tier 1 snapshot).
+  - **Momentum:** RSI(14)=58.92, EMA8=7.1131, EMA21=7.0779; EMA8−EMA21 spread narrowing (most recent narrowest of last 5) — momentum test would fail (logged only, non-gating).
+  - **Relative strength:** pct_52w_range=0.9710; composite rank 0.805, #5 of 10 Tier 1 survivors.
+  - **Valuation:** P/E=36.13 — mid-pack among positive-P/E names this run.
+  - **Catalyst:** news sentiment -0.002 (borderline Neutral, not negative by the literal gate, but skewed bearish in the most recent sub-sample — see Tier 3 notes above); missed EPS estimates 6 of last 7 quarters incl. the most recent and largest miss (swung to a loss, 2026-08-06); no earnings within 85 days.
+  - **Risk:** ATR14=0.0541 → stop_distance=min(1.5×ATR=0.0810, 3%-floor=0.213)=**0.0810** (ATR bound, tighter than the floor) → stop **$7.0190** (1.14% away), R-target **$7.2620** (2R). `shares_risk`=493 > `shares_cap`=211 (15% position cap binds) → no leveraged ETF exists for this name → **plain equity, accepted under-risked**: actual risk $17.09 (0.171% of NAV vs. the 0.4% with-trend target). Position $1,498.10 (14.98% of NAV, at the cap).
+  - **Direction:** bullish, with-trend (SPY regime is LONG).
+  - **Execution:** signal_price $7.09 → fresh entry_price (ask) $7.10 — moved $0.01 vs. a $0.041 chase-protection threshold, inside but close. Spread $7.09/$7.10 = 0.141% of mid (under the 0.5% cap). Depth: 61,499 shares resting at the best ask vs. a 211-share order — trivially ample. Filled as a marketable limit at the ask, $7.10.
+  - **Sector:** Commercial Services — 1 of 3 allowed, no conflict.
+  - **Thesis:** A vol-confirmed breakout that cleared every mechanical gate, but weaker on every soft signal than ACAD — decelerating momentum, a recent earnings miss, and bearish-leaning post-earnings news. Taken because the gates are the gates and this system doesn't override a passing setup on discretion, but flagged here explicitly as the name to watch first for an early exit signal.
+
+**Index sleeve (SSO):** SPY trend template passes (price $770.065 > SMA50 $747.5576 > SMA200 $703.479; within 10% of high52 $776.85; relative-strength proxy 0.954 ≥ 0.6) and the `breakout_52w` price/EMA conditions fire (price within 2% of high52, EMA8 $764.06 > EMA21 $754.67). **Volume confirmation fails**: last completed session (Aug 10) volume 39,249,478 ÷ 30-day avg 49,220,303 = relative_volume **0.798** — well under 1.4. **No SSO trade** — the fourth consecutive run this has failed on the same volume gate (this morning: 0.798 also, essentially unchanged since it's the same completed-session bar). This is now enough occurrences to flag explicitly for the human, separate from the self-adaptation policy's evidence bar (which requires ≥5 of the last 10 *closed* trades, not applicable yet): the index sleeve has never once cleared Tier 2 since the trend-template fix, and it's worth checking deliberately whether the 1.4 threshold — tuned for single-stock breakouts — is the right bar for a broad index ETF, whose volume is structurally less bursty than an individual name's. Not acted on this run; noted only. This was also moot this run regardless of its own merits — both new-trade slots (max 2 under NORMAL) were already used by ACAD and PAYO, which cleared the full funnel first.
+
+**Rejected by gates:** None reached gates.md-level sizing/execution checks. TECH, CDNA, OGN, FBP, ATAI, LXP were dropped at Tier 2 (breakout price condition met but volume confirmation failed — not logged to `trade_log.csv` per schema scope, which reserves logging for Tier 3/gate-level declines). KLAC, PAY, PYPL, SAIA failed Tier 1 (broken trend stack in both directions). EAT was dropped at the Tier 1 earnings blackout (reports tomorrow). SSO/index sleeve dropped at the Tier 2 volume-confirmation gate (not logged, same scope rule).
+
+**Strategy adaptation this run:** None — this is the first run with actual fills, so there is no closed-trade history yet to evaluate against the adaptation policy's evidence bar. Two observations for future reference, not acted on: (1) the index-sleeve volume gate has now failed identically on every run since the template fix (4 for 4) — worth a deliberate look once there's bandwidth, separate from the auto-adaptation threshold; (2) PAYO is a useful natural experiment for whether `momentum_test_would_pass` and/or the news-sentiment nuance (average-vs-recent-skew) carry real predictive value, since it cleared every literal gate while showing weaker readings than ACAD on both.

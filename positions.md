@@ -9,18 +9,19 @@ separate and simulated.
 | Field | Value |
 |---|---|
 | Starting NAV | $10,000 |
-| Current cash (simulated) | $10,000 |
-| Current NAV (simulated) | $10,000 |
+| Current cash (simulated) | $7,174.85 |
+| Current NAV (simulated) | $10,000.00 |
 | Realized P&L (all-time) | $0 |
 | Today's realized P&L | $0 |
 | Trading halted today? | No |
-| Last updated | 2026-08-11 14:01 UTC (morning run; no trades — see trade_journal.md) |
+| Last updated | 2026-08-11 18:45 UTC (midday run; opened ACAD, PAYO — see trade_journal.md) |
 
 ## Open positions — equity and leveraged ETFs
 
 | Symbol | Underlying | Sleeve | Direction | Counter-trend? | Qty | Entry price | Entry date | Original stop | R-target | R-target reached? | Current exit stop | Current price | Unrealized P&L | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| _(none yet)_ | | | | | | | | | | | | | | |
+| ACAD | ACAD | stock | bullish | No | 45 | $29.49 | 2026-08-11 | $28.6053 | $31.2594 | No | $28.6053 | $29.49 | $0.00 | Health Technology. breakout_52w, vol-confirmed (rel_vol 1.565). PEAD tailwind (beat 5/7 qtrs, incl. most recent). |
+| PAYO | PAYO | stock | bullish | No | 211 | $7.10 | 2026-08-11 | $7.0190 | $7.2620 | No | $7.0190 | $7.10 | $0.00 | Commercial Services. breakout_52w, vol-confirmed (rel_vol 1.513). Under-risked (cap-bound, no leveraged ETF available). Soft-negative PEAD (missed 6/7 qtrs, incl. most recent) and mixed/slightly-negative recent news — watch closely. |
 
 `Underlying` is the symbol the **thesis** is about, and the one whose
 SMA(50) the trend-break exit checks. For a plain stock it equals
@@ -77,3 +78,4 @@ is a one-way flag, same semantics as the equity table.
 | 2026-08-10 (midday, 18:42 UTC) | midday | $10,000 | $10,000 | $0 | No |
 | 2026-08-10 (close, 19:41 UTC) | close | $10,000 | $10,000 | $0 | No |
 | 2026-08-11 (morning, 14:01 UTC) | morning | $10,000 | $10,000 | $0 | No |
+| 2026-08-11 (midday, 18:45 UTC) | midday | $10,000.00 | $7,174.85 | $0 | No |
