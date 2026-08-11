@@ -267,9 +267,30 @@ diversify across many small positions rather than concentrating in six.
 2. **Published anomalies decay.** McLean & Pontiff (2016) found returns
    to documented anomalies fall roughly 58% post-publication. Everything
    cited here is published.
-3. **Momentum crashes.** Momentum's failure mode is not gentle — it
-   suffers rare, severe drawdowns (notably 2009). The regime filter is a
-   partial mitigation, not a solution.
+3. **Momentum crashes — the single most important risk here.** Momentum's
+   failure mode is not gentle. Daniel & Moskowitz, *Momentum Crashes*
+   (Journal of Financial Economics), documents that these losses are not
+   random: they cluster in "panic states — following market declines and
+   when market volatility is high — and are contemporaneous with market
+   rebounds." Momentum performs worst **not during the bear market but
+   when it ends**. After a major decline, past-loser betas rise above 3
+   while past-winner betas fall below 0.5, so a momentum book carries a
+   large *negative* conditional beta into the recovery and is run over by
+   it.
+
+   This is why the risk level in `strategy.md` halts new entries when
+   high VIX coincides with a prior decline. It is also the sharpest
+   answer to an intuitive objection — high VIX marks fear, fear marks
+   lows, so shouldn't we buy? For *the index*, the evidence says yes
+   (SPX bought above VIX 30 has averaged ~23% one-year returns). For a
+   *momentum strategy*, the same moment is the documented worst entry.
+   The claims are about different strategies, not in conflict.
+
+   Encouragingly, the paper finds these crashes are **partly
+   forecastable**, and that a dynamic momentum strategy conditioned on
+   forecast mean and variance roughly doubles static momentum's alpha and
+   Sharpe. The risk-level layer is a crude version of that idea; a proper
+   implementation would be a real upgrade.
 4. **None of it is validated *here*.** The strongest caveat: no backtest
    of this specific synthesis, on this universe, with these thresholds,
    exists. Tier A evidence supports the ingredients; it says nothing

@@ -66,10 +66,13 @@ and 3:30pm ET** — all of them *inside* regular market hours:
    - `get_indexes` for VIX (id `3b912aa2-88f9-4682-8ae3-e39520bdf4db`),
      then `get_index_quotes` for its current level
    - **NORMAL** (SPY > 50DMA and VIX < 20) → full rules
-   - **CAUTION** (SPY < 50DMA **or** VIX 20-25) → max **1** new trade this
-     run, no new index-sleeve entries, **counter-trend disabled**
-   - **STRESSED** (VIX ≥ 25) → **no new entries at all**; still review and
-     exit existing positions normally
+   - **CAUTION** (SPY < 50DMA, **or** VIX 20-25, **or** VIX ≥ 25 while SPY
+     is still above its 200DMA) → max **1** new trade this run, no new
+     index-sleeve entries, **counter-trend disabled**
+   - **STRESSED** (VIX ≥ 25 **and** SPY below its 200DMA) → **no new
+     entries at all**; still review and exit existing positions normally.
+     Both conditions are required: momentum crashes cluster in high
+     volatility *following declines*, not in volatility alone.
    Take the **worse** of the two readings. Record both direction and risk
    level explicitly in the journal.
    Existing positions are reviewed and exited in either mode, regardless

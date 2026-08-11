@@ -139,15 +139,51 @@ with-trend and make bearish ones *harder*. That is backwards during a
 decline. The risk level catches deterioration far earlier without
 flipping the regime on noise.
 
-| Level | Trigger (worst of the two applies) | Effect |
+| Level | Trigger (worst applies) | Effect |
 |---|---|---|
 | **NORMAL** | SPY > SMA(50) **and** VIX < 20 | Full rules |
-| **CAUTION** | SPY < SMA(50), **or** VIX 20–25 | Max **1** new trade this run; no new index-sleeve entries; **counter-trend disabled** |
-| **STRESSED** | VIX ≥ 25 | **No new entries of any kind.** Existing positions are still reviewed and exited normally |
+| **CAUTION** | SPY < SMA(50), **or** VIX 20–25, **or** VIX ≥ 25 while SPY is still above its SMA(200) | Max **1** new trade this run; no new index-sleeve entries; **counter-trend disabled** |
+| **STRESSED** | VIX ≥ 25 **and** SPY below its SMA(200) | **No new entries of any kind.** Existing positions are still reviewed and exited normally |
 
-Always take the **worse** of the two readings. Existing positions are
-managed identically at every level — risk level gates *new* commitment
-only, never exits.
+Always take the **worse** reading. Existing positions are managed
+identically at every level — risk level gates *new* commitment only,
+never exits.
+
+### Why STRESSED requires *both* high VIX and a prior decline
+
+A reasonable objection: high VIX marks fear, fear marks lows, so isn't
+that when we should be buying? For **the index**, yes — the evidence is
+strong. Buying SPX with VIX > 30 has historically produced ~23% average
+one-year returns, ~12.4% over six months, positive 70–83% of the time,
+and in the 30–40 VIX band three-week forward returns were positive 81.5%
+of the time.
+
+But that evidence is about **buying the index**, not about **running a
+momentum strategy**. Daniel & Moskowitz, *Momentum Crashes* (Journal of
+Financial Economics), finds momentum's rare catastrophic losses occur
+specifically in "panic states — following market declines and when market
+volatility is high — and are contemporaneous with market rebounds."
+Momentum performs worst **not during the bear market but when it ends**.
+The mechanism: after a major decline, past-loser betas rise above 3 while
+past-winner betas fall below 0.5, so a momentum book carries a large
+*negative* conditional beta into the rebound and gets run over by it.
+
+So the moment that is excellent for buying SPY is the documented worst
+moment for buying a 52-week-high breakout. The two claims don't conflict;
+they describe different strategies.
+
+**The refinement** is that Daniel & Moskowitz specify a *conjunction* —
+high volatility **following declines**. A VIX spike inside an intact
+uptrend is a shakeout, not a panic state, and halting entirely there
+costs opportunity for no documented reason. Hence STRESSED requires both
+conditions; high VIX alone with the primary trend intact is CAUTION.
+
+**What we knowingly give up:** the sharp recoveries off panic lows. That
+is a real cost, and it is accepted deliberately — capturing it would
+require a *mean-reversion* sleeve (buy the index on fear, hold weeks to
+months), which is a different edge on a different horizon from anything
+here. Worth building someday; not worth bolting onto an unvalidated
+momentum system now.
 
 **VIX thresholds are calibrated to observed distribution, not guessed.**
 Measured over the 12 months to 2026-08-11: VIX spent most weeks at
