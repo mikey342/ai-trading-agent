@@ -685,3 +685,60 @@ Both cleared every gating check (the news-sentiment gate is literal — average 
 **Rejected by gates:** None reached gates.md-level sizing/execution checks. TECH, CDNA, OGN, FBP, ATAI, LXP were dropped at Tier 2 (breakout price condition met but volume confirmation failed — not logged to `trade_log.csv` per schema scope, which reserves logging for Tier 3/gate-level declines). KLAC, PAY, PYPL, SAIA failed Tier 1 (broken trend stack in both directions). EAT was dropped at the Tier 1 earnings blackout (reports tomorrow). SSO/index sleeve dropped at the Tier 2 volume-confirmation gate (not logged, same scope rule).
 
 **Strategy adaptation this run:** None — this is the first run with actual fills, so there is no closed-trade history yet to evaluate against the adaptation policy's evidence bar. Two observations for future reference, not acted on: (1) the index-sleeve volume gate has now failed identically on every run since the template fix (4 for 4) — worth a deliberate look once there's bandwidth, separate from the auto-adaptation threshold; (2) PAYO is a useful natural experiment for whether `momentum_test_would_pass` and/or the news-sentiment nuance (average-vs-recent-skew) carry real predictive value, since it cleared every literal gate while showing weaker readings than ACAD on both.
+
+---
+
+### 2026-08-11 19:42 UTC — close run (3:30pm ET slot)
+
+**gates.md MODE check:** `PAPER` — confirmed, run proceeds under normal paper-trading rules.
+
+**Market status:** `MARKET_STATUS` (Alpha Vantage) succeeded — US equity markets `open`. Corroborated via Robinhood `get_equity_quotes` (SPY): live regular-session trade at 2026-08-11T19:38:00Z (15:38 ET) — inside the 3:30pm ET pre-close slot.
+
+**Account (before this run):** NAV $10,000.00, cash $7,174.85, halted: no. Two open positions from the midday run: ACAD (45 sh @ $29.49), PAYO (211 sh @ $7.10).
+
+**Position review:**
+- **ACAD:** current $29.34 vs stop $28.6053 and R-target $31.2594 — neither hit, `R-target reached?` stays No. SMA(50) $24.4579 (unchanged, same completed bar) — price still well above, trend template intact, no trend-break exit. Entry date is today — 0 trading days elapsed, no time-stop. Unrealized P&L: 45 × (29.34−29.49) = **−$6.75**.
+- **PAYO:** current $7.09 vs stop $7.0190 and R-target $7.2620 — neither hit. SMA(50) $6.7955 (unchanged) — price still above, no trend-break. Entry date today, no time-stop. Unrealized P&L: 211 × (7.09−7.10) = **−$2.11**.
+- Neither position closed. NAV recomputed: cash $7,174.85 + ACAD mkt value $1,320.30 + PAYO mkt value $1,495.99 = **$9,991.14**. Today's realized P&L $0; unrealized −$8.86 is nowhere near the −2% ($200) daily halt trigger.
+
+**Regime filter:**
+- **Direction:** SPY $770.915 > SMA(200) $703.479 → **LONG mode**. SMA(200) still climbing steadily (last-5 values 701.39→703.48), price far above throughout — established regime, 3-close confirmation trivially satisfied.
+- **Risk level:** SPY $770.915 > SMA(50) $747.5576 ✓, VIX 15.28 < 20 ✓ → **NORMAL**. Full rules: up to 2 new trades this run, index sleeve permitted, counter-trend permitted.
+
+**Scouted (Tier 0):** `run_scan` (scan_id de1b1994...) returned **396 total matches** again (200 rows returned), essentially the same universe as the midday run 55 minutes earlier — expected, since intraday price moves rarely reshuffle a trend-strength scan much. After the $20M/day dollar-volume screen client-side, **190 of 200** cleared. Ranked by ADX(14) desc (scan column) with the 1.15× `ai_theme.md` tilt applied (KLAC and CRWD, both AI-theme names): **top 15 identical in symbol and order to the midday run** — TECH, CDNA, OGN, KLAC, FBP, PAY, ATAI, PAYO, LIND, EAT, PYPL, ACAD, CRWD, SAIA, LXP.
+
+**Judgment call — already-open positions excluded from new-entry ranking.** ACAD and PAYO both reappear in today's top 15 (both still trending), but both are already open positions with no pyramiding mechanism in this system's position model (one row per symbol in `positions.md`). Re-running them through Tier 1-3 would not produce an actionable new trade, so both are excluded from the Tier 1 survivor pool that feeds the composite-rank Tier 2 cap, freeing two slots for names not yet tested today. This is a judgment call, not an explicit rule in `run_instructions.md`/`strategy.md` — noted here for visibility since a future run may want it made explicit.
+
+**Skipped without re-testing (daily-bar criteria unchanged since the midday run, ~55 minutes ago, same completed session):**
+- **KLAC, PAY, PYPL, SAIA** — failed Tier 1 trend template both directions at midday (broken/wrong-order SMA50-vs-SMA200 stack, a daily-bar fact that cannot change intraday). Re-verified current price only (live, re-runs per policy): KLAC $200.17, PAY $40.54, PYPL $59.11, SAIA $358.12 — all still far outside the price condition needed (12-48% gaps at midday), confirming the same both-direction fail without re-pulling SMA/fundamentals.
+- **TECH, CDNA, OGN, FBP, ATAI, LXP** — passed Tier 1 at midday but failed Tier 2 volume confirmation (`relative_volume` computed from the last **completed** session, Aug 10, ÷ 30-day average — both inputs fixed until tomorrow's bar closes). Not re-tested for volume, since the answer is mathematically identical; however, since these two names (LIND, CRWD) newly entered the Tier 2 pool this run (see judgment call above), fresh Tier 2 checks were required for them specifically — see below.
+- **EAT** — re-confirmed via this run's required `get_earnings_calendar` (days=7) call: still reports 2026-08-12 (am), inside the 3-day blackout. Dropped.
+
+**Tier 1 — the 8 candidates carried forward (TECH, CDNA, OGN, FBP, ATAI, LIND, CRWD, LXP):** re-verified with fresh `get_equity_quotes` + `get_equity_fundamentals` (SMA50/200 reused from midday, unchanged/daily-bar). All 8 still pass the LONG trend template on live price (proximity to 52-week high/low, price>SMA50>SMA200) — no change from midday. pct_52w_range this run: TECH 0.9926, CDNA 0.9474, OGN 0.9987 (new 52wk high $13.66 set today), FBP 0.9615, ATAI 0.9962, LIND 0.9080, CRWD 0.9664, LXP 0.9554.
+
+**Value/momentum composite (N=8, ACAD/PAYO excluded per the judgment call above — all 8 survivors fit under the top-8 cap, so no cut needed this run):** ranked by PE ascending among positive-PE names (FBP 12.22, OGN 17.37, CDNA 23.06, LXP 60.96, TECH 103.62), then negative-PE names ordered least-negative-first (ATAI −3.24, LIND −88.96, CRWD −4780.47). Composite = 0.6×pct_52w_range + 0.4×value_score: **FBP 0.977, OGN 0.942, CDNA 0.854, LXP 0.802, TECH 0.767, ATAI 0.712, LIND 0.602, CRWD 0.580.** All 8 advance to Tier 2 (this is the first Tier 2 look for LIND and CRWD today — both were cut by the ranking cap at midday when ACAD/PAYO occupied 2 of the 8 slots).
+
+**Tier 2 — entry trigger, all 8** (volume confirmation computed from `get_equity_historicals` day-bar for Aug 10 ÷ `get_equity_fundamentals`'s `average_volume_30_days`, both fresh calls this run):
+
+| Symbol | Aug 10 volume | 30d avg volume | relative_volume | ≥1.4? | RSI(14) | Trigger |
+|---|---|---|---|---|---|---|
+| TECH | 3,337,478 | 3,628,907 | 0.920 | ✗ | 72.22 (carried) | none |
+| CDNA | 1,228,966 | 1,354,567 | 0.907 | ✗ | 73.62 (carried) | none |
+| OGN | 1,464,153 | 2,424,697 | 0.604 | ✗ | 66.88 (carried) | none |
+| FBP | 1,490,485 | 1,594,517 | 0.935 | ✗ | 64.08 (carried) | none |
+| ATAI | 3,450,718 | 19,803,427 | 0.174 | ✗ | 73.88 (carried) | none |
+| LIND | 539,536 | 844,668 | 0.639 | ✗ | 70.40 (fresh) | none |
+| CRWD | 8,178,475 | 8,212,981 | 0.996 | ✗ | 71.47 (fresh) | none |
+| LXP | 745,602 | 980,233 | 0.761 | ✗ | 69.97 (carried) | none |
+
+All 8 fail volume confirmation (both breakout triggers need it) and all 8 have RSI far outside the 35-45 pullback band — same high-momentum-name pattern as every prior run this week. **No triggers fired; no candidates reach Tier 3.** LIND and CRWD, freshly evaluated for the first time today, land squarely in the same regime as the other six: strong trend, no fresh volume participation.
+
+**No candidates reached Tier 3 this run.** Per `DATA_SCHEMA.md`, Tier 2 non-gate declines are not logged to `trade_log.csv`, only noted here.
+
+**Index sleeve (SSO):** SPY trend template passes (price $770.915 > SMA50 $747.5576 > SMA200 $703.479; within 10% of high52 $776.85; relative-strength proxy 0.960 ≥ 0.6) and the breakout price/EMA conditions were already established at midday. **Volume confirmation fails again**: Aug 10 volume 39,249,478 ÷ 30-day avg 49,220,302.79 = relative_volume **0.798** — same fixed inputs as every run this week. **No SSO trade — the fifth consecutive run failing this exact gate.** Flagging again for the human: this is now a full trading day plus of the index sleeve never once clearing Tier 2 since the trend-template fix; worth a deliberate look at whether 1.4 (calibrated for single-stock breakouts) is the right bar for a structurally-less-bursty index ETF. Not acted on this run — the adaptation policy's evidence bar governs `strategy.md` changes, not standing observations.
+
+**Decisions:** No new positions opened (equity, options, or index sleeve). No positions closed.
+
+**Rejected by gates:** None reached gates.md-level sizing/execution checks — nothing had a valid entry trigger this run. KLAC, PAY, PYPL, SAIA failed Tier 1 (unchanged from midday, re-verified on price only). TECH, CDNA, OGN, FBP, ATAI, LXP, LIND, CRWD all failed Tier 2 volume confirmation (LIND/CRWD freshly tested; the other six carried forward from midday's identical daily-bar result). EAT dropped at the Tier 1 earnings blackout (confirmed again, reports tomorrow). SSO/index sleeve dropped at Tier 2 volume confirmation (5th consecutive run). ACAD and PAYO were excluded from new-entry consideration as already-open positions (see judgment call above) — not gate rejections.
+
+**Strategy adaptation this run:** None — still only 0 closed trades, below every evidence bar in the adaptation policy. Restating the two standing observations from midday (index-sleeve volume gate now 5-for-5 failing; PAYO as a natural experiment for the retired momentum test) — neither acted on. New observation: the market-wide volume drought (every Tier 2 candidate across both the stock funnel and the index sleeve failed on `relative_volume` today) suggests today (Aug 10 session, the last completed bar feeding every check right now) was simply a low-participation day market-wide, not a defect in the 1.4 threshold specifically — worth confirming once Aug 11's session closes and becomes the new "last completed session" for tomorrow's runs.
