@@ -352,19 +352,45 @@ and EMA (period=8 and period=21, output="last:5") for Tier 1 survivors —
 `output` trims the response server-side, no extraction step needed. A
 candidate qualifies if **either**:
 
-**LONG mode:**
-- **Breakout trigger** (Turtle-style): price within 2% of `high_52_weeks`
-  AND EMA8 > EMA21
-- **Pullback trigger** (Connors-style): RSI(14) between 35-45 AND price
-  still > SMA(50) (pullback within an intact uptrend, not a breakdown)
-  AND EMA21 is flat-to-rising over the last 5 values (trend not rolling
-  over)
+**LONG mode — three triggers, any one qualifies:**
+- **`breakout_52w`** (O'Neil / George & Hwang): price within 2% of
+  `high_52_weeks` AND EMA8 > EMA21. The strongest level signal — no
+  overhead supply at all.
+- **`breakout_20d`** (original Turtle): price today exceeds the **prior
+  bar's** 20-day Donchian **upper** channel AND EMA8 > EMA21 AND
+  `Relative volume` ≥ 1.2 from the Tier 0 scan. A new 20-day high is a
+  weaker level signal than a 52-week high, so it carries an extra
+  requirement — **volume expansion** — which is what O'Neil and
+  Qullamaggie actually use to confirm a break.
+- **`pullback`** (Connors-style): RSI(14) between 35-45 AND price still >
+  SMA(50) (pullback within an intact uptrend, not a breakdown) AND EMA21
+  is flat-to-rising over the last 5 values (trend not rolling over).
 
-**SHORT mode (mirrored):**
-- **Breakdown trigger**: price within 2% of `low_52_weeks` AND EMA8 <
-  EMA21
-- **Rally-to-resistance trigger**: RSI(14) between 55-65 AND price still
-  < SMA(50) (a bounce inside an intact downtrend, not a genuine reversal)
+**Why `breakout_20d` was added (2026-08-11).** The first two triggers left
+a **dead zone**: a stock 10% off its high, basing for six weeks, RSI ~52,
+breaking out of its range fires *neither* — too far from the high for
+`breakout_52w`, not oversold enough for `pullback`. That is a textbook
+swing setup falling straight through the middle. It is also worth noting
+the Turtles' actual system used 20- and 55-day channel breakouts, not
+52-week highs; adopting only the stricter O'Neil level had quietly
+dropped the entry that Turtle sizing was designed around.
+
+**Labeling when triggers overlap.** A stock at a new 52-week high is
+necessarily at a new 20-day high, so `breakout_52w` is a strict subset of
+`breakout_20d`. When both fire, label it **`breakout_52w`** — the
+stronger signal. Recording which trigger fired is what will later show
+whether the weaker 20-day breakout earns its place or just adds losing
+trades.
+
+**SHORT mode mirrors all three**, using the Donchian **lower** channel for
+`breakdown_20d`, and the 52-week low for `breakdown_52w`.
+
+**SHORT mode (all three mirrored):**
+- **`breakdown_52w`**: price within 2% of `low_52_weeks` AND EMA8 < EMA21
+- **`breakdown_20d`**: price today falls below the **prior bar's** 20-day
+  Donchian **lower** channel AND EMA8 < EMA21 AND `Relative volume` ≥ 1.2
+- **`rally_to_resistance`**: RSI(14) between 55-65 AND price still <
+  SMA(50) (a bounce inside an intact downtrend, not a genuine reversal)
   AND EMA21 is flat-to-falling over the last 5 values
 
 **The short mirror is "short the bounce," not "short the dip."** Note the
@@ -846,6 +872,12 @@ Every run, after updating the journal:
   plainly in the journal and propose tightening or suspending them — that
   allowance was made on a contested argument and should be judged on its
   own record. The reverse also holds: if they are clearly working, note it.
+- **Check the `trigger` column too.** `breakout_20d` is a weaker level
+  signal than `breakout_52w` and was added to close a coverage gap, not
+  because it was shown to work here. Once ≥10 trades have closed on it,
+  compare its win rate and average R against the other triggers. If it
+  underperforms, remove it — a trigger that only adds trades is worse
+  than no trigger.
 - **Check the `ai_theme` column the same way.** The 1.15× tilt was added
   on a plausible thesis (AI names are high-beta and high-ADX, which suits
   momentum), not on evidence from this system. Once ≥10 trades have

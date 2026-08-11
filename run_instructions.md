@@ -186,7 +186,13 @@ re-run, since price does move.
 ### Tier 2 — shortlist
 For Tier 1 survivors (capped at top 8 by the value/momentum tiebreaker —
 see `strategy.md`), call `get_equity_technical_indicators` for RSI
-(period=14, output="last:5") and EMA (period=8 and 21, output="last:5").
+(period=14, output="last:5"), EMA (period=8 and 21, output="last:5"), and
+**donchian_channels (period=20, output="last:3")**. Three triggers now
+qualify — `breakout_52w`, `breakout_20d`, `pullback` (mirrored in SHORT
+mode). For `breakout_20d`, compare today's price against the **prior
+bar's** upper channel, not today's, and require `Relative volume` ≥ 1.2
+from the Tier 0 scan. When both breakout triggers fire, label it
+`breakout_52w` — the stronger signal.
 The `output` parameter trims the response server-side — no file/jq
 extraction needed. Apply the Tier 2 breakout/pullback trigger logic. Drop
 anything that fails.

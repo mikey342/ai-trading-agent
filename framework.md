@@ -62,8 +62,8 @@ of pieces from each, not a pure implementation of any one:
    and stops**, not fixed percentages.
 
    **Why specifically the 52-week high** (the level `strategy.md`'s
-   breakout trigger uses): at a 52-week high, essentially no one who
-   bought in the past year is underwater, so there is no reservoir of
+   strongest breakout trigger uses): at a 52-week high, essentially no one
+   who bought in the past year is underwater, so there is no reservoir of
    trapped holders selling into strength just to get back to even —
    overhead supply is thin. This is Tier A evidence, not just
    practitioner lore: **George & Hwang (2004), "The 52-Week High and
@@ -72,6 +72,24 @@ of pieces from each, not a pure implementation of any one:
    themselves*, making it one of the more robust momentum variants. The
    2% window means the breakout is imminent or underway rather than
    already extended.
+
+   **But note what the Turtles actually traded: 20- and 55-day channel
+   breakouts, not 52-week highs.** The system originally used only the
+   stricter O'Neil-style level, which quietly discarded the entry that
+   Turtle ATR sizing was built around and left a coverage gap — a stock
+   10% off its high, basing, breaking its range, matched no trigger at
+   all. `strategy.md` now carries a 20-day Donchian breakout alongside
+   the 52-week one, with volume confirmation attached since the weaker
+   level signal needs it. A 52-week-high breakout remains the stronger
+   signal and is labeled as such when both fire.
+
+   **Neither level is a risk filter.** Proximity to a 52-week high says
+   nothing about gap risk — a stock at its highs can drop hard on a
+   downgrade or guidance cut. What bounds that is position sizing: at a
+   15% position, a −10% overnight gap costs ~1.5% of NAV, roughly 4× the
+   intended per-trade risk, with the −2% daily halt catching further
+   damage. The earnings blackout removes the most predictable gap source;
+   nothing removes surprise news.
 
 2. **Trend template / stage analysis (Minervini's SEPA)** — Mark
    Minervini's published methodology (*Trade Like a Stock Market Wizard*):
