@@ -1021,11 +1021,18 @@ Close a position if **any** of:
    SHORT: price closes back **above** SMA(50). The premise for the trade
    no longer holds. This always exits, regardless of R-target/trailing-
    stop state.
-3. Held > 20 trading days without reaching the R-target (time-stop — an
-   extreme RSI reading pre-R-target, >75 in a LONG or <25 in a SHORT, is
-   a signal to watch more closely, not an automatic exit on its own; the
-   time-stop and trend-template rules above are what actually close a
-   stalled position)
+3. **Time-stop — the limit depends on the sleeve** (per `gates.md`):
+   **20 trading days** for ordinary stock, **10** for an index leveraged
+   ETF (SSO/QLD/SDS/QID), **7** for a single-stock leveraged ETF. The
+   more decay-prone the instrument, the shorter the leash. Measured from
+   `Entry date` and only applies while the R-target has *not* been
+   reached — once it has, the trailing stop governs and a winner is
+   allowed to run past these limits.
+
+   (An extreme RSI reading pre-R-target — >75 in a LONG, <25 in a SHORT —
+   is a signal to watch more closely, not an automatic exit. The
+   time-stop and trend-template rules are what actually close a stalled
+   position.)
 4. For options specifically: 21 days-to-expiration reached, OR 50% of the
    DTE at entry has elapsed with no progress toward the R-target —
    whichever comes first (see the options overlay section for the full
