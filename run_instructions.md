@@ -157,17 +157,26 @@ Never short a stock and never use margin, in any circumstance.
 Call `run_scan` with `scan_id: de1b1994-b5db-472a-9b79-c052f1215193`
 ("Swing Agent - Trend Candidates"). This returns live market-wide results
 already filtered on market cap > $2B, price > $5, 30d avg volume > 250K,
-ADX(14) > 25, RSI(14) 25-75, and relative options volume > 0.5 — with all
-those values included per row, so no extra calls are needed to read them.
-Note the total match count in the journal (~116 at last check).
+ADX(14) > 25, and RSI(14) 25-75 — with all those values included per row,
+so no extra calls are needed to read them. Results are sorted **ADX(14)
+descending**. Note the total match count in the journal, and note that
+the response caps at 200 rows (~396 matched on 2026-08-11).
+
+A `relative options volume > 0.5` filter was removed on 2026-08-11: it
+compared today's *partial* options volume against a *full-day* average,
+so it rejected nearly the entire universe during the morning run (4
+matches at 09:57 vs 51 at 12:57 the same day). See `strategy.md`. **If a
+morning scan ever again returns a single-digit match count while later
+runs return dozens, suspect a partial-intraday-accumulation filter before
+concluding the market is thin.**
 
 **Then apply the dollar-volume screen client-side** (free — the data is
 already in the response): compute `Last × Average volume` and drop
 anything below **$20M/day**. Share volume alone is a poor liquidity
 measure across price levels; see `strategy.md`.
 
-Rank client-side (free) primarily by `Average directional index (14)`
-descending, using `Relative options volume` as a tiebreaker. **Multiply
+Rank client-side (free) by `Average directional index (14)`
+descending. **Multiply
 the score by 1.15 for any symbol listed in `ai_theme.md`** — a tilt, not
 a filter; non-AI names still displace AI names when they rank higher.
 Take the **top 15** into Tier 1. This is the entire candidate universe for the run

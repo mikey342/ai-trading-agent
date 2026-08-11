@@ -29,11 +29,50 @@ list:
   **ADX(14) > 25** (a real trend exists — direction-agnostic, so this
   serves both long and short modes), RSI(14) between 25-75 (deliberately
   wide enough to surface oversold short-mode candidates as well as
-  long-mode pullbacks), **relative options volume > 0.5** (ensures the
-  name has a live options market — required for the options overlay —
-  and surfaces the `Relative options volume` column for ranking).
-- **Verified live 2026-08-11:** 116 matches under this filter set (was 96
-  at the old 1M-share floor).
+  long-mode pullbacks).
+- **Sorted ADX(14) descending** (changed from market-cap desc on
+  2026-08-11) so that the scan's 200-row response cap aligns with the
+  funnel's own primary ranking axis — the top 15 by ADX is then always
+  inside the returned rows.
+- **Verified live 2026-08-11:** 396 matches under this filter set,
+  200 returned (response cap), truncating at ADX ≈ 31.2.
+
+#### ⚠ Removed 2026-08-11: `relative options volume > 0.5`
+
+This filter was **time-inconsistent and silently crippling the morning
+run.** Robinhood computes it as
+`optionsTotalDayVolume / optionsTotalVolumeAvg(30d)` — *today's
+partially-accumulated* options volume over a *full-day* 30-day average.
+The numerator grows through the session while the denominator does not,
+so the same `> 0.5` threshold means something completely different
+depending on when the scan runs:
+
+| Run time | Session elapsed | Observed matches |
+|---|---|---|
+| 09:57 ET | ~7% | **4** |
+| 12:57 ET | ~54% | **51** |
+| (same day, filter removed) | — | **396** |
+
+Measured 2026-08-11: the four names that survived the 09:57 scan read
+0.628 / 0.817 / 0.633 / 0.934 — all clustered just above the threshold,
+i.e. the filter was selecting *names running ~7x normal early options
+pace*, not trend candidates. The same names by midday: TSLA 0.633 →
+2.619, RKLB 0.934 → 2.326. The 2026-08-10 runs showed the identical
+split (7 matches in the morning, ~92-96 at midday/close).
+
+**This is not fixable by tuning the threshold.** At 09:57 `> 0.5` selects
+the top few percent by early options flow; by 15:57 it means "about half
+of normal pace," which is nearly everything. No single value is correct
+across all three run times, so the filter was removed rather than
+re-tuned. This is the same defect already documented for volume
+confirmation in `gates.md` ("never use a partial intraday volume"), which
+had been applied to the client-side check but never to the screener's own
+filter set.
+
+Nothing load-bearing was lost: liquidity is enforced by market cap >$2B,
+price >$5, 30d avg volume >250K, and the client-side $20M/day
+dollar-volume screen. The options overlay checks its own chain liquidity
+at selection time regardless.
 
 ### ⚠ The scan's ADX is not the same measure as a direct ADX call
 
@@ -84,7 +123,7 @@ The scanner has no dollar-volume filter, but it returns both `Last` and
 `Average volume`, so **compute `Last × Average volume` client-side and
 drop anything below $20M/day.** Free, and a far better measure.
 
-Measured 2026-08-11: of the 116 matches, only **3** fall below $20M/day
+Measured 2026-08-11 (pre-filter-removal, 116-match set): only **3** fell below $20M/day
 (TIMB $9M, EFXT $10M, TFSL $15M). The `market cap > $2B` filter was
 already doing nearly all the liquidity work — the 1M-share floor was
 excluding roughly 20 names while adding almost no protection. $20M/day is
@@ -101,12 +140,23 @@ didn't meet the strategy's own criteria. It also made the
 relative-strength ranking nearly meaningless: ranking 19 pre-selected
 mega-caps against each other is not a cross-sectional signal.
 
-**Narrowing for the funnel:** ~116 is far more than Tier 1 can process.
-Rank the scan results client-side (free — the scan already returned these
-columns) by a blend of `Average directional index (14)` (trend strength)
-and `Relative options volume` (unusual positioning — a public,
-exchange-derived early-interest signal), then take the **top 15** into
-Tier 1.
+**Narrowing for the funnel:** the returned set (up to 200 rows) is far
+more than Tier 1 can process. Rank the scan results client-side (free —
+the scan already returned these columns) by `Average directional index
+(14)` (trend strength), then take the **top 15** into Tier 1.
+
+> **Known limitation (2026-08-11).** The scan matches ~396 names but
+> returns only 200. Sorting by ADX desc makes this harmless for the
+> ADX rank itself, but the **AI tilt is applied before the rank**, so an
+> `ai_theme.md` name whose ADX falls below the truncation boundary
+> (≈31.2 on 2026-08-11) cannot be tilted into the top 15 because it is
+> never returned. On 2026-08-11 only **6 of 95** theme names appeared in
+> the returned rows (BWXT, CRWD, FTNT, GFS, KLAC, NTAP). It is **not yet
+> established** how many of the remaining 89 were legitimately filtered
+> out by ADX>25 / RSI 25-75 versus merely truncated — do not assume
+> either. Resolving this properly means querying `ai_theme.md` names
+> directly rather than depending on scan visibility, which is a Tier 0
+> redesign, not a bug fix, and is left as an open decision.
 
 **AI theme tilt.** Multiply the ranking score by **1.15** for any symbol
 listed in `ai_theme.md`. This is a tilt, not a filter: it makes AI names
@@ -114,10 +164,8 @@ likelier to reach the top 15 without excluding anything else, and a
 non-AI name still displaces an AI name if it ranks higher on merit. The
 boost is deliberately modest — large enough to surface the theme, too
 small to promote a weak setup over a strong one. See `ai_theme.md` for
-why tilting beats filtering here. Weight ADX primarily; use relative options volume as the
-tiebreaker rather than the main sort, since unusual options activity is
-suggestive, not directional on its own — it can precede a move either
-way, and it is not a substitute for the trend template. If the scan
+why tilting beats filtering here. Rank on ADX; the former relative-options-volume
+tiebreaker was removed with that filter on 2026-08-11 (see above). If the scan
 returns fewer than 15, use them all. Log the scan's total match count in
 the journal so the universe's breadth on a given day is visible.
 
