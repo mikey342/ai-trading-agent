@@ -32,6 +32,9 @@ Empty — no open equity, options, or index-sleeve positions.
 - Premarket notes (2026-08-10) show the scan universe was thin pre-open (only COO), with news unavailable for COO's premarket move as well — same quota issue.
 - No other degraded inputs identified; equity price/indicator data (SMA/EMA/RSI/ADX/ATR) came through normally via Robinhood on all runs.
 
+## Open-question tracking
+`strategy.md` carries a pre-registered decision rule on the breakout-vs-momentum conflict (Tier 2 breakout trigger vs. Tier 3 acceleration test). Running tally: **momentum test: 4 of 4 breakout candidates rejected, across 1 trading session** (2026-08-10 — TECH x2 [midday and close, same underlying bar], TXG, IMAX). The pre-registered threshold — ≥15 candidates over ≥10 sessions with ≥90% rejected — has **not** been met (1 session vs. 10 required, 4 candidates vs. 15 required). No rule change proposed; per the pre-registration, a small sample must not drive a change.
+
 ## Watch items
 - Tier 3 momentum confirmation has rejected every single Tier 2 survivor today (4 for 4) — not yet a pattern per the ≥5-of-10-closed-trades adaptation bar (zero closed trades exist), but worth tracking as real trades start closing.
 - SSO index-sleeve rule-3 (25%-above-low52) has blocked every run since the system went live, purely due to SPY's currently compressed 52-week range — a structural condition, not a signal problem. No strategy.md change made; flagged for human attention if it persists.
