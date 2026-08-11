@@ -562,13 +562,37 @@ options. All verified live 2026-08-10 (30-day average volumes):
 | Underlying | Bull ETF | Vol | Bear ETF | Vol | Bear leverage |
 |---|---|---|---|---|---|
 | NVDA | NVDL | 13.5M | **NVD** | 78.8M | −2x |
-| TSLA | TSLL | 76M | **TSLQ** | 5.9M | −2x |
+| PLTR | — | — | **PLTD** | 41.2M | −1x |
 | AMZN | AMZU | 3.3M | **AMZD** | 13.6M | −1x |
+| MU | — | — | **MUD** | 13.3M | −1x |
 | AAPL | AAPU | 2.2M | **AAPD** | 11.4M | −1x |
+| MSTR | — | — | **MSTZ** | 9.0M | −2x |
+| TSLA | TSLL | 76M | **TSLQ** | 5.9M | −2x |
 | MSFT | MSFU | 7.7M | **MSFD** | 1.7M | −1x |
+| AMD | — | — | **AMDD** | 1.07M | −1x (barely clears floor) |
 | META | METU | 5.4M | METD | 744K | ❌ below floor |
 | GOOGL | GGLL | 1.7M | GGLS | 368K | ❌ below floor |
+| MSTR | — | — | SMST | 223K | ❌ below floor (use MSTZ) |
 | COIN | CONL | 18.6M | CONI | 144K | ❌ below floor |
+| NFLX | — | — | NFXS | 44K | ❌ below floor |
+
+Verified 2026-08-10/11. **Nine names currently have a tradeable bear
+expression.** Re-verify volume before using any bear ETF not on this
+list — the bear side is consistently thinner than the bull side, and
+several plausible-looking tickers fail the floor outright.
+
+**3x inverse funds (SQQQ, SPXS) are out of scope**, despite being highly
+liquid (58M and 11M respectively). Daily-reset drag is `(L²−L)/2 × σ²`,
+so a −3x fund carries **6× σ²** — double the −2x penalty and six times
+the +2x one. At that decay rate a multi-day hold is fighting the
+instrument itself. The index sleeve stays on SDS/QID (−2x).
+
+**Note how the volatility gate interacts with this list.** MSTR and COIN
+are the most decay-prone underlyings here, and `gates.md`'s ATR ≤ 4%
+requirement will typically exclude them before their bear ETFs are ever
+considered. That is the gate doing its job, not a gap — the names with
+the most liquid inverse products are often the ones whose volatility
+makes leveraged exposure worst.
 
 **Two asymmetries that must not be glossed over:**
 

@@ -100,6 +100,7 @@ are a set; changing one alone re-breaks the coherence.
 | Leveraged ETF liquidity floor | 30-day average volume ≥ 1M shares | Hard gate. Bear-side ETFs are frequently far thinner than their bull counterparts — METD (744K), GGLS (368K), CONI (144K) and TSLS (409K) all **fail** this. If a name's bear ETF is below the floor, there is no bearish expression for that name; take no trade rather than reaching for an illiquid one. |
 | **Verify leverage per instrument** | Read the fund's own description before sizing | Bear ETFs do **not** reliably mirror their bull counterpart's leverage — AAPD, MSFD, AMZD and TSLS are **−1x**, while NVD and TSLQ are **−2x**. Never infer leverage from the ticker or from the bull side. |
 | **−2x inverse decay penalty** | Treat −2x single-stock funds as the highest-decay instrument permitted | Daily-reset drag is `(L²−L)/2 × σ²`, so **−2x carries 3× the drag of +2x** — identical to a +3x fund. Observed: CONI −2x COIN fell $141.65 → $52.64; TSLQ −2x TSLA fell $51.45 → $25.17. |
+| **3x funds (either direction)** | **Forbidden** | Includes SQQQ and SPXS despite their high liquidity. A −3x fund carries **6× σ²** of drag — double a −2x and six times a +2x. Over a multi-day hold that is fighting the instrument rather than the market. The index sleeve uses −2x (SDS/QID) only. |
 
 ## Execution gates
 
