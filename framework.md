@@ -259,6 +259,36 @@ thresholds statistically instead of from round numbers (RSI 35-45, ADX
 parameters), run formal risk models and transaction-cost models, and
 diversify across many small positions rather than concentrating in six.
 
+### The short side is mirrored mechanically, but not evidentially
+
+`strategy.md` mirrors every long rule for shorts — 52-week low replaces
+52-week high, the range-position test inverts, breakdown replaces
+breakout. The *mechanism* mirrors cleanly, and in one respect is stronger:
+at a 52-week low everyone who bought in the past year is underwater, so
+rallies meet motivated sellers escaping at break-even — more forceful
+than the mere absence of sellers near a high.
+
+But the **evidence** does not mirror, and the rules should not pretend it
+does:
+
+1. **Momentum's short leg is historically weaker than its long leg** —
+   most of the documented winner-minus-loser spread comes from the
+   winners.
+2. **Stocks near 52-week lows include distressed names** whose payoffs
+   are lottery-like. A refinancing, a buyout rumor, or a short squeeze
+   can produce a violent upward move. The tail risk is fat and points
+   *against* a short.
+3. **The equity risk premium works against shorts.** Stocks drift upward
+   over time, so a short position fights a structural tailwind that a
+   long position rides.
+
+This is why the system already leans against shorts structurally —
+counter-trend gates whenever the regime is long, no outright short
+selling (defined-risk inverse ETFs only), and a bear universe naturally
+limited to ~13 names with liquid inverse products. Those are not
+oversights to be "fixed" into symmetry; they are the asymmetry being
+respected.
+
 ### Four caveats that genuinely bite
 1. **Survivorship bias in the practitioner sources.** Minervini and
    Qullamaggie are known *because* they won. The many traders who used
