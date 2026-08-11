@@ -510,3 +510,62 @@ Both logged to `trade_log.csv` as Tier 3 rejects (`TECH-20260810-2`, `IMAX-20260
 **Strategy adaptation this run:** None. Zero closed trades on record; the adaptation policy requires reviewing closed-trade history, which doesn't exist yet.
 
 **Day summary (all three runs today):** Zero trades opened across morning, midday, and close runs. The funnel worked as designed — real candidates reached Tier 2/3 each run (TSLA counter-trend at Tier 2 this morning; TECH/TXG then IMAX/TECH again at Tier 3 midday/close) but none cleared the final bar. No gate was loosened to force a fit. First actual trading day still pending a candidate that clears every tier.
+
+---
+
+### 2026-08-11 14:01 UTC — morning run
+
+**gates.md MODE check:** `PAPER` — confirmed, run proceeds under normal paper-trading rules.
+
+**Market status:** `MARKET_STATUS` (Alpha Vantage) succeeded this run — US equity markets `open` (no quota exhaustion today, unlike every run yesterday). Corroborated independently via Robinhood `get_equity_quotes` (SPY): live regular-session trade at 2026-08-11T13:57:31Z (09:57 ET) — inside the 9:30am morning window, first run of the day.
+
+**Account:** NAV $10,000, cash $10,000, halted: no (no open positions).
+
+**Position review:** `positions.md` shows zero open equity/options positions — nothing to review.
+
+**Regime filter:**
+- **Direction:** SPY $773.335 > SMA(200) $703.48 → **LONG mode**. SMA(200) has been climbing steadily and SPY has traded well above it for the entire lookback shown (last-5 SMA(200) values 701.39→703.48, all far below price) — the 3-consecutive-close confirmation requirement is trivially satisfied; this is an established regime, not a fresh flip.
+- **Risk level:** SPY $773.335 > SMA(50) $747.56 ✓, and VIX 15.52 < 20 ✓ → **NORMAL**. Full rules apply: up to 2 new trades this run, index sleeve permitted, counter-trend permitted.
+
+**Scouted (Tier 0):** `run_scan` (scan_id de1b1994...) returned only **4 total matches** today — a very thin universe (vs. ~92-96 typical), similar in kind to the 7-match morning scan on 2026-08-10. All 4 cleared the $20M/day dollar-volume screen easily (TSLA ≈$13.7B/day, RKLB ≈$1.63B/day, PBF ≈$220M/day, DK ≈$78M/day) and none appear in `ai_theme.md`, so no AI tilt applied. Ranked by ADX(14) desc (scan column, screening-only use):
+
+| Rank | Symbol | ADX(14) (scan) | Rel. options vol |
+|---|---|---|---|
+| 1 | PBF | 36.46 | 0.628 |
+| 2 | DK | 32.14 | 0.817 |
+| 3 | TSLA | 29.90 | 0.633 |
+| 4 | RKLB | 27.00 | 0.934 |
+
+All 4 (under the top-15 cap) advance to Tier 1.
+
+**Earnings blackout (Tier 1, one `get_earnings_calendar` days=7 call):** none of TSLA, RKLB, PBF, DK report within the next 7 days. All 4 proceed.
+
+**Tier 1 — trend template, both directions, all 4:**
+- **TSLA** ($333.71, SMA50 $378.22, SMA200 $408.24, 52wk $297.38–$498.83): fails LONG (price<SMA50). SHORT: price<SMA50<SMA200 ✓ (333.71<378.22<408.24); within 25% of low52 ✓ ($333.71 ≤ $371.73); ≥25% below high52 ✓ ($333.71 ≤ $374.12); relative-weakness proxy = (333.71−297.38)/(498.83−297.38) = **0.1803** ≤0.4 ✓. **PASS SHORT (bearish).**
+- **RKLB** ($77.345, SMA50 $89.187, SMA200 $78.053, 52wk $37.57–$151.00): fails LONG (price<SMA50). SHORT requires SMA50<SMA200 for a genuine descending stack — here SMA50 ($89.19) > SMA200 ($78.05), a broken/non-monotonic stack, not a confirmed downtrend. **FAIL both.**
+- **PBF** ($66.5192, SMA50 $52.032, SMA200 $40.817, 52wk $21.46–$74.74): stack ✓ (66.52>52.03>40.82); within 25% of high ✓; ≥25% above low ✓; pct_52w_range=0.8457 ✓. **PASS LONG (bullish).**
+- **DK** ($61.30, SMA50 $54.475, SMA200 $42.110, 52wk $20.055–$68.93): stack ✓; pct_52w_range=0.8440 ✓. **PASS LONG (bullish).**
+
+**Tier 1 survivors (3, all under the top-8 cap so no value/momentum cut needed):** PBF (with-trend), DK (with-trend), TSLA (bearish while SPY is LONG → **counter-trend**).
+
+**Counter-trend gate check (TSLA, all 5 required, gates.md/strategy.md):**
+1. Max 1 counter-trend position open: 0 currently open → OK.
+2. **ADX(14) > 30, direct regular-session call (not the scan column):** `get_equity_technical_indicators` (type=adx, period=14) = **29.9037** → **FAILS** (< 30). Notably, the scan's own ADX column read 29.9037 as well — essentially identical to the direct call today, unlike the documented 7-12pt TECH/FTNT divergence — but the outcome is the same failure either way, so the source distinction wasn't decision-relevant this time.
+3. Relative-strength ≤0.25 (stricter counter-trend bar): 0.1803 → would PASS, not reached since gate 2 already failed.
+4/5. Not evaluated — gate 2 failure is sufficient to drop the setup.
+
+**TSLA dropped at the counter-trend ADX gate.** Logged to `trade_log.csv` (`TSLA-20260811-1`, counter_trend=true) since this is a gate-level rejection, not a Tier 1/2 decline — this is exactly the column DATA_SCHEMA.md exists to make judgeable later. For the record, TSLA would also have failed every Tier 2 SHORT-mode trigger had it advanced: `breakdown_52w` needs price within 2% of low52 ($303.33) vs actual $333.71; `breakdown_20d` needs price below the prior bar's Donchian lower ($297.38) vs actual $333.71; `rally_to_resistance` needs RSI 55-65 vs actual RSI(14)=42.52 (last completed session).
+
+**Tier 2 — entry trigger, PBF and DK** (indicator series dated through Mon 2026-08-10 close):
+- **PBF:** price $66.5192 vs high52 $74.74 → 11.0% off, `breakout_52w` fails. Prior bar's (Aug 10) 20d Donchian upper = $74.74; price doesn't exceed it → `breakout_20d` fails. RSI(14) last completed = 59.996, outside the 35-45 pullback band → `pullback` fails. **No trigger. DROP.**
+- **DK:** price $61.30 vs high52 $68.93 → 11.1% off, `breakout_52w` fails. Prior bar's (Aug 10) 20d Donchian upper = $68.93; price doesn't exceed it → `breakout_20d` fails. RSI(14) last completed = 51.489, outside the 35-45 band → `pullback` fails. **No trigger. DROP.**
+
+**No candidates reached Tier 3 this run.** Per `DATA_SCHEMA.md` (and 2026-08-10 precedent), Tier 1/2 declines with no trigger are not logged to `trade_log.csv`, only noted here.
+
+**Index sleeve (SSO, since SPY is in LONG mode):** Using the **index-adjusted** template (fixed 2026-08-10, no 25%-above-low rule): SPY $773.335 > SMA50 $747.56 > SMA200 $703.48 ✓; within 10% of high52 $776.85 ✓ (773.335 ≥ $699.17); relative-strength proxy = (773.335−629.28)/(776.85−629.28) = **0.9762** ≥ 0.6 ✓. **PASS trend template** — first time the index sleeve has cleared Tier 1 since the fix. Entry trigger: price within 2% of high52 ($761.31 floor) ✓; EMA8 $764.06 > EMA21 $754.66 (Aug 10) ✓ → `breakout_52w` triggers on price/trend grounds. **Volume confirmation required and computed:** last completed session (Aug 10) volume = 39,249,478 ÷ 30-day average 49,220,303 = **relative_volume 0.798** — well under the 1.4 threshold. **FAILS volume confirmation. No SSO trade.** This is a materially different outcome than every prior run (which failed the old, now-fixed 25%-above-low rule) — the index-adjusted template fix is working as intended, and this is the first real data point on whether the volume gate is the right bar for the index sleeve specifically; worth watching.
+
+**Decisions:** No new positions opened (equity, options, or index sleeve). No positions closed (none open).
+
+**Rejected by gates:** TSLA dropped at the counter-trend ADX gate (logged to `trade_log.csv`, `TSLA-20260811-1`). PBF, DK dropped at Tier 2 (no entry trigger fired, not logged per schema scope). RKLB dropped at Tier 1 (broken trend stack). SSO/index sleeve dropped at the Tier 2 volume-confirmation gate (not logged — same scope rule as the stock funnel's Tier 2 declines).
+
+**Strategy adaptation this run:** None. Zero closed trades on record; the adaptation policy requires reviewing closed-trade history, which still doesn't exist. Worth flagging as an observation only (not a rule change): today's Tier 0 universe was extremely thin (4 names) for the second time in two trading days' worth of runs — not yet a pattern requiring action, just noted for visibility.

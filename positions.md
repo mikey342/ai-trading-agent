@@ -14,7 +14,7 @@ separate and simulated.
 | Realized P&L (all-time) | $0 |
 | Today's realized P&L | $0 |
 | Trading halted today? | No |
-| Last updated | 2026-08-10 19:41 UTC (close run; no trades — see trade_journal.md) |
+| Last updated | 2026-08-11 14:01 UTC (morning run; no trades — see trade_journal.md) |
 
 ## Open positions — equity and leveraged ETFs
 
@@ -76,3 +76,4 @@ is a one-way flag, same semantics as the equity table.
 | 2026-08-10 (morning, 13:57 UTC) | morning | $10,000 | $10,000 | $0 | No |
 | 2026-08-10 (midday, 18:42 UTC) | midday | $10,000 | $10,000 | $0 | No |
 | 2026-08-10 (close, 19:41 UTC) | close | $10,000 | $10,000 | $0 | No |
+| 2026-08-11 (morning, 14:01 UTC) | morning | $10,000 | $10,000 | $0 | No |
