@@ -344,6 +344,45 @@ respected.
    exists. Tier A evidence supports the ingredients; it says nothing
    about this recipe.
 
+## Evaluated and declined: LLM-debate frameworks
+
+**TradingAgents** (TauricResearch, arXiv 2412.20138, UCLA/MIT,
+Apache-2.0) was assessed on 2026-08-11. It is a LangGraph multi-agent
+system mirroring a trading firm: analyst team → bull and bear researchers
+who debate → trader → risk manager. Competent work, sensible role
+decomposition, and it carries two data sources this system lacks (social
+sentiment from StockTwits/Reddit, and FRED macro).
+
+**Declined, for one reason that overrides the rest: its decision layer is
+stochastic.** The framework's own documentation lists temperature and
+"non-deterministic factors" as reasons results may not reproduce. Every
+design decision here — numeric thresholds, pre-registered change
+criteria, logged rejections, the `trigger`/`counter_trend`/`ai_theme`
+columns — exists so that a rule can be *judged later on its record*. That
+is impossible if identical inputs produce different decisions: a change
+can never be distinguished from a different argument on the day.
+
+Supporting reasons:
+
+- **The evidence is thin.** The paper's backtest runs 2024-01-01 to
+  2024-03-29 — roughly 60 trading days, in a quarter when the S&P rose
+  about 10%. Any long-biased approach looks strong there. The README
+  publishes no metrics at all and states the framework is "designed for
+  research purposes."
+- **Architecture mismatch.** Our routines are markdown playbooks run
+  against a fresh clone. Integrating would mean per-run dependency
+  installs, separate LLM API keys with paid calls inside each routine,
+  and additional vendor credentials.
+- **Its best idea is already here.** The "persistent decision log that
+  injects historical lessons into subsequent analyses" is
+  `trade_journal.md` plus the adaptation policy in `strategy.md` — except
+  ours is bounded by pre-registered thresholds, so it cannot rationalize
+  a strategy change on three data points.
+
+**What remains worth pursuing from it:** social sentiment and macro data
+are genuine gaps. Both are blocked on connector availability, not on
+this decision.
+
 ## What's deliberately not here (yet)
 
 - **No backtest.** Every methodology cited above has a published track
