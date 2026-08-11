@@ -199,21 +199,40 @@ see `strategy.md`), call `get_equity_technical_indicators` for RSI
 **donchian_channels (period=20, output="last:3")**. Three triggers now
 qualify — `breakout_52w`, `breakout_20d`, `pullback` (mirrored in SHORT
 mode). For `breakout_20d`, compare today's price against the **prior
-bar's** upper channel, not today's, and require `Relative volume` ≥ 1.2
-from the Tier 0 scan. When both breakout triggers fire, label it
-`breakout_52w` — the stronger signal.
-The `output` parameter trims the response server-side — no file/jq
-extraction needed. Apply the Tier 2 breakout/pullback trigger logic. Drop
-anything that fails.
+bar's** upper channel, not today's. When both breakout triggers fire,
+label it `breakout_52w` — the stronger signal. The `output` parameter
+trims the response server-side — no file/jq extraction needed.
+
+**Both breakout triggers also require volume confirmation:
+`relative_volume ≥ 1.4`** — the last **COMPLETED** session's volume ÷ the
+30-day average, both already available from the Tier 1
+`get_equity_fundamentals` call. Two traps:
+
+- **Never use a partial day.** During a live run today's volume is only
+  partial, so comparing it to a full-day average understates every name
+  and would reject everything. Use the last completed session —
+  consistent with every other daily indicator in this funnel.
+- **Compute it; do not read the scan's `Relative volume` column**, which
+  uses `session="all"` (the same session-bounds problem as ADX).
+
+Basis: O'Neil's 40%-above-average rule, supported by O'Neil Global
+Advisors' 1995-2021 study finding volume-confirmed breakouts
+significantly outperform. This **replaced** the old Tier 3 momentum test.
 
 ### Tier 3 — finalists (cap 3 per gates.md)
-For Tier 2 survivors: check the EMA8/EMA21 spread from the values already
-pulled in Tier 2 (no new call). Then pull `NEWS_SENTIMENT` (Alpha Vantage,
-limit param 5-10), `get_earnings_results` (Robinhood, per symbol), and
-`get_equity_technical_indicators` (Robinhood, type=atr, period=14,
-output=latest). Apply the Tier 3 confirmation checklist. Drop anything
-that fails. `MACD` (Alpha Vantage) is permanently premium-gated on this
-plan and must never be called — the EMA-spread check already covers this.
+For Tier 2 survivors, pull `NEWS_SENTIMENT` (Alpha Vantage, limit 5-10),
+`get_earnings_results` (Robinhood, per symbol),
+`get_equity_technical_indicators` (type=atr, period=14, output=latest),
+and `get_sentiment` (Stocktwits, log-only).
+
+**Also compute the EMA8/EMA21 spread test and log it to
+`momentum_test_would_pass` — but do NOT gate on it.** It was retired on
+2026-08-11 because it was invented rather than researched; volume
+confirmation at Tier 2 replaced it. Logging preserves the ability to
+check later whether it actually predicted anything.
+
+Drop anything failing the remaining checks. `MACD` (Alpha Vantage) is
+permanently premium-gated and must never be called.
 
 ## 4. Decide instrument: equity, options, or skip
 

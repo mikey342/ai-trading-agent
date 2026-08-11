@@ -48,6 +48,8 @@ specific rule is actually earning its place).
 | `pct_52w_range` | all | `(price - low52) / (high52 - low52)` — the relative-strength proxy. |
 | `pe_ratio` | all | From `get_equity_fundamentals`. |
 | `composite_rank` | all | The value+momentum tiebreaker score from `strategy.md`. |
+| `relative_volume` | all | Last COMPLETED session volume ÷ 30-day average, from `get_equity_fundamentals`. The breakout gate: ≥1.4 (O'Neil's 40% above average). Computed, never read from the scan's column, which uses `session="all"`. |
+| `momentum_test_would_pass` | all | Whether the retired EMA-spread test would have passed. **Logged only, gates nothing** — kept so the pre-registered question stays answerable: did the invented rule actually predict anything? |
 | `trigger` | open/reject | Which entry rule fired. LONG: `breakout_52w`, `breakout_20d`, `pullback`. SHORT: `breakdown_52w`, `breakdown_20d`, `rally_to_resistance`. When both breakout triggers qualify, record the stronger one (`breakout_52w`). **Slice performance by this column** — `breakout_20d` is the weaker level signal and was added to fill a coverage gap; if it underperforms the other two once trades close, it should be removed rather than kept on the argument that introduced it. |
 | `news_sentiment` | all | Score, or the literal `UNAVAILABLE` when the Alpha Vantage quota was exhausted (see `strategy.md`'s degradation rule). Never fabricate this. |
 | `social_score` | all | Stocktwits `sentiment.score` (0-100) at decision time, or `NO_COVERAGE`. **Never `bullish_pct`** — on thin names that reads as false consensus (IMAX showed "100% bullish" against a canonical score of 47). |

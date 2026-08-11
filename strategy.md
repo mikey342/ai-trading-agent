@@ -396,17 +396,66 @@ candidate qualifies if **either**:
 
 **LONG mode — three triggers, any one qualifies:**
 - **`breakout_52w`** (O'Neil / George & Hwang): price within 2% of
-  `high_52_weeks` AND EMA8 > EMA21. The strongest level signal — no
-  overhead supply at all.
+  `high_52_weeks` AND EMA8 > EMA21 AND **volume confirmation** (below).
+  The strongest level signal — no overhead supply at all.
 - **`breakout_20d`** (original Turtle): price today exceeds the **prior
   bar's** 20-day Donchian **upper** channel AND EMA8 > EMA21 AND
-  `Relative volume` ≥ 1.2 from the Tier 0 scan. A new 20-day high is a
-  weaker level signal than a 52-week high, so it carries an extra
-  requirement — **volume expansion** — which is what O'Neil and
-  Qullamaggie actually use to confirm a break.
+  **volume confirmation**. A weaker level signal than a 52-week high, but
+  it carries the same volume requirement.
 - **`pullback`** (Connors-style): RSI(14) between 35-45 AND price still >
   SMA(50) (pullback within an intact uptrend, not a breakdown) AND EMA21
   is flat-to-rising over the last 5 values (trend not rolling over).
+
+### Volume confirmation — the breakout gate (replaces the momentum test)
+
+**Both breakout triggers require `relative_volume ≥ 1.4`** — the most
+recent **completed** daily session's volume divided by the 30-day average
+volume, both from `get_equity_fundamentals`.
+
+**Why 1.4:** O'Neil's rule is that a valid breakout comes on volume
+40–50% above average — the "footprints of big money," institutional
+demand arriving. This is not folklore: **O'Neil Global Advisors published
+quantitative research over 1995–2021** finding breakouts produce ~1.1%
+alpha and 3.2% returns over three months, with **breakouts accompanied by
+sharp volume increases significantly outperforming**. O'Neil's summary:
+*price without volume is meaningless.*
+
+**Two implementation details that matter:**
+
+1. **Use the last COMPLETED session, never a partial one.** During a live
+   run today's volume is only partial, so comparing it to a full-day
+   average would understate every name and reject everything. This
+   matches how the rest of the funnel already behaves — all daily
+   indicators are computed through the prior close.
+2. **Compute it, don't read the scan's `Relative volume` column.** The
+   scan uses `session="all"`; the same session-bounds discipline that
+   applies to ADX applies here. Fundamentals give regular-session volume.
+
+**What this replaced, and why.** Tier 3 previously gated breakouts on a
+momentum-acceleration test — the EMA8/EMA21 spread having to be the
+widest of its last five sessions. **That rule was invented, not
+researched.** It began as an ambiguous "spread widening" phrase, and the
+precise form was chosen for determinism, not derived from evidence. It
+rejected 5 of 5 breakout candidates across two sessions.
+
+The change is made on **provenance, not on those rejections.** The
+pre-registered threshold (≥15 candidates over ≥10 sessions) governs
+whether a *grounded* rule is too strict; it was never a reason to keep an
+*ungrounded* one. Volume confirmation replaces it because it has a
+26-year quantitative study behind it, a citable threshold, and it sits
+with the trigger rather than as a separate layer — the original Turtle
+system had no third confirmation stage at all.
+
+**The old test is still computed and logged**, just not gating, so the
+pre-registered question can still be answered later: would it have helped?
+
+**Evidence it is doing real work, not just letting everything through**
+(measured 2026-08-11 on Monday's completed session): the two names that
+reached Tier 3 under the old rule broke toward 52-week highs on
+*below-average* volume — ACA at 0.68× and HQY at 0.85× — precisely the
+weak breakouts O'Neil declines. Meanwhile BFLY (1.50×) and NTAP (1.46×)
+showed genuine participation. The rule selects **different** names, not
+merely **more** of them.
 
 **Why `breakout_20d` was added (2026-08-11).** The first two triggers left
 a **dead zone**: a stock 10% off its high, basing for six weeks, RSI ~52,
@@ -430,7 +479,7 @@ trades.
 **SHORT mode (all three mirrored):**
 - **`breakdown_52w`**: price within 2% of `low_52_weeks` AND EMA8 < EMA21
 - **`breakdown_20d`**: price today falls below the **prior bar's** 20-day
-  Donchian **lower** channel AND EMA8 < EMA21 AND `Relative volume` ≥ 1.2
+  Donchian **lower** channel AND EMA8 < EMA21 AND `relative_volume` ≥ 1.4
 - **`rally_to_resistance`**: RSI(14) between 55-65 AND price still <
   SMA(50) (a bounce inside an intact downtrend, not a genuine reversal)
   AND EMA21 is flat-to-falling over the last 5 values
@@ -451,40 +500,35 @@ dip is shorting a rally, not shorting a decline.)
 
 For candidates passing Tier 2:
 
-1. **Momentum confirmation**: the EMA8/EMA21 spread (already pulled in
-   Tier 2 — no new call needed) must show momentum *accelerating*, not
-   merely present.
+1. **Momentum spread — LOGGED, NOT GATING** (changed 2026-08-11).
+   Compute `|EMA8 − EMA21|` over the last 5 sessions and record whether
+   the most recent value is the widest, into `trade_log.csv`'s
+   `momentum_test_would_pass` column. **Never reject a candidate on it.**
 
-   **This test applies to BREAKOUT entries only — never to pullback
-   entries.** For a breakout, compute `|EMA8 − EMA21|` for each of the
-   last 5 sessions; the most recent value must be strictly greater than
-   all four prior values. Anything else fails.
+   Breakout confirmation now happens at Tier 2 via **volume** (see
+   "Volume confirmation" above), which carries a 26-year quantitative
+   study where this test had nothing behind it. The old rule was
+   *invented*: it started as an ambiguous "spread is widening" phrase and
+   its precise form — most recent value strictly the widest of five — was
+   chosen by the assistant for determinism, not derived from evidence. It
+   then rejected 5 of 5 breakout candidates across two sessions
+   (TECH, TXG, IMAX on 08-10; ACA, HQY on 08-11).
 
-   **For a pullback entry, this test is skipped entirely, and running it
-   would be a logic error.** A pullback *is* a narrowing spread — EMA8
-   falling back toward EMA21 is the definition of the setup — so
-   requiring the spread to be at a 5-session maximum would reject every
-   pullback that ever occurs. The equivalent confirmation for a pullback
-   is already performed at Tier 2: EMA21 must be flat-to-rising over its
-   last 5 values, which is what establishes the trend is intact rather
-   than rolling over. Confirmed as a real defect on 2026-08-10, when the
-   strict test rejected 4 of 4 Tier 2 survivors and would have
-   permanently blocked the pullback path had one fired.
+   **It was retired on provenance, not on those rejections.** The
+   pre-registered threshold (≥15 candidates across ≥10 sessions) governs
+   whether a *grounded* rule is too strict. It was never a reason to keep
+   an *ungrounded* one, and treating a 5-name sample as justification
+   would have been exactly the reasoning that threshold exists to
+   prevent.
 
-   This wording replaces an earlier "spread is widening over its last 5
-   values," which was ambiguous enough to be unusable: on real BAC data
-   (1.093 → 1.133 → 1.184 → 1.163 → 1.147) a *net* reading passes
-   (+0.054 across the window) while a *trend* reading fails (two
-   consecutive narrowing sessions). Two runs could reach opposite
-   conclusions from identical numbers, which disqualifies it as a
-   mechanical rule. The stricter reading is the deliberate choice: a
-   breakout whose momentum is already decelerating is exactly the one to
-   decline. On that BAC data this test **fails**, and the trade is
-   dropped.
+   Keeping it logged preserves the original question: once trades close,
+   compare outcomes where this test would have passed versus failed. If
+   it turns out to carry predictive value, it can be reinstated **on
+   evidence** rather than on the intuition that produced it.
 
-   Direction still matters for the sign: in LONG mode EMA8 must be above
-   EMA21, in SHORT mode below — the magnitude test above applies to the
-   absolute spread once that direction check passes.
+   (It never applied to pullbacks in any case — a pullback *is* a
+   narrowing spread, so a 5-session-maximum requirement would have
+   rejected every pullback that ever occurred.)
 
    `MACD` (Alpha Vantage) was the
    original design for this check but is **permanently premium-gated on
