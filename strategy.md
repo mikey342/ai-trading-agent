@@ -1046,36 +1046,43 @@ or near new 52-week highs with decelerating spreads. Rejections were
 individually correct; the question is whether the combination is
 *systematically* unsatisfiable.
 
-**Pre-registered decision rule** — fixed in advance to prevent post-hoc
-rationalization:
+**RESOLVED 2026-08-11 — but not by this rule.** The pre-registered
+threshold (≥15 candidates across ≥10 sessions with ≥90% rejected) was
+**never met** — the count reached 5 names across 2 sessions. The test was
+retired anyway, on a different and independent basis: **it was invented
+rather than researched.** Reviewing its provenance showed the precise
+form ("most recent spread strictly the widest of five") had been chosen
+by the assistant for determinism, with no supporting evidence, while a
+well-grounded alternative existed — O'Neil's volume confirmation, backed
+by a 1995-2021 quantitative study.
 
-- **Trigger for change:** ≥ 15 breakout candidates reach Tier 3 across at
-  least 10 trading sessions, **and** the momentum test rejects ≥ 90% of
-  them. (Both conditions; a small sample or a short window does not
-  count.)
+Those are different claims, and the distinction is the point: the
+threshold governs whether a *grounded* rule is too strict. It was never
+a reason to keep an *ungrounded* one. Citing the 5 rejections as
+justification would have been precisely the post-hoc rationalization this
+pre-registration exists to prevent — so they were treated as what
+prompted the review, not as evidence for the conclusion.
+
+### The question that remains open
+
+Retiring the gate did not answer whether the test had predictive value.
+That is still worth knowing, so it is **computed and logged** on every
+candidate as `momentum_test_would_pass`, gating nothing.
+
+**New pre-registered rule, for reinstating it:**
+
+- **Trigger:** ≥ 20 closed trades, **and** entries where the test would
+  have passed show a materially better average R-multiple than those
+  where it would have failed (≥ 0.3R difference).
 - **Count distinct symbol-days, never raw CSV rows.** A name evaluated at
-  the morning, midday, and pre-close runs produces up to three identical
-  rejections, because daily-bar indicators do not change intraday — only
-  price does. Counting rows would reach 15 in roughly five sessions of
-  duplicates and fire this rule on a third of the evidence it specifies.
-  Confirmed 2026-08-10: TECH was logged twice with byte-identical
-  indicator values, and the day's honest count is **3 distinct names**
-  (TECH, TXG, IMAX), not 4 rows.
-- **If triggered, the replacement is already chosen:** confirm breakouts
-  with **volume expansion** instead of spread acceleration — require
-  `Relative volume ≥ 1.5` from the Tier 0 scan, which costs nothing extra
-  since the scan already returns it. This is what O'Neil and Qullamaggie
-  actually use to confirm a breakout ("volume surge on the upside break")
-  — a better-grounded criterion than a momentum oscillator for this
-  specific setup. The acceleration test would then be retired for
-  breakouts and remain retired for pullbacks.
-- **If not triggered:** change nothing. A low pass rate is not by itself
-  a defect — a selective filter that only admits genuinely accelerating
-  breakouts may be doing exactly its job.
-
-Track this by counting `action=reject` rows in `trade_log.csv` whose
-`trigger` is `breakout` and whose `notes` cite the momentum test —
-**deduplicated by (symbol, date)**.
+  the morning, midday and pre-close runs produces up to three identical
+  entries, because daily-bar indicators do not change intraday — only
+  price does. Confirmed 2026-08-10, when TECH was logged twice with
+  byte-identical values.
+- **If triggered:** reinstate it as a gate, on evidence rather than the
+  intuition that produced it the first time.
+- **If not:** leave it logged and non-gating. A test that does not
+  separate winners from losers has no claim on the funnel.
 
 ### Daily indicators do not move intraday — plan around it
 

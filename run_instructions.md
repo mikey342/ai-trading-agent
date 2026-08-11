@@ -185,11 +185,11 @@ directions** (long and inverted). Drop anything that passes neither.
 
 **Before advancing anything to Tier 2:** check `trade_log.csv` for reject
 rows dated today. If a candidate was already rejected today on a
-daily-bar criterion (the momentum test, an RSI band, EMA ordering), skip
-it — daily indicators are computed from completed bars and cannot change
-intraday, so re-testing is guaranteed to reach the same answer. Do not
-log a duplicate rejection row; duplicates corrupt the pre-registered
-tally in `strategy.md`. Price-based checks are exempt and should still
+daily-bar criterion (**volume confirmation**, an RSI band, EMA ordering),
+skip it — daily indicators are computed from completed bars and cannot
+change intraday, so re-testing is guaranteed to reach the same answer. Do
+not log a duplicate rejection row; duplicates corrupt the pre-registered
+tallies in `strategy.md`. Price-based checks are exempt and should still
 re-run, since price does move.
 
 ### Tier 2 — shortlist

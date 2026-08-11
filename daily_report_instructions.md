@@ -69,15 +69,21 @@ news sentiment, failed calls, market-closed fallbacks. Be specific; this
 is how systematic data problems get noticed.
 
 ## Open-question tracking (include when relevant)
-`strategy.md` carries a pre-registered decision rule on the breakout
-momentum test. Each day, count the cumulative `action=reject` rows in
-`trade_log.csv` where `trigger=breakout` and the notes cite the momentum
-test — **deduplicated by (symbol, date)**, never raw rows. A name
-evaluated at more than one run in a day produces identical rejections,
-because daily-bar indicators don't move intraday; counting rows would
-reach the threshold on a fraction of the intended evidence. Report as a
-running tally (e.g. "momentum test: 3 of 3 distinct breakout candidates
-rejected, across 1 session"). State plainly whether the pre-registered
+`strategy.md` carries a pre-registered rule about whether the retired
+EMA-spread momentum test should be **reinstated**. It no longer gates
+anything; it is logged as `momentum_test_would_pass`.
+
+Each day, report the running state: how many trades have **closed**, and
+— once any have — the average R-multiple split by
+`momentum_test_would_pass` true vs false. **Deduplicate by (symbol,
+date)**, never count raw rows: a name evaluated at more than one run in a
+day produces identical entries, since daily-bar indicators don't move
+intraday.
+
+State plainly whether the reinstatement threshold (≥20 closed trades and
+a ≥0.3R advantage for the passing group) has been met. **Do not propose
+reinstating it before then** — that threshold exists precisely so a small
+sample can't drive the decision, in either direction. State plainly whether the pre-registered
 threshold — ≥15 candidates over ≥10 sessions with ≥90% rejected — has
 been met. Do **not** propose changing the rule before it is met; that
 threshold exists precisely to stop a small sample from driving a change.
