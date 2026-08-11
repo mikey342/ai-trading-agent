@@ -18,9 +18,17 @@ separate and simulated.
 
 ## Open positions — equity and leveraged ETFs
 
-| Symbol | Sleeve | Direction | Counter-trend? | Qty | Entry price | Entry date | Original stop | R-target | R-target reached? | Current exit stop | Current price | Unrealized P&L | Notes |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| _(none yet)_ | | | | | | | | | | | | | |
+| Symbol | Underlying | Sleeve | Direction | Counter-trend? | Qty | Entry price | Entry date | Original stop | R-target | R-target reached? | Current exit stop | Current price | Unrealized P&L | Notes |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| _(none yet)_ | | | | | | | | | | | | | | |
+
+`Underlying` is the symbol the **thesis** is about, and the one whose
+SMA(50) the trend-break exit checks. For a plain stock it equals
+`Symbol`. For a leveraged ETF it is the underlying stock or index
+(NVD → NVDA, SDS → SPY): the ETF's own moving averages are distorted by
+leverage and daily resets, so they cannot be used for the trend test.
+Stops and R-targets, by contrast, are always tracked on the **instrument
+actually held**, since that is what was sized and filled.
 
 `Direction` is `bullish` or `bearish` (a bearish position is a *long*
 position in an inverse ETF — never a short). `Counter-trend?` marks a

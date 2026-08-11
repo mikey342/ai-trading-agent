@@ -1021,6 +1021,14 @@ Close a position if **any** of:
    SHORT: price closes back **above** SMA(50). The premise for the trade
    no longer holds. This always exits, regardless of R-target/trailing-
    stop state.
+
+   **Check this on the UNDERLYING, not on a leveraged ETF.** Record the
+   underlying in `positions.md`'s `Underlying` column at entry (NVD →
+   NVDA, SDS → SPY; for a plain stock it equals the symbol). A leveraged
+   ETF's own moving averages are distorted by leverage and daily resets
+   and do not describe the thesis. Stops and R-targets are the opposite —
+   always tracked on the **instrument actually held**, since that is what
+   was sized and filled.
 3. **Time-stop — the limit depends on the sleeve** (per `gates.md`):
    **20 trading days** for ordinary stock, **10** for an index leveraged
    ETF (SSO/QLD/SDS/QID), **7** for a single-stock leveraged ETF. The

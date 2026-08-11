@@ -340,6 +340,13 @@ system; `MODE` in `gates.md` must be `PAPER`. Update `positions.md`
 accordingly (deduct simulated cash, add the position row with stop/target
 or DTE/premium as applicable).
 
+**Always populate the `Underlying` column.** It is the symbol the thesis
+is about, and the one whose SMA(50) the trend-break exit checks. For a
+plain stock it equals `Symbol`; for a leveraged ETF it is the underlying
+(NVD → NVDA, SDS → SPY). Leave it blank and the hourly monitor cannot
+evaluate the trend-break exit correctly — it would test the ETF's own
+moving average, which leverage and daily resets have distorted.
+
 ## 7. Update positions.md, trade_log.csv, and trade_journal.md
 
 1. Recompute NAV (cash + market value of open equity + open options) and

@@ -43,14 +43,25 @@ For each open **equity** position:
   (type=ema, period=21, interval=day, output=latest), set
   `Current exit stop = max(EMA21, Original stop)`, check if price has hit
   it.
-- Check if price has closed below SMA(50) (trend-template break — exits
-  regardless of R-target state).
-- Check the time-stop (pure date math from `Entry date`, no API call).
-  The limit depends on the sleeve: **20** trading days for an ordinary
-  stock, **10** for an index leveraged ETF (SSO/QLD/SDS/QID), **7** for a
-  single-stock leveraged ETF (TSLL/NVDL/etc.) — decay scales with
-  volatility, so the more leveraged-and-volatile the instrument, the
-  shorter the leash. See `gates.md`.
+- **Trend-template break — check the UNDERLYING, not the ETF.** For a
+  plain stock position that is the same symbol. For any leveraged ETF
+  position, use the `Underlying` column in `positions.md` and pull
+  *that* symbol's SMA(50): a leveraged ETF's own moving averages are
+  distorted by leverage and daily resets, so they do not describe the
+  thesis. Bullish position → exit if the underlying closes **below**
+  SMA(50); bearish position (a long inverse ETF) → exit if the underlying
+  closes **back above** SMA(50). This exits regardless of R-target state.
+- **Time-stop — only applies while `R-target reached?` is "No".** Pure
+  date math from `Entry date`, no API call. Limits by sleeve: **20**
+  trading days for ordinary stock, **10** for an index leveraged ETF
+  (SSO/QLD/SDS/QID), **7** for a single-stock leveraged ETF
+  (TSLL/NVDL/etc.) — decay scales with volatility, so the more
+  leveraged-and-volatile the instrument, the shorter the leash.
+
+  **Never time-stop a position that has reached its R-target.** Once the
+  flag flips, the trailing stop governs and the winner is allowed to run
+  past these limits — that is the entire point of the design. The clock
+  exists to close *stalled* trades, not working ones. See `gates.md`.
 
 For each open **options** position:
 - `get_option_quotes` for current premium, `get_equity_quotes` for the
