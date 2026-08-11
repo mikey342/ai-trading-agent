@@ -8,8 +8,9 @@ positions and exit anything that crosses a threshold. Nothing else.**
 Do NOT: scout new candidates, open new positions, run any part of the
 Tier 1/2/3 funnel, or touch `strategy.md`'s Adaptation policy. Those are
 the scan routine's job. This routine exists purely to shrink the
-gap between "a stop is hit" and "the system notices," since the
-scan routine can leave a position unreviewed for 8-16 hours.
+gap between "a stop is hit" and "the system notices." The scan routine
+runs at 9:30am, 2:30pm and 3:30pm ET, so without this routine a position
+would go unreviewed for a five-hour stretch mid-session and overnight.
 
 `gates.md` overrides anything here or in `strategy.md` if they ever
 conflict.
@@ -52,9 +53,9 @@ For each open **equity** position:
   SMA(50); bearish position (a long inverse ETF) → exit if the underlying
   closes **back above** SMA(50). This exits regardless of R-target state.
 - **Time-stop — only applies while `R-target reached?` is "No".** Pure
-  date math from `Entry date`, no API call. Limits by sleeve: **20**
-  trading days for ordinary stock, **10** for an index leveraged ETF
-  (SSO/QLD/SDS/QID), **7** for a single-stock leveraged ETF
+  date math from `Entry date`, no API call. Limits by sleeve: **10**
+  trading days for ordinary stock, **8** for an index leveraged ETF
+  (SSO/QLD/SDS/QID), **5** for a single-stock leveraged ETF
   (TSLL/NVDL/etc.) — decay scales with volatility, so the more
   leveraged-and-volatile the instrument, the shorter the leash.
 
@@ -75,6 +76,33 @@ For each open **options** position:
 Apply the full exit rules from `strategy.md` — this routine is not a
 reduced/partial version of them; with Robinhood covering SMA/EMA/RSI/ATR
 directly, every exit rule can be checked here.
+
+### If more than one exit condition fires at once
+
+A position exits **once**, but several rules can be true in the same
+check (a gap-down can breach the stop, break SMA(50), and land on the
+time-stop day simultaneously). The position closes either way — this
+ordering only decides which value goes in `exit_rule`, so that
+`trade_log.csv` attributes the exit to the rule that actually did the
+work. Record the **first** match in this order:
+
+1. `stop` — original fixed stop breached (R-target never reached)
+2. `trailing_stop` — trailing EMA21 stop breached (R-target reached)
+3. `dte_21` / `dte_50pct` — options time decay checkpoint
+4. `trend_break` — underlying closed through its SMA(50)
+5. `time_stop` — holding-period limit reached
+
+Price-based stops rank above the calendar because they are what defines
+the trade's risk: if price hit the stop, the trade lost 1R and that is
+the honest label, whether or not the clock also happened to run out that
+day. `time_stop` ranks last because it is the residual case — it means
+*nothing else fired*, the trade simply went nowhere. Mislabeling a
+stopped-out trade as a time-stop would corrupt the only statistic that
+tells us whether the time-stop is set correctly.
+
+Note the co-occurring conditions in the journal entry — a stop and a
+trend-break on the same bar is a different (and more decisive) event than
+a stop alone, and that context is worth keeping.
 
 ## 3. Act only if something actually triggered
 

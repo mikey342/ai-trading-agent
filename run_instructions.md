@@ -101,10 +101,11 @@ For every row in `positions.md` (equity and options separately):
   50% of DTE-at-entry.
 - Check against the full exit rules in `strategy.md` (current exit stop
   per the above, SMA(50) trend-template break, time-stop, options DTE
-  checkpoints). **Time-stops differ by sleeve** — 20 trading days for an
-  ordinary stock, **10** for an index leveraged ETF, **7** for a
+  checkpoints). **Time-stops differ by sleeve** — 10 trading days for an
+  ordinary stock, **8** for an index leveraged ETF, **5** for a
   single-stock leveraged ETF (decay scales with volatility; see
-  `gates.md`).
+  `gates.md`). These apply **only while `R-target reached?` is "No"**;
+  never time-stop a position that has already reached its R-target.
 - If an exit condition is met: simulate closing (record exit price/premium,
   compute realized P&L), update `positions.md`, and log it in
   `trade_journal.md` with the specific rule that triggered it.

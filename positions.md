@@ -38,7 +38,7 @@ and it is sized at half risk. Check this column before opening another.
 `Sleeve` is `stock` (individual name from the Tier 0-3 funnel) or `index`
 (a 2x ETF: SSO/QLD long, SDS/QID inverse). Index-sleeve positions are
 capped at **one at a time**, count **2x** toward gross exposure, and use
-a **10-trading-day** time-stop instead of 20 — see `gates.md`.
+an **8-trading-day** time-stop instead of 10 — see `gates.md`.
 
 Everything here is bought with cash. There is no margin column because
 margin is disabled outright, and no short column because short selling is

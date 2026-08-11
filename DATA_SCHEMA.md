@@ -58,7 +58,7 @@ specific rule is actually earning its place).
 | `earnings_days_away` | all | Days to next earnings report; blackout is <3. |
 | `regime` | all | `risk-on` / `risk-off` — SPY vs its 200-day SMA. |
 | `strike`, `expiration`, `delta_at_entry`, `iv_at_entry`, `dte_at_entry`, `underlying_price` | options only | Blank for equity rows. |
-| `exit_rule` | close | Which rule fired: `stop`, `trailing_stop`, `trend_break`, `time_stop`, `dte_21`, `dte_50pct`. Index-sleeve positions use a 10-day time-stop rather than 20. |
+| `exit_rule` | close | Which rule fired: `stop`, `trailing_stop`, `trend_break`, `time_stop`, `dte_21`, `dte_50pct`. Time-stop limits by sleeve: 10 trading days for ordinary stock, 8 for an index-sleeve ETF, 5 for a single-stock leveraged ETF. |
 | `realized_pnl` | close | Dollars. |
 | `r_multiple` | close | `realized_pnl / (initial risk in dollars)`. The single most useful performance number — a system with a 30% win rate is fine if winners average +3R. |
 | `nav_after` | open/close | NAV following this action. |

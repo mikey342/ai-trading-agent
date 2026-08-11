@@ -8,8 +8,12 @@ change relates to, it's probably not a change to make.
 
 ## Style: swing trading, not day trading
 
-Holding period target: **~5–15 trading days**, hard time-stop at **20
-trading days**. Three runs a day — 9:30am (open), 2:30pm (midday, five
+Holding period target: **~3–10 trading days**, hard time-stop at **10
+trading days (2 calendar weeks)** for an unresolved position — 8 for an
+index leveraged ETF, 5 for a single-stock one. The cap applies while a
+trade is still working toward its R-target; a position that has *reached*
+its R-target switches to the trailing EMA21 stop and may run longer, which
+is where the strategy's payoff actually comes from. Three runs a day — 9:30am (open), 2:30pm (midday, five
 hours in), and 3:30pm (pre-close) — all inside regular hours, using
 live regular-session prices rather than a stale or thin premarket quote,
 and never after the close where a decision could not actually be filled.
@@ -207,7 +211,7 @@ The cost of that safety is **volatility decay**: these funds target 2x
 the *daily* return and reset each day, so a flat round-trip in the index
 still loses money (index +10% then −9.09% → 2x fund −1.8%). They reward
 sustained trends and punish chop, which is why the index sleeve only
-fires with trend confirmation present and carries a 10-day time-stop
+fires with trend confirmation present and carries an 8-day time-stop
 rather than 20.
 
 ## Options and leverage: same signal, different instrument
@@ -394,7 +398,7 @@ this decision.
 - **No options Greeks modeling.** Delta is used as a rough strike-selection
   heuristic (see `strategy.md`), but theta/vega/gamma exposure isn't
   tracked or limited beyond the DTE floor and defined-risk-only rule.
-- **No modeling of leveraged-ETF decay.** The 10-day time-stop is a blunt
+- **No modeling of leveraged-ETF decay.** The 8-day time-stop is a blunt
   guard against it, not a model of it. Realized decay depends on the
   actual volatility path and isn't projected anywhere.
 - **Paper P&L omits five real costs**, all of which bias it optimistic:

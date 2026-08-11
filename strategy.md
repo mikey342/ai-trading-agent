@@ -770,7 +770,7 @@ the trade more capital-efficient. Never a standalone signal source.
   put debit spreads — and in SHORT mode options are the **only** allowed
   expression, since shorting stock is forbidden outright.
 - Minimum 30 days to expiration, target ~45 DTE for a swing hold of up to
-  20 trading days (never buy less time than you expect to need).
+  10 trading days (never buy less time than you expect to need).
 - Target delta 0.40-0.60 in absolute value (puts quote negative delta —
   a −0.50 put satisfies the same gate a +0.50 call does).
 - **Affordability at the current account size:** with a $10,000 NAV and
@@ -865,7 +865,7 @@ trend evidence.
 - **Counts double toward gross exposure.** A 3%-of-NAV position in a 2x
   ETF carries ~6% of effective market exposure; account for it that way
   against `gates.md` limits.
-- **Tighter time-stop: 10 trading days**, versus 20 for ordinary stock
+- **Tighter time-stop: 8 trading days**, versus 10 for ordinary stock
   positions. See the decay note below — time is a materially larger enemy
   here.
 
@@ -959,7 +959,7 @@ someone who holds through chop and doesn't honor the time-stop.
   is ≤ 4%**. Above that, the decay is too steep for the holding period —
   trade the plain stock instead. This is what keeps a CONL-type outcome
   out of the book.
-- **7-trading-day time-stop** — shorter than the index sleeve's 10, since
+- **5-trading-day time-stop** — shorter than the index sleeve's 8, since
   drag is several times larger.
 - Requires 30-day average volume ≥ 100K shares **and** the order to be
   ≤ 1% of that ETF's 30-day ADV (see `gates.md`). Re-check before using
@@ -1030,8 +1030,8 @@ Close a position if **any** of:
    always tracked on the **instrument actually held**, since that is what
    was sized and filled.
 3. **Time-stop — the limit depends on the sleeve** (per `gates.md`):
-   **20 trading days** for ordinary stock, **10** for an index leveraged
-   ETF (SSO/QLD/SDS/QID), **7** for a single-stock leveraged ETF. The
+   **10 trading days** for ordinary stock, **8** for an index leveraged
+   ETF (SSO/QLD/SDS/QID), **5** for a single-stock leveraged ETF. The
    more decay-prone the instrument, the shorter the leash. Measured from
    `Entry date` and only applies while the R-target has *not* been
    reached — once it has, the trailing stop governs and a winner is
