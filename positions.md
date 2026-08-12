@@ -24,7 +24,8 @@ separate and simulated.
 | PAYO | PAYO | stock | bullish | No | 211 | $7.10 | 2026-08-11 | $7.0190 | $7.2620 | No | $7.0190 | $7.09 | -$2.11 | Commercial Services. breakout_52w, vol-confirmed (rel_vol 1.513). Under-risked (cap-bound, no leveraged ETF available). Soft-negative PEAD (missed 6/7 qtrs, incl. most recent) and mixed/slightly-negative recent news — watch closely. |
 
 `Underlying` is the symbol the **thesis** is about, and the one whose
-SMA(50) the trend-break exit checks. For a plain stock it equals
+trend MA the trend-break exit checks (SMA20 for the stock sleeve, SMA50
+for the index sleeve — see `strategy.md`). For a plain stock it equals
 `Symbol`. For a leveraged ETF it is the underlying stock or index
 (NVD → NVDA, SDS → SPY): the ETF's own moving averages are distorted by
 leverage and daily resets, so they cannot be used for the trend test.

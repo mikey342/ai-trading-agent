@@ -368,8 +368,9 @@ in SHORT mode, since that's the only thing being traded then.
 
 Pull `get_equity_quotes` (all 15 in one batched call) +
 `get_equity_fundamentals` (batched, 10 per call — 2 calls). Then, per
-candidate, `get_equity_technical_indicators` (type=sma, period=50,
-output=latest) and (type=sma, period=200, output=latest) — these are
+candidate, `get_equity_technical_indicators` (type=sma, period=20,
+output=latest), (type=sma, period=50, output=latest) and
+(type=sma, period=200, output=latest) — these are
 one-symbol-per-call and are the expensive part of Tier 1 (~30 calls for
 15 names). Robinhood has shown no daily cap, but each call costs wall-clock
 time, which is why Tier 0 narrows to 15 first. A candidate survives Tier 1
@@ -377,7 +378,7 @@ only if **all** of (Minervini-style trend template, adapted to available
 fields):
 
 **LONG mode:**
-1. Current price > SMA(50) > SMA(200)
+1. Current price > **SMA(20)**, and SMA(50) > SMA(200)
 2. Current price at least 25% above `low_52_weeks`
 3. Relative-strength proxy: `(price - low_52_weeks) / (high_52_weeks -
    low_52_weeks)` ≥ 0.6 (i.e., trading in the upper 40% of its 52-week
@@ -387,7 +388,7 @@ fields):
 
 **SHORT mode (exact mirror — a confirmed *downtrend*, not merely a
 long-mode failure):**
-1. Current price < SMA(50) < SMA(200)
+1. Current price < **SMA(20)**, and SMA(50) < SMA(200)
 2. Current price at least 25% below `high_52_weeks`
 3. Relative-weakness proxy: `(price - low_52_weeks) / (high_52_weeks -
    low_52_weeks)` ≤ 0.4 (lower 40% of its 52-week range)
@@ -415,12 +416,18 @@ a stock making a fresh 20-day high partway through a recovery, for
 instance. `breakout_52w` is unaffected, since its own 2% requirement is
 stricter than the removed 25% one.
 
-**What it does not change:** a name below its SMA(50) still fails
+**What it does not change:** a name below its trend MA still fails
 criterion #1, and a name in the lower 60% of its 52-week range still
-fails criterion #3. This removal alone does not admit deeply broken names
-— worked example, NBIS on 2026-08-11: price $193.23 vs SMA50 $221.75
-(fails #1) and range position 0.552 vs the 0.6 bar (fails #3), so it
-remains a Tier 1 rejection with this criterion gone.
+fails criterion #3. This removal alone does not admit deeply broken
+names.
+
+> **Superseded in part, same day.** The worked example originally here
+> used NBIS failing on SMA(50). Criterion #1 moved to SMA(20) later on
+> 2026-08-11 (see below), so that example no longer holds: NBIS at
+> $193.23 vs SMA20 $193.17 now *passes* the MA leg and is stopped instead
+> by criterion #3 (range position 0.552 vs the 0.6 bar). The point stands
+> — removing the proximity check alone does not admit it — but the
+> criterion doing the blocking changed.
 
 **Earnings blackout runs here, not at Tier 3.** Make **one**
 `get_earnings_calendar` call (Robinhood, `days=7`, no market-cap filter)
@@ -496,6 +503,13 @@ candidate qualifies if **either**:
 - **`pullback`** (Connors-style): RSI(14) between 35-45 AND price still >
   SMA(50) (pullback within an intact uptrend, not a breakdown) AND EMA21
   is flat-to-rising over the last 5 values (trend not rolling over).
+  **This keeps SMA(50) deliberately, even though the Tier 1 template moved
+  to SMA(20) on 2026-08-11.** A dip-buy needs a *well-established* trend
+  to be dipping inside of; SMA(20) would be nearly redundant here (Tier 1
+  already guarantees price above it) and a normal pullback routinely
+  pierces a 20-day average. Consequence: a name that passed Tier 1 on
+  SMA(20) but sits below its SMA(50) cannot fire `pullback` — only a
+  breakout trigger. That is intended, not an oversight.
 
 ### Volume confirmation — the breakout gate (replaces the momentum test)
 
@@ -575,7 +589,8 @@ trades.
   Donchian **lower** channel AND EMA8 < EMA21 AND `relative_volume` ≥ 1.4
 - **`rally_to_resistance`**: RSI(14) between 55-65 AND price still <
   SMA(50) (a bounce inside an intact downtrend, not a genuine reversal)
-  AND EMA21 is flat-to-falling over the last 5 values
+  AND EMA21 is flat-to-falling over the last 5 values. **Keeps SMA(50)
+  deliberately**, mirroring `pullback` — same reasoning, inverted
 
 **No pyramiding — a symbol already in `positions.md` is excluded from
 new-entry ranking.** A name that is already held is not re-tested through
@@ -1120,10 +1135,26 @@ Close a position if **any** of:
 1. Price hits the current exit stop (fixed stop pre-R-target, or trailing
    EMA21 stop post-R-target, per above). LONG: price falls to the stop.
    SHORT: price rises to it.
-2. The trend template breaks — LONG: price closes back **below** SMA(50);
-   SHORT: price closes back **above** SMA(50). The premise for the trade
-   no longer holds. This always exits, regardless of R-target/trailing-
-   stop state.
+2. The trend template breaks — LONG: price closes back **below** the
+   sleeve's trend MA; SHORT: price closes back **above** it. The premise
+   for the trade no longer holds. This always exits, regardless of
+   R-target/trailing-stop state.
+
+   **The MA is sleeve-specific, and must match the one the entry template
+   used for that sleeve:**
+
+   | Sleeve | Entry trend test | Trend-break exit |
+   |---|---|---|
+   | stock (incl. single-stock leveraged ETFs) | price vs **SMA(20)** | **SMA(20)** |
+   | index (SSO/QLD/SDS/QID) | price vs **SMA(50)** | **SMA(50)** |
+
+   Mismatching these breaks the system in one direction or the other. A
+   stock entered on an SMA(20) cross while exiting on SMA(50) would be
+   closed on the very next monitor run whenever it sits between the two
+   — e.g. NBIS on 2026-08-11: price $193.23, SMA20 $193.17 (entry passes),
+   SMA50 $221.75 (exit fires immediately). The reverse pairing is equally
+   wrong: an index position entered above SMA(50) would be exited by any
+   shallow dip below SMA(20).
 
    **Check this on the UNDERLYING, not on a leveraged ETF.** Record the
    underlying in `positions.md`'s `Underlying` column at entry (NVD →
@@ -1293,7 +1324,7 @@ Two consequences the funnel should respect:
    `trade_log.csv` already holds a reject row for that symbol today
    citing a daily-bar criterion; if so, skip it and do not log it again.
 2. **Price-based checks *do* change intraday** and remain worth
-   re-running: proximity to the 52-week high, price versus SMA(50), the
+   re-running: price versus SMA(20)/SMA(50), the
    regime check, and every exit rule on open positions. This is what the
    midday and pre-close runs are genuinely for — not re-deriving
    indicators that cannot have moved.

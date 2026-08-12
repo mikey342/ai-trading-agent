@@ -34,9 +34,11 @@ so it never touches the shared 25-req/day quota.
 
 For each open **equity** position:
 - `get_equity_quotes` for current price.
-- `get_equity_technical_indicators` (type=sma, period=50, interval=day,
-  output=latest) for the current SMA(50) — needed for the trend-template
-  break check.
+- `get_equity_technical_indicators` (type=sma, interval=day,
+  output=latest) for the sleeve's trend MA — **period=20 for a stock
+  position, period=50 for an index-sleeve position** (SSO/QLD/SDS/QID).
+  The exit MA must match the one the entry template used for that sleeve;
+  see `strategy.md`. Needed for the trend-template break check.
 - If `R-target reached?` is "No": check if current price has now hit the
   stored `R-target` — if so, flip the flag to "Yes" (one-way, never back
   to "No"). Also check if price has hit the `Original stop`.
@@ -47,11 +49,12 @@ For each open **equity** position:
 - **Trend-template break — check the UNDERLYING, not the ETF.** For a
   plain stock position that is the same symbol. For any leveraged ETF
   position, use the `Underlying` column in `positions.md` and pull
-  *that* symbol's SMA(50): a leveraged ETF's own moving averages are
+  *that* symbol's trend MA: a leveraged ETF's own moving averages are
   distorted by leverage and daily resets, so they do not describe the
   thesis. Bullish position → exit if the underlying closes **below**
-  SMA(50); bearish position (a long inverse ETF) → exit if the underlying
-  closes **back above** SMA(50). This exits regardless of R-target state.
+  its trend MA; bearish position (a long inverse ETF) → exit if the
+  underlying closes **back above** it. This exits regardless of R-target
+  state.
 - **Time-stop — only applies while `R-target reached?` is "No".** Pure
   date math from `Entry date`, no API call. Limits by sleeve: **10**
   trading days for ordinary stock, **8** for an index leveraged ETF
@@ -80,7 +83,7 @@ directly, every exit rule can be checked here.
 ### If more than one exit condition fires at once
 
 A position exits **once**, but several rules can be true in the same
-check (a gap-down can breach the stop, break SMA(50), and land on the
+check (a gap-down can breach the stop, break the trend MA, and land on the
 time-stop day simultaneously). The position closes either way — this
 ordering only decides which value goes in `exit_rule`, so that
 `trade_log.csv` attributes the exit to the rule that actually did the
@@ -89,7 +92,8 @@ work. Record the **first** match in this order:
 1. `stop` — original fixed stop breached (R-target never reached)
 2. `trailing_stop` — trailing EMA21 stop breached (R-target reached)
 3. `dte_21` / `dte_50pct` — options time decay checkpoint
-4. `trend_break` — underlying closed through its SMA(50)
+4. `trend_break` — underlying closed through its trend MA (SMA20 stock /
+   SMA50 index)
 5. `time_stop` — holding-period limit reached
 
 Price-based stops rank above the calendar because they are what defines

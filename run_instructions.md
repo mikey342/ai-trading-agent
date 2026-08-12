@@ -82,8 +82,9 @@ and 3:30pm ET** — all of them *inside* regular market hours:
 
 For every row in `positions.md` (equity and options separately):
 - Equity: `get_equity_quotes` for current price, and
-  `get_equity_technical_indicators` (type=sma, period=50, output=latest)
-  for the current SMA(50).
+  `get_equity_technical_indicators` (type=sma, output=latest) for the
+  sleeve's trend MA — **period=20 for a stock position, period=50 for an
+  index-sleeve position**; see `strategy.md`.
 - If `R-target reached?` is still "No": check if current price has now hit
   the R-target — if so, flip the flag to "Yes" in `positions.md` (this
   never flips back). Whether or not it just flipped, also check if price
@@ -100,7 +101,7 @@ For every row in `positions.md` (equity and options separately):
   check days-to-expiration remaining vs. both the 21-DTE checkpoint and
   50% of DTE-at-entry.
 - Check against the full exit rules in `strategy.md` (current exit stop
-  per the above, SMA(50) trend-template break, time-stop, options DTE
+  per the above, trend-template break on the sleeve's MA, time-stop, options DTE
   checkpoints). **Time-stops differ by sleeve** — 10 trading days for an
   ordinary stock, **8** for an index leveraged ETF, **5** for a
   single-stock leveraged ETF (decay scales with volatility; see
@@ -189,8 +190,8 @@ First, **one** `get_earnings_calendar` call (days=7) — drop any candidate
 reporting within 3 calendar days before spending anything else on it.
 Then pull `get_equity_quotes` (one batched call for all 15) and
 `get_equity_fundamentals` (2 batched calls), then per-symbol
-`get_equity_technical_indicators` (sma, period=50 and period=200,
-output=latest). Apply the Tier 1 trend-template checklist **in both
+`get_equity_technical_indicators` (sma, period=20, period=50 and
+period=200, output=latest). Apply the Tier 1 trend-template checklist **in both
 directions** (long and inverted). Drop anything that passes neither.
 The **proximity-to-52-week-extreme criterion was removed 2026-08-11**
 (both directions) — the SMA stack and the upper/lower-40%-of-range test
@@ -356,7 +357,7 @@ accordingly (deduct simulated cash, add the position row with stop/target
 or DTE/premium as applicable).
 
 **Always populate the `Underlying` column.** It is the symbol the thesis
-is about, and the one whose SMA(50) the trend-break exit checks. For a
+is about, and the one whose trend MA the trend-break exit checks. For a
 plain stock it equals `Symbol`; for a leveraged ETF it is the underlying
 (NVD → NVDA, SDS → SPY). Leave it blank and the hourly monitor cannot
 evaluate the trend-break exit correctly — it would test the ETF's own
