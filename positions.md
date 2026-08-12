@@ -10,18 +10,18 @@ separate and simulated.
 |---|---|
 | Starting NAV | $10,000 |
 | Current cash (simulated) | $7,912.04 |
-| Current NAV (simulated) | $10,000.14 |
+| Current NAV (simulated) | $10,005.28 |
 | Realized P&L (all-time) | -$2.11 |
 | Today's realized P&L | -$2.11 |
 | Trading halted today? | No |
-| Last updated | 2026-08-12 18:38 UTC (midday run; opened CVS, mean_reversion sleeve — see trade_journal.md) |
+| Last updated | 2026-08-12 19:45 UTC (close run; 0 opened, 0 closed, no candidates cleared the funnel — see trade_journal.md) |
 
 ## Open positions — equity and leveraged ETFs
 
 | Symbol | Underlying | Sleeve | Direction | Counter-trend? | Qty | Entry price | Entry date | Original stop | R-target | R-target reached? | Current exit stop | Current price | Unrealized P&L | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| ACAD | ACAD | stock | bullish | No | 45 | $29.49 | 2026-08-11 | $28.6053 | $31.2594 | No | $28.6053 | $29.54 | $2.25 | Health Technology. breakout_52w, vol-confirmed (rel_vol 1.565). PEAD tailwind (beat 5/7 qtrs, incl. most recent). |
-| CVS | CVS | mean_reversion | bullish | No | 8 | $94.85 | 2026-08-12 | $90.35 | N/A (MR sleeve) | N/A | $90.35 | $94.85 | $0.00 | Retail Trade. mr_reversal, entry rsi2=0.560 (Aug 11 session, sub-10 cohort). No volume confirmation required (MR sleeve). Stop = 1.5xATR14 (MR sleeve exempt from 3% ceiling). Exits: stop -> mr_target (RSI2>70) -> trend_break (close<SMA200) -> 5-day time-stop. |
+| ACAD | ACAD | stock | bullish | No | 45 | $29.49 | 2026-08-11 | $28.6053 | $31.2594 | No | $28.6053 | $29.615 | $5.63 | Health Technology. breakout_52w, vol-confirmed (rel_vol 1.565). PEAD tailwind (beat 5/7 qtrs, incl. most recent). SMA20 (stock trend MA) $26.524 as of 2026-08-12 close run -- no trend_break. |
+| CVS | CVS | mean_reversion | bullish | No | 8 | $94.85 | 2026-08-12 | $90.35 | N/A (MR sleeve) | N/A | $90.35 | $95.07 | $1.76 | Retail Trade. mr_reversal, entry rsi2=0.560 (Aug 11 session, sub-10 cohort). No volume confirmation required (MR sleeve). Stop = 1.5xATR14 (MR sleeve exempt from 3% ceiling). Exits: stop -> mr_target (RSI2>70) -> trend_break (close<SMA200) -> 5-day time-stop. SMA200 $85.167 as of 2026-08-12 close run -- no trend_break. Entered today, time-stop clock not yet started. |
 
 `Underlying` is the symbol the **thesis** is about, and the one whose
 trend MA the trend-break exit checks (SMA20 for the stock sleeve, SMA50
@@ -86,3 +86,4 @@ is a one-way flag, same semantics as the equity table.
 | 2026-08-11 (close, 19:42 UTC) | close | $9,991.14 | $7,174.85 | $0 | No |
 | 2026-08-12 (monitor, 14:05 UTC) | monitor | $9,997.44 | $8,670.84 | -$2.11 | No |
 | 2026-08-12 (midday, 18:38 UTC) | midday | $10,000.14 | $7,912.04 | $0 | No |
+| 2026-08-12 (close, 19:45 UTC) | close | $10,005.28 | $7,912.04 | $0 | No |
