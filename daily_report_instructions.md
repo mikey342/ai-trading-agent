@@ -41,18 +41,34 @@ Keep it factual and short; this is a record, not an essay.
 One paragraph: regime (long/short mode), how many runs executed, how many
 positions opened/closed, and the day's realized and unrealized P&L.
 
+> **Two sleeves run over one book.** Sleeve A (breakout, `sleeve=stock`
+> or `index`) and Sleeve B (mean reversion, `sleeve=mean_reversion`) are
+> separate strategies with **opposite payoff structures** — A expects a
+> ~35-45% win rate carried by a few large winners; B expects a high win
+> rate with capped wins. **Never report a blended win rate, average R, or
+> "hit rate" across both.** Such a figure describes neither, and would
+> make A look broken and B look excellent. Report per-sleeve counts and
+> per-sleeve outcomes throughout, and say "no closed trades yet in this
+> sleeve" rather than borrowing the other's numbers.
+
 ## Account
 | Field | Open of day | Close of day | Change |
 NAV, cash, open position count, whether the daily-loss halt tripped.
 
 ## Positions opened today
-Per position: symbol, sleeve, direction, counter-trend?, qty, fill price,
-stop, R-target, and the one-sentence thesis from the journal. If none,
-say "None" and give the most common reason candidates were rejected.
+**Group by sleeve.** Per position: symbol, sleeve, trigger, direction,
+counter-trend?, qty, fill price, stop, R-target (Sleeve A only — Sleeve B
+has none), and the one-sentence thesis from the journal. For
+`mean_reversion` rows also give the entry `rsi2`. If none, say "None"
+and give the most common reason candidates were rejected **in each
+sleeve separately** — the two funnels fail for different reasons.
 
 ## Positions closed today
-Per position: symbol, exit rule that fired, exit price, realized P&L,
-R-multiple, and how many days it was held.
+**Group by sleeve.** Per position: symbol, sleeve, exit rule that fired,
+exit price, realized P&L, R-multiple, and days held. Note that the exit
+vocabularies differ: Sleeve A closes on `stop` / `trailing_stop` /
+`trend_break` (SMA20) / `time_stop` (10d); Sleeve B on `stop` /
+`mr_target` (RSI(2)>70) / `trend_break` (SMA200) / `time_stop` (5d).
 
 ## Open book
 Current positions with entry, current price, unrealized P&L, distance to
@@ -68,10 +84,29 @@ Any degraded inputs today — Alpha Vantage quota exhaustion, unavailable
 news sentiment, failed calls, market-closed fallbacks. Be specific; this
 is how systematic data problems get noticed.
 
-## Open-question tracking (include when relevant)
-`strategy.md` carries a pre-registered rule about whether the retired
-EMA-spread momentum test should be **reinstated**. It no longer gates
-anything; it is logged as `momentum_test_would_pass`.
+## Pre-registered experiment tracking (include every day)
+
+Three experiments are running with **criteria fixed in advance**. Report
+progress toward each threshold, and **never call a result before the
+threshold is met** — in either direction. Cite counts, not impressions.
+
+**1. `momentum_vol` — does a price level add anything?**
+Trigger with no level test, admitted 2026-08-12. Criterion: at **≥10
+closed `momentum_vol` trades**, compare mean R against `breakout_7d` over
+the same period; retire it if it trails by ≥0.3R. Report: how many
+`momentum_vol` trades have closed so far. Historical `breakout_52w` rows
+from 2026-08-11 predate the rewrite and **must not be pooled** into this.
+
+**2. `RSI(2) < 15` — was raising the mean-reversion threshold right?**
+Raised from 10 on 2026-08-12. Criterion: at **≥10 closed mean-reversion
+trades**, split by entry `rsi2` into a **sub-10** and a **10-15** cohort
+and compare mean R; revert to 10 if 10-15 trails by ≥0.3R. **Fewer than
+10 closes, or fewer than 4 in either cohort, is not a result.** Report the
+count in each cohort. **Do not cite individual winning trades as support**
+— the change was made on two names selected *because* they had bounced.
+
+**3. Momentum test reinstatement.** The retired EMA-spread test no longer
+gates anything; it is logged as `momentum_test_would_pass`.
 
 Each day, report the running state: how many trades have **closed**, and
 — once any have — the average R-multiple split by

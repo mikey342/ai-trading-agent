@@ -1,25 +1,49 @@
 # AI Trading Agent (Paper Trading — Swing)
 
-An adaptive, cloud-scheduled swing-trading research agent. It scans a
-watchlist, applies a tiered trend/momentum/catalyst screen, decides on
-equity or defined-risk options trades, and simulates execution —
-currently **paper trading only**, no real orders are ever placed.
+An adaptive, cloud-scheduled swing-trading research agent. It screens the
+US equity market three times a day, decides on equity, 2x-ETF or
+defined-risk options trades, and simulates execution — currently **paper
+trading only**, no real orders are ever placed.
 
-Holding period target: ~5-15 trading days (swing, not day trading).
+**Two independent strategies run over one $10,000 book:**
+
+| | Sleeve A — breakout | Sleeve B — mean reversion |
+|---|---|---|
+| Buys | strength breaking to a 7-day high on volume | sharp 2-day weakness inside a long-term uptrend |
+| Entry | `breakout_7d` / `momentum_vol` + volume ≥1.4x | `RSI(2) < 15`, price > SMA(200), first up-close |
+| Exit | trailing EMA21 after 2R; SMA(20) break | `RSI(2) > 70`; SMA(200) break |
+| Max hold | 10 trading days (suspended once 2R hit) | 5 trading days, never suspended |
+| Expects | ~35-45% win rate, carried by a fat tail | high win rate, capped wins |
+
+They have **opposite payoff structures**, so their statistics must never
+be pooled — see the `sleeve` column in `DATA_SCHEMA.md`. Holding period is
+capped at **10 trading days** (2 calendar weeks) for anything unresolved.
+
+There is **no watchlist**. A saved market-wide screener defines the
+universe on every run.
+
+Bearish exposure is taken by *buying* 2x inverse ETFs with cash. **Short
+selling and margin are forbidden outright.**
 
 ## Files
 
-- `framework.md` — the methodology this is grounded in (Turtle/Donchian
-  trend-following, Minervini trend template, O'Neil relative strength,
-  Connors RSI pullback, PEAD earnings drift) and what's deliberately not
-  validated yet (no backtest).
+- `framework.md` — the methodology this is grounded in (Donchian channel
+  breakouts, Minervini-style trend template, O'Neil volume confirmation,
+  Connors & Alvarez RSI(2) mean reversion, Jegadeesh/Lehmann short-term
+  reversal, PEAD earnings drift) **and an explicit evidence audit** of
+  which rules carry published support and which are conventions. Note the
+  George & Hwang 52-week-high trigger was **removed 2026-08-12**, which
+  weakened Sleeve A's entry evidence — recorded there rather than glossed.
+  Nothing here has been backtested.
 - `gates.md` — hard risk limits, including options and leverage limits.
   Agent reads but never edits this. **Edit this by hand** to change risk
   tolerance or go live.
-- `strategy.md` — the adaptive playbook: the funnel (Tier 1/2/3 screening),
-  entry/exit rules, position sizing, options/leverage overlay. The agent
-  evolves this over time based on results, with a changelog of every
-  change and why.
+- `strategy.md` — the adaptive playbook: both sleeves' funnels (Tier 0-3),
+  entry/exit rules, position sizing, instrument selection, options and
+  leverage overlays. Carries a changelog of every rule change and why,
+  plus **pre-registered criteria** for the experiments currently running
+  (`momentum_vol`, and the `RSI(2) < 15` threshold) — fixed in advance so
+  results cannot be rationalised after the fact.
 - `positions.md` — current simulated equity + options book, and NAV
   history.
 - `trade_journal.md` — append-only narrative log of every run's decisions,
