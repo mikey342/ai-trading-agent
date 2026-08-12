@@ -399,22 +399,23 @@ long-mode failure):**
 25% of the 52-week high* (LONG) / *within 25% of the 52-week low*
 (SHORT). Both were removed together — removing only the long side would
 leave the "exact mirror" asymmetric, the same defect closed on
-`breakdown_52w` earlier the same day.
+`breakdown_52w` earlier the same day (that trigger has since been removed).
 
 Rationale: the check is a *leadership* filter drawn from Minervini's
 template, which is designed for multi-month position holds where being in
 the top cohort of a market cycle matters. At a sub-2-week swing horizon
 it mostly duplicates work already done elsewhere — criterion #1 (the SMA
 stack) already establishes an intact uptrend, criterion #3 already
-requires the upper 40% of the 52-week range, and `breakout_52w` at Tier 2
-independently requires price within **2%** of the high, a far stricter
-bar than 25%.
+requires the upper 40% of the 52-week range.
 
-**What this actually changes:** it opens `breakout_20d` and `pullback`
-(Tier 2) to names in a valid uptrend that are not near a 52-week high —
-a stock making a fresh 20-day high partway through a recovery, for
-instance. `breakout_52w` is unaffected, since its own 2% requirement is
-stricter than the removed 25% one.
+**What this actually changes:** it opens the Tier 2 triggers to names in
+a valid uptrend that are not near a 52-week high — a stock making a fresh
+range high partway through a recovery, for instance.
+
+> **Superseded later the same day.** This note originally also argued the
+> change was safe because `breakout_52w`'s 2% requirement was stricter
+> still. That trigger was removed on 2026-08-12, so **no 52-week level
+> test remains anywhere in the funnel.**
 
 **What it does not change:** a name below its trend MA still fails
 criterion #1, and a name in the lower 60% of its 52-week range still
@@ -493,13 +494,9 @@ and EMA (period=8 and period=21, output="last:5") for Tier 1 survivors —
 candidate qualifies if **either**:
 
 **LONG mode — three triggers, any one qualifies:**
-- **`breakout_52w`** (O'Neil / George & Hwang): price within 2% of
-  `high_52_weeks` AND EMA8 > EMA21 AND **volume confirmation** (below).
-  The strongest level signal — no overhead supply at all.
-- **`breakout_20d`** (original Turtle): price today exceeds the **prior
-  bar's** 20-day Donchian **upper** channel AND EMA8 > EMA21 AND
-  **volume confirmation**. A weaker level signal than a 52-week high, but
-  it carries the same volume requirement.
+- **`breakout_7d`** (Donchian, shortened): price today exceeds the
+  **prior bar's** **7-day** Donchian **upper** channel AND EMA8 > EMA21
+  AND **volume confirmation** (below). The only remaining level test.
 - **`momentum_vol`** (⚠ **EXPERIMENT, added 2026-08-12** — see below):
   EMA8 > EMA21 AND **volume confirmation**, with **no level requirement
   at all**. Mirrored for SHORT as EMA8 < EMA21 plus volume. This is the
@@ -515,57 +512,64 @@ candidate qualifies if **either**:
   SMA(20) but sits below its SMA(50) cannot fire `pullback` — only a
   breakout trigger. That is intended, not an oversight.
 
-#### ⚠ The `momentum_vol` experiment — running from 2026-08-12
+#### ⚠ Trigger set rewritten 2026-08-12 (second revision, same day)
 
-**User decision.** The question was whether to drop `breakout_52w`'s 2%
-proximity window. Dropping it outright would have been destructive rather
-than merely loosening: with no level test, `breakout_52w` becomes a
-superset of `breakout_20d`, and since the labeling rule records the
-stronger trigger when both fire, `breakout_20d` would have stopped
-appearing in `trade_log.csv` entirely — destroying the very comparison
-`DATA_SCHEMA.md` says to run on it.
-
-**So the gate was not removed from `breakout_52w`. Instead the excluded
-population was admitted under its own name.** The taxonomy is now:
+**User decision.** `breakout_52w` / `breakdown_52w` were **removed
+entirely**, and the Donchian channel was shortened from **20 days to 7**
+to match the ≤10-day holding period. The surviving taxonomy:
 
 | Trigger | Level requirement |
 |---|---|
-| `breakout_52w` | within **2%** of the 52-week high |
-| `breakout_20d` | clears the prior bar's **20-day** Donchian channel |
+| `breakout_7d` | clears the prior bar's **7-day** Donchian channel |
 | `momentum_vol` | **none** — EMA direction + volume only |
+| `pullback` | none (RSI band; structurally starved — see below) |
 
 Record the **most specific** trigger that fires:
-`breakout_52w` → `breakout_20d` → `momentum_vol`. A name is only labelled
-`momentum_vol` when it satisfies *neither* level test, so that label
-isolates exactly the trades the old gate would have blocked.
+`breakout_7d` → `momentum_vol`.
 
-**Why this is a smaller change than it sounds.** Tier 1 already requires
-a range position ≥ 0.6 (upper 40% of the 52-week range), and a stock in
-the upper 40% of its range is usually not far from its high. The admitted
-population is bounded upstream. Measured 2026-08-11: of 8 candidates
-reaching Tier 2, **7 passed the 2% test and 1 failed** (CDNA at 3.94%,
-which then failed volume at 0.907 anyway). Expect roughly 0-1 extra
-candidate per run, not a flood.
+**What this costs, stated plainly.** `breakout_52w` carried the strongest
+published evidence in the system — George & Hwang (2004) found nearness
+to the 52-week high predicts returns better than past returns themselves,
+with two independent mechanisms (thin overhead supply, anchoring). None
+of that transfers to a 7-day high. The Turtle research this trigger now
+leans on tested **20- and 55-day** channels; 7 days is shorter than
+anything in it. Sleeve A's entry logic is now **less well evidenced than
+it was this morning**, and `framework.md`'s audit has been updated to say
+so rather than continue implying otherwise.
 
-**Pre-registered review criterion — decided before any data exists, so
-that the result cannot be rationalised after the fact:**
+**What it buys.** A 7-day lookback is horizon-matched to a ≤10-day hold
+(the old 20-day channel was 2x the holding period). Expect materially
+more signals — a 7-day high occurs roughly 3x as often as a 20-day high
+— which means the **max-2-trades-per-run cap will start binding**, and
+selection among simultaneous triggers becomes a live question for the
+first time. Ranking falls back to Tier 1 order (range position desc);
+this is now load-bearing where it previously was not.
+
+**Historical rows keep their labels.** `trade_log.csv` still contains
+`breakout_52w` entries from 2026-08-11 (ACAD, PAYO). They were accurate
+when written and must not be rewritten. ACAD remains open and is
+unaffected — exits never reference the entry trigger.
+
+**Pre-registered review criterion, re-baselined.** The original compared
+`momentum_vol` against `breakout_52w`; with that trigger gone, the
+comparison would be unevaluable. It now reads:
 
 > Once **≥ 10 `momentum_vol` trades have closed**, compare their mean
-> R-multiple against the mean of `breakout_52w` closes over the same
-> period. If `momentum_vol` trails by **≥ 0.3R**, the 2% gate is
-> reinstated and this trigger is retired. If it is within 0.3R or better,
-> it stays. **Fewer than 10 closed trades is not a result** — do not act
-> on 2 or 3, in either direction.
+> R-multiple against the mean of `breakout_7d` closes over the same
+> period. If `momentum_vol` trails by **≥ 0.3R**, a level requirement is
+> reinstated and `momentum_vol` is retired. If it is within 0.3R or
+> better, it stays. **Fewer than 10 closed trades is not a result** — do
+> not act on 2 or 3, in either direction.
 
-The `pct_from_52w_high` column is populated on **every** row (all
-triggers, opens and rejects) so this comparison is possible as a
-continuous variable, not merely as a pass/fail flag. This mirrors the
-`momentum_test_would_pass` pattern: measure the thing you removed.
+The underlying question is unchanged: *does requiring a price level add
+anything?* It is simply now asked against a 7-day level rather than a
+52-week one. `pct_from_52w_high` is still populated on every row so the
+relationship can be examined as a continuous variable.
 
 ### Volume confirmation — the breakout gate (replaces the momentum test)
 
-**All four level-based triggers — `breakout_52w`, `breakout_20d`,
-`breakdown_52w`, `breakdown_20d` — require `relative_volume ≥ 1.4`** — the most
+**Both level-based triggers — `breakout_7d` and `breakdown_7d` — plus
+`momentum_vol`, require `relative_volume ≥ 1.4`** — the most
 recent **completed** daily session's volume divided by the 30-day average
 volume, both from `get_equity_fundamentals`.
 
@@ -614,29 +618,29 @@ weak breakouts O'Neil declines. Meanwhile BFLY (1.50×) and NTAP (1.46×)
 showed genuine participation. The rule selects **different** names, not
 merely **more** of them.
 
-**Why `breakout_20d` was added (2026-08-11).** The first two triggers left
-a **dead zone**: a stock 10% off its high, basing for six weeks, RSI ~52,
-breaking out of its range fires *neither* — too far from the high for
-`breakout_52w`, not oversold enough for `pullback`. That is a textbook
-swing setup falling straight through the middle. It is also worth noting
-the Turtles' actual system used 20- and 55-day channel breakouts, not
-52-week highs; adopting only the stricter O'Neil level had quietly
-dropped the entry that Turtle sizing was designed around.
+**History of this trigger.** Added 2026-08-11 as `breakout_20d` to close
+a dead zone the 52-week trigger left open — a stock 10% off its high,
+basing for six weeks, breaking its range, fired nothing. Shortened to
+**7 days on 2026-08-12** when `breakout_52w` was removed and the channel
+was matched to the ≤10-day holding period.
 
-**Labeling when triggers overlap.** A stock at a new 52-week high is
-necessarily at a new 20-day high, so `breakout_52w` is a strict subset of
-`breakout_20d`. When both fire, label it **`breakout_52w`** — the
-stronger signal. Recording which trigger fired is what will later show
-whether the weaker 20-day breakout earns its place or just adds losing
-trades.
+Note what the shortening costs evidentially: the Turtles' tested system
+used **20- and 55-day** channels. A 7-day channel is shorter than
+anything in that research, so this trigger is now *inspired by* Donchian
+rather than *supported by* the Turtle results. Recorded in
+`framework.md`'s evidence audit.
 
-**SHORT mode mirrors all three**, using the Donchian **lower** channel for
-`breakdown_20d`, and the 52-week low for `breakdown_52w`.
+**Labeling when triggers overlap.** `momentum_vol` requires no level at
+all, so every `breakout_7d` also satisfies it. When both fire, label it
+**`breakout_7d`** — the more specific signal. A row is labelled
+`momentum_vol` only when no level test passed, which is exactly what
+makes that experiment measurable.
+
+**SHORT mode mirrors both**, using the Donchian **lower** channel for
+`breakdown_7d`.
 
 **SHORT mode (all three mirrored):**
-- **`breakdown_52w`**: price within 2% of `low_52_weeks` AND EMA8 < EMA21
-  AND `relative_volume` ≥ 1.4
-- **`breakdown_20d`**: price today falls below the **prior bar's** 20-day
+- **`breakdown_7d`**: price today falls below the **prior bar's** **7-day**
   Donchian **lower** channel AND EMA8 < EMA21 AND `relative_volume` ≥ 1.4
 - **`rally_to_resistance`**: RSI(14) between 55-65 AND price still <
   SMA(50) (a bounce inside an intact downtrend, not a genuine reversal)
@@ -1413,12 +1417,15 @@ Every run, after updating the journal:
   plainly in the journal and propose tightening or suspending them — that
   allowance was made on a contested argument and should be judged on its
   own record. The reverse also holds: if they are clearly working, note it.
-- **Check the `trigger` column too.** `breakout_20d` is a weaker level
-  signal than `breakout_52w` and was added to close a coverage gap, not
-  because it was shown to work here. Once ≥10 trades have closed on it,
-  compare its win rate and average R against the other triggers. If it
-  underperforms, remove it — a trigger that only adds trades is worse
-  than no trigger.
+- **Check the `trigger` column too.** Since 2026-08-12 the funnel has
+  exactly one level test (`breakout_7d`) and one trigger with none
+  (`momentum_vol`). The pre-registered comparison is between those two:
+  once **≥10 `momentum_vol` trades have closed**, compare mean R against
+  `breakout_7d` over the same period; if `momentum_vol` trails by ≥0.3R,
+  reinstate a level requirement and retire it. **Fewer than 10 closes is
+  not a result, in either direction.** Historical `breakout_52w` rows
+  (2026-08-11) predate the rewrite — keep them, but do not pool them into
+  this comparison.
 - **Check the `social_*` columns once coverage accumulates.** These are
   logged and never gate anything. The hypothesis worth testing is
   **contrarian**: extreme bullish sentiment *plus* extreme message volume

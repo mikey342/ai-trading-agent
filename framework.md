@@ -65,8 +65,16 @@ of pieces from each, not a pure implementation of any one:
    stop. The core idea we borrow: **volatility-normalized position sizing
    and stops**, not fixed percentages.
 
+   **⚠ REMOVED FROM THE SYSTEM 2026-08-12.** The `breakout_52w` /
+   `breakdown_52w` triggers were retired by user decision, and the
+   Donchian channel shortened from 20 days to 7. **Nothing in the funnel
+   now tests proximity to a 52-week high.** The material below is
+   retained because it documents the strongest-evidenced rule the system
+   ever had and what was given up in dropping it — not because it is
+   still in force.
+
    **Why specifically the 52-week high** (the level `strategy.md`'s
-   strongest breakout trigger uses): at a 52-week high, essentially no one
+   strongest breakout trigger used to use): at a 52-week high, essentially no one
    who bought in the past year is underwater, so there is no reservoir of
    trapped holders selling into strength just to get back to even —
    overhead supply is thin. This is Tier A evidence, not just
@@ -82,10 +90,12 @@ of pieces from each, not a pure implementation of any one:
    stricter O'Neil-style level, which quietly discarded the entry that
    Turtle ATR sizing was built around and left a coverage gap — a stock
    10% off its high, basing, breaking its range, matched no trigger at
-   all. `strategy.md` now carries a 20-day Donchian breakout alongside
-   the 52-week one, with volume confirmation attached since the weaker
-   level signal needs it. A 52-week-high breakout remains the stronger
-   signal and is labeled as such when both fire.
+   all. As of 2026-08-12 the Donchian breakout is the **only** level test
+   left, and at **7 days** it is shorter than the 20- and 55-day channels
+   the Turtle results were built on. So this trigger is now *inspired by*
+   Donchian rather than *supported by* the published Turtle evidence —
+   the honest description, and the reason this paragraph is worth
+   re-reading before anyone claims Tier A backing for Sleeve A's entry.
 
    **Neither level is a risk filter.** Proximity to a 52-week high says
    nothing about gap risk — a stock at its highs can drop hard on a
@@ -277,10 +287,29 @@ factors** — not a replication of what a quant fund does. Real systematic
 equity shops differ from this in nearly every operational respect: they
 trade universes of thousands of names rather than a top-15 slice, derive
 thresholds statistically instead of from round numbers (RSI 35-45, ADX
-25, the 0.6 range-position bar, the 2% `breakout_52w` window, the 1.4x
+25, the 0.6 range-position bar, the **7-day Donchian channel**, the 1.4x
 volume-confirmation ratio and the 10-day time-stop are all conventions,
 not optimized parameters), run formal risk models and transaction-cost models, and
 diversify across many small positions rather than concentrating in six.
+
+### ⚠ Sleeve A's entry evidence weakened on 2026-08-12
+
+Stated plainly so no future reader infers more support than exists. On
+that date `breakout_52w` was removed and the Donchian channel shortened
+to 7 days. What Sleeve A's *entry* now rests on:
+
+| Component | Evidence standing |
+|---|---|
+| Trend template (SMA20 / SMA50 / SMA200) | Practitioner convention (Minervini-style), never a controlled result |
+| `breakout_7d` | *Inspired by* Donchian; the tested Turtle channels were 20 and 55 days, not 7 |
+| `momentum_vol` | **No level test at all** — an explicit experiment, running under a pre-registered review |
+| Volume confirmation ≥1.4x | O'Neil's 40%-above-average rule, supported by the 1995-2021 O'Neil Global Advisors study. **The strongest surviving component**, and the only Sleeve A check carrying information the price series does not already contain |
+
+The George & Hwang (2004) 52-week-high result — the single best-evidenced
+rule the system ever carried, with two independent mechanisms behind it —
+is **no longer used**. Sleeve B (mean reversion) is now the better-evidenced
+of the two sleeves at the entry stage: Jegadeesh (1990), Lehmann (1990)
+and Connors & Alvarez (2008) all bear directly on its exact setup.
 
 ### The short side is mirrored mechanically, but not evidentially
 

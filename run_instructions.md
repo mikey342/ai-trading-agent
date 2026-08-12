@@ -199,8 +199,9 @@ period=200, output=latest). Apply the Tier 1 trend-template checklist **in both
 directions** (long and inverted). Drop anything that passes neither.
 The **proximity-to-52-week-extreme criterion was removed 2026-08-11**
 (both directions) — the SMA stack and the upper/lower-40%-of-range test
-still apply, and `breakout_52w` at Tier 2 enforces a stricter 2% bar of
-its own. See `strategy.md`.
+still apply. (This note originally also cited `breakout_52w`'s stricter
+2% bar; that trigger was removed 2026-08-12 — **no 52-week level test
+remains anywhere in the funnel.**) See `strategy.md`.
 
 **Before advancing anything to Tier 2:** check `trade_log.csv` for reject
 rows dated today. If a candidate was already rejected today on a
@@ -216,16 +217,18 @@ For Tier 1 survivors (capped at top 8 by the **relative-strength proxy**
 alone — the value leg was removed 2026-08-11 as horizon-inappropriate for
 a ≤10-day hold; see `strategy.md`), call `get_equity_technical_indicators` for RSI
 (period=14, output="last:5"), EMA (period=8 and 21, output="last:5"), and
-**donchian_channels (period=20, output="last:3")**. Four triggers now
-qualify — `breakout_52w`, `breakout_20d`, **`momentum_vol`** (EMA
-direction + volume, **no level requirement** — the experimental
-population admitted 2026-08-12), `pullback` (mirrored in SHORT
-mode). For `breakout_20d`, compare today's price against the **prior
-bar's** upper channel, not today's. When both breakout triggers fire,
-label it `breakout_52w` — the stronger signal. The `output` parameter
-trims the response server-side — no file/jq extraction needed.
+**donchian_channels (period=7, output="last:3")** — shortened from 20 on
+2026-08-12 to match the ≤10-day hold. Three triggers now qualify —
+**`breakout_7d`**, **`momentum_vol`** (EMA direction + volume, **no level
+requirement at all**), and `pullback` (all mirrored in SHORT mode as
+`breakdown_7d`, `momentum_vol`, `rally_to_resistance`). For
+`breakout_7d`, compare today's price against the **prior bar's** upper
+channel, not today's — using today's own channel is circular and always
+passes. Every `breakout_7d` also satisfies `momentum_vol`; when both
+fire, label it **`breakout_7d`**, the more specific signal. The `output`
+parameter trims the response server-side — no file/jq extraction needed.
 
-**Both breakout triggers also require volume confirmation:
+**`breakout_7d` and `momentum_vol` both require volume confirmation:
 `relative_volume ≥ 1.4`** — the last **COMPLETED** session's volume ÷ the
 30-day average, both already available from the Tier 1
 `get_equity_fundamentals` call. Two traps:
@@ -241,11 +244,10 @@ Basis: O'Neil's 40%-above-average rule, supported by O'Neil Global
 Advisors' 1995-2021 study finding volume-confirmed breakouts
 significantly outperform. This **replaced** the old Tier 3 momentum test.
 
-**Record the MOST SPECIFIC trigger that fires** — `breakout_52w` →
-`breakout_20d` → `momentum_vol`. A candidate is only labelled
-`momentum_vol` when it satisfies *neither* level test; that label
-isolates exactly the trades the old 2% proximity gate would have blocked,
-which is the entire point of the experiment. Populate
+**Record the MOST SPECIFIC trigger that fires** — `breakout_7d` →
+`momentum_vol`. A candidate is labelled `momentum_vol` only when **no
+level test passed**; that label isolates the population with no level
+requirement, which is the entire point of the experiment. Populate
 `pct_from_52w_high` on **every** row — opens, rejects, both sleeves — so
 the comparison can be run as a continuous variable. See `strategy.md`,
 "The `momentum_vol` experiment", including its **pre-registered** review
