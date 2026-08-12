@@ -277,8 +277,9 @@ factors** — not a replication of what a quant fund does. Real systematic
 equity shops differ from this in nearly every operational respect: they
 trade universes of thousands of names rather than a top-15 slice, derive
 thresholds statistically instead of from round numbers (RSI 35-45, ADX
-25, the 0.6 range-position bar are all conventions, not optimized
-parameters), run formal risk models and transaction-cost models, and
+25, the 0.6 range-position bar, the 2% `breakout_52w` window, the 1.4x
+volume-confirmation ratio and the 10-day time-stop are all conventions,
+not optimized parameters), run formal risk models and transaction-cost models, and
 diversify across many small positions rather than concentrating in six.
 
 ### The short side is mirrored mechanically, but not evidentially

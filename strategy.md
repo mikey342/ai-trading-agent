@@ -799,8 +799,8 @@ fill rather than avoiding an entire time window.
 **SHORT mode sizing** is identical arithmetic with the signs flipped:
 the stop sits **above** entry (`entry_price + stop_distance`) and the
 R-target **below** (`entry_price − 2 × stop_distance`). `stop_distance`
-itself, the 1%-of-NAV risk budget, and the `gates.md` ceilings are
-unchanged. Note that in SHORT mode the position is *always* expressed as
+itself, the 0.4%-of-NAV risk budget (0.2% counter-trend), and the
+`gates.md` ceilings are unchanged. Note that in SHORT mode the position is *always* expressed as
 long puts or a put debit spread — so the actual capital at risk is the
 premium, and these underlying levels are the trigger prices used to
 decide when to close, exactly as described in the options overlay below.
