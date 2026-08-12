@@ -1169,6 +1169,25 @@ per symbol:
 
 Doing step 3 before step 2 would triple the call count for no benefit.
 
+**Known limitation — the scan's `RSI(14) ≥ 25` floor.** The shared Tier 0
+screener excludes names with RSI(14) below 25, so the most deeply
+oversold names on the 14-period measure never enter this sleeve's
+universe either. This is *mostly* harmless because RSI(2) and RSI(14)
+measure different things — a stock in an intact uptrend routinely prints
+RSI(2) near zero after two down days while RSI(14) sits near 45 — so the
+floor is not the binding constraint for this setup. It was left in place
+rather than relaxed because the scan is shared with the breakout sleeve
+and widening it there has its own consequences. Revisit if
+mean-reversion candidates prove scarce in practice.
+
+**Reachability verified 2026-08-12** (the check that the `pullback`
+trigger failed): from the 10 lowest-RSI(14) names clearing the
+dollar-volume screen, SNEX printed RSI(2) **3.46** with price $65.97
+against SMA(200) $59.38 and an up-close in pre-market — a clean pass on
+all three conditions. CRUS was correctly rejected at step 2 on
+RSI(2) 17.4. The funnel discriminates rather than passing or blocking
+everything.
+
 ### Tier 1-MR — template
 
 Required:
