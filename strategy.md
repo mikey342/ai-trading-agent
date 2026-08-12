@@ -1148,6 +1148,17 @@ Close a position if **any** of:
    | stock (incl. single-stock leveraged ETFs) | price vs **SMA(20)** | **SMA(20)** |
    | index (SSO/QLD/SDS/QID) | price vs **SMA(50)** | **SMA(50)** |
 
+   **Applied to open positions, not grandfathered** (user decision
+   2026-08-11). The alternative — letting each position keep the exit MA
+   in force when it was entered — was considered and declined in favour of
+   one uniform rule. Known cost, recorded here so the trade log stays
+   interpretable: **PAYO** (opened 2026-08-11 at $7.10 under the SMA(50)
+   rule) closes on the next monitor run at ~$7.09 against SMA20 $7.12,
+   despite sitting well above its entry-era SMA(50) of $6.80. That single
+   `trend_break` row is **config-driven, not a market event** — discount it
+   when the adaptation policy later evaluates whether `trend_break` is
+   pulling its weight.
+
    Mismatching these breaks the system in one direction or the other. A
    stock entered on an SMA(20) cross while exiting on SMA(50) would be
    closed on the very next monitor run whenever it sits between the two
