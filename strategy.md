@@ -500,6 +500,10 @@ candidate qualifies if **either**:
   bar's** 20-day Donchian **upper** channel AND EMA8 > EMA21 AND
   **volume confirmation**. A weaker level signal than a 52-week high, but
   it carries the same volume requirement.
+- **`momentum_vol`** (⚠ **EXPERIMENT, added 2026-08-12** — see below):
+  EMA8 > EMA21 AND **volume confirmation**, with **no level requirement
+  at all**. Mirrored for SHORT as EMA8 < EMA21 plus volume. This is the
+  population the 2% proximity window used to exclude.
 - **`pullback`** (Connors-style): RSI(14) between 35-45 AND price still >
   SMA(50) (pullback within an intact uptrend, not a breakdown) AND EMA21
   is flat-to-rising over the last 5 values (trend not rolling over).
@@ -510,6 +514,53 @@ candidate qualifies if **either**:
   pierces a 20-day average. Consequence: a name that passed Tier 1 on
   SMA(20) but sits below its SMA(50) cannot fire `pullback` — only a
   breakout trigger. That is intended, not an oversight.
+
+#### ⚠ The `momentum_vol` experiment — running from 2026-08-12
+
+**User decision.** The question was whether to drop `breakout_52w`'s 2%
+proximity window. Dropping it outright would have been destructive rather
+than merely loosening: with no level test, `breakout_52w` becomes a
+superset of `breakout_20d`, and since the labeling rule records the
+stronger trigger when both fire, `breakout_20d` would have stopped
+appearing in `trade_log.csv` entirely — destroying the very comparison
+`DATA_SCHEMA.md` says to run on it.
+
+**So the gate was not removed from `breakout_52w`. Instead the excluded
+population was admitted under its own name.** The taxonomy is now:
+
+| Trigger | Level requirement |
+|---|---|
+| `breakout_52w` | within **2%** of the 52-week high |
+| `breakout_20d` | clears the prior bar's **20-day** Donchian channel |
+| `momentum_vol` | **none** — EMA direction + volume only |
+
+Record the **most specific** trigger that fires:
+`breakout_52w` → `breakout_20d` → `momentum_vol`. A name is only labelled
+`momentum_vol` when it satisfies *neither* level test, so that label
+isolates exactly the trades the old gate would have blocked.
+
+**Why this is a smaller change than it sounds.** Tier 1 already requires
+a range position ≥ 0.6 (upper 40% of the 52-week range), and a stock in
+the upper 40% of its range is usually not far from its high. The admitted
+population is bounded upstream. Measured 2026-08-11: of 8 candidates
+reaching Tier 2, **7 passed the 2% test and 1 failed** (CDNA at 3.94%,
+which then failed volume at 0.907 anyway). Expect roughly 0-1 extra
+candidate per run, not a flood.
+
+**Pre-registered review criterion — decided before any data exists, so
+that the result cannot be rationalised after the fact:**
+
+> Once **≥ 10 `momentum_vol` trades have closed**, compare their mean
+> R-multiple against the mean of `breakout_52w` closes over the same
+> period. If `momentum_vol` trails by **≥ 0.3R**, the 2% gate is
+> reinstated and this trigger is retired. If it is within 0.3R or better,
+> it stays. **Fewer than 10 closed trades is not a result** — do not act
+> on 2 or 3, in either direction.
+
+The `pct_from_52w_high` column is populated on **every** row (all
+triggers, opens and rejects) so this comparison is possible as a
+continuous variable, not merely as a pass/fail flag. This mirrors the
+`momentum_test_would_pass` pattern: measure the thing you removed.
 
 ### Volume confirmation — the breakout gate (replaces the momentum test)
 

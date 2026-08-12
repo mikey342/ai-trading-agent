@@ -216,8 +216,10 @@ For Tier 1 survivors (capped at top 8 by the **relative-strength proxy**
 alone — the value leg was removed 2026-08-11 as horizon-inappropriate for
 a ≤10-day hold; see `strategy.md`), call `get_equity_technical_indicators` for RSI
 (period=14, output="last:5"), EMA (period=8 and 21, output="last:5"), and
-**donchian_channels (period=20, output="last:3")**. Three triggers now
-qualify — `breakout_52w`, `breakout_20d`, `pullback` (mirrored in SHORT
+**donchian_channels (period=20, output="last:3")**. Four triggers now
+qualify — `breakout_52w`, `breakout_20d`, **`momentum_vol`** (EMA
+direction + volume, **no level requirement** — the experimental
+population admitted 2026-08-12), `pullback` (mirrored in SHORT
 mode). For `breakout_20d`, compare today's price against the **prior
 bar's** upper channel, not today's. When both breakout triggers fire,
 label it `breakout_52w` — the stronger signal. The `output` parameter
@@ -238,6 +240,16 @@ trims the response server-side — no file/jq extraction needed.
 Basis: O'Neil's 40%-above-average rule, supported by O'Neil Global
 Advisors' 1995-2021 study finding volume-confirmed breakouts
 significantly outperform. This **replaced** the old Tier 3 momentum test.
+
+**Record the MOST SPECIFIC trigger that fires** — `breakout_52w` →
+`breakout_20d` → `momentum_vol`. A candidate is only labelled
+`momentum_vol` when it satisfies *neither* level test; that label
+isolates exactly the trades the old 2% proximity gate would have blocked,
+which is the entire point of the experiment. Populate
+`pct_from_52w_high` on **every** row — opens, rejects, both sleeves — so
+the comparison can be run as a continuous variable. See `strategy.md`,
+"The `momentum_vol` experiment", including its **pre-registered** review
+criterion: no conclusions before 10 closed `momentum_vol` trades.
 
 ### Tier 3 — finalists (cap 3 per gates.md)
 For Tier 2 survivors, pull `NEWS_SENTIMENT` (Alpha Vantage, limit 5-10),
