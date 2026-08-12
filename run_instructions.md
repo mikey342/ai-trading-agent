@@ -287,7 +287,9 @@ positions (`gates.md` cap).
    **10 lowest `RSI`** (the scan's RSI(14)). Free.
 2. `get_equity_technical_indicators` (type=rsi, **period=2**,
    interval=day, output="last:2") for those 10. Keep only names whose
-   **last completed session** printed **RSI(2) < 10**. Usually leaves
+   **last completed session** printed **RSI(2) < 15** (raised from 10 on
+   2026-08-12 — running as a measured experiment, see `strategy.md`).
+   Usually leaves
    2-4 names.
 3. Only now pull `get_equity_quotes` and SMA(200) for the survivors.
    Running step 3 first triples the call count for no benefit.
@@ -298,7 +300,7 @@ not call it twice). Do **not** apply the SMA(20) test, the 0.6
 range-position floor, or the ADX rank — those belong to the breakout
 template and are mutually exclusive with a pullback by construction.
 
-**Tier 2-MR — trigger `mr_reversal`:** the oversold session's RSI(2) < 10
+**Tier 2-MR — trigger `mr_reversal`:** the oversold session's RSI(2) < 15
 **and** the current price is above that session's close (the first
 up-close). **No volume confirmation** — that is a breakout concept and
 oversold bounces often come on declining volume.

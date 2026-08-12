@@ -1181,7 +1181,8 @@ losers outperform over the following 1-4 weeks, and at that horizon the
 effect is statistically stronger than momentum. The practitioner
 implementation is Connors & Alvarez, *Short Term Trading Strategies That
 Work* (2008): **RSI(2) below 10 on a stock trading above its 200-day
-moving average.**
+moving average.** *(This system runs a raised threshold of **15** as of
+2026-08-12 — see the experiment note below.)*
 
 ### ⚠ The 200-day condition is load-bearing, not decoration
 
@@ -1218,8 +1219,8 @@ per symbol:
    RSI(14) is a weak proxy for RSI(2) but a serviceable pre-filter, and
    it costs nothing.
 2. Compute **RSI(2)** for those 10 (`type=rsi, period=2, output="last:2"`).
-   Keep only `RSI(2) < 10` on the last completed session. Typically
-   leaves 2-4 names.
+   Keep only **`RSI(2) < 15`** on the last completed session (raised from
+   10 on 2026-08-12 — see below). Typically leaves 2-4 names.
 3. **Only then** pull SMA(200) and quotes for the survivors.
 
 Doing step 3 before step 2 would triple the call count for no benefit.
@@ -1234,6 +1235,44 @@ floor is not the binding constraint for this setup. It was left in place
 rather than relaxed because the scan is shared with the breakout sleeve
 and widening it there has its own consequences. Revisit if
 mean-reversion candidates prove scarce in practice.
+
+#### ⚠ Threshold raised to 15 on 2026-08-12 — running as an experiment
+
+**User decision**, made against the recommendation recorded below. What
+it changes and how it will be judged:
+
+Connors published `<5` and `<10`; **15 sits outside the tested range**,
+and since returns improve monotonically as RSI(2) falls, the 10-15 band
+is the weakest cohort this sleeve has admitted. It also narrows an
+already-thin margin: this sleeve breaks even near a **60% win rate**
+given its R:R, against Connors' 70-80% *at the tighter thresholds*.
+
+**Worked examples that prompted the change** (both would have entered at
+15, neither at 10 — and note the one-day window):
+
+| | RSI(2) on Aug 10 | run Aug 11 | run Aug 12 |
+|---|---|---|---|
+| NBIS | 12.47 | **ENTRY at 15** | no (RSI(2) rebounded to 60.6) |
+| BE | 12.43 | **ENTRY at 15** | no (RSI(2) 18.0) |
+
+Both were showing gains shortly after (NBIS ~+6.5%, BE ~+3.2%). **That is
+not why the change is defensible, and it should not be cited as evidence
+later.** Both names entered the discussion *because* they had sold off
+and visibly bounced — a sample selected on the outcome. The stocks that
+printed RSI(2) between 10 and 15 and kept falling were never mentioned,
+because nobody notices those. On the screen's own unselected output the
+10-15 band was empty (see the base-rate table below).
+
+**Pre-registered revert criterion — fixed now, before any data exists:**
+
+> Once **≥ 10 mean-reversion trades have closed**, split them by entry
+> `rsi2`: the **sub-10** cohort versus the **10-15** cohort. If the 10-15
+> cohort's mean R trails the sub-10 cohort by **≥ 0.3R**, revert the
+> threshold to 10. **Fewer than 10 closed trades — or fewer than 4 in
+> either cohort — is not a result**, in either direction.
+
+The `rsi2` column records the actual entry value on every row, so this
+split is computable without any further instrumentation.
 
 **Base rate of the RSI(2) < 10 threshold, measured 2026-08-12.** The
 question of loosening to 15 came up after several names appeared to
@@ -1301,7 +1340,7 @@ template rather than a loosened one:
 ### Tier 2-MR — trigger: `mr_reversal`
 
 Both conditions, on the last completed daily bar plus the live quote:
-- **RSI(2) < 10** on the last completed session (the oversold print), and
+- **RSI(2) < 15** on the last completed session (the oversold print), and
 - **current price > that session's close** — the first up-close.
 
 The second condition is the "just starting to turn up" requirement. It
@@ -1334,7 +1373,7 @@ is exempt from `gates.md`'s 3% stop ceiling** and uses `1.5 x ATR14`
 outright.
 
 **Why (decided 2026-08-12).** This sleeve selects elevated-ATR names *by
-construction* — a stock only prints `RSI(2) < 10` by having just moved
+construction* — a stock only prints a very low `RSI(2)` by having just moved
 violently. Under the 3% ceiling the stop lands inside one average day's
 range:
 
