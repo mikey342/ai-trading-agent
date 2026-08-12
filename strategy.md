@@ -456,7 +456,8 @@ candidate qualifies if **either**:
 
 ### Volume confirmation — the breakout gate (replaces the momentum test)
 
-**Both breakout triggers require `relative_volume ≥ 1.4`** — the most
+**All four level-based triggers — `breakout_52w`, `breakout_20d`,
+`breakdown_52w`, `breakdown_20d` — require `relative_volume ≥ 1.4`** — the most
 recent **completed** daily session's volume divided by the 30-day average
 volume, both from `get_equity_fundamentals`.
 
@@ -526,11 +527,22 @@ trades.
 
 **SHORT mode (all three mirrored):**
 - **`breakdown_52w`**: price within 2% of `low_52_weeks` AND EMA8 < EMA21
+  AND `relative_volume` ≥ 1.4
 - **`breakdown_20d`**: price today falls below the **prior bar's** 20-day
   Donchian **lower** channel AND EMA8 < EMA21 AND `relative_volume` ≥ 1.4
 - **`rally_to_resistance`**: RSI(14) between 55-65 AND price still <
   SMA(50) (a bounce inside an intact downtrend, not a genuine reversal)
   AND EMA21 is flat-to-falling over the last 5 values
+
+**No pyramiding — a symbol already in `positions.md` is excluded from
+new-entry ranking.** A name that is already held is not re-tested through
+Tiers 1-3 on a later run, and a second entry is never added to an open
+position. This system has no averaging-up mechanism, no scale-in sizing,
+and no rule for what a second entry's stop would be relative to the
+first. Adding to a winner would also silently breach the 15% position cap
+that was enforced at entry. Drop held symbols at Tier 0 before ranking.
+(Applied correctly by the 2026-08-11 close run as a judgement call;
+written down here so it is not one.)
 
 **The short mirror is "short the bounce," not "short the dip."** Note the
 RSI band for a short entry (55-65) sits *above* neutral, not below — the
