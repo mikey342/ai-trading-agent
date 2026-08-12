@@ -378,9 +378,8 @@ fields):
 
 **LONG mode:**
 1. Current price > SMA(50) > SMA(200)
-2. Current price within 25% of `high_52_weeks`
-3. Current price at least 25% above `low_52_weeks`
-4. Relative-strength proxy: `(price - low_52_weeks) / (high_52_weeks -
+2. Current price at least 25% above `low_52_weeks`
+3. Relative-strength proxy: `(price - low_52_weeks) / (high_52_weeks -
    low_52_weeks)` ≥ 0.6 (i.e., trading in the upper 40% of its 52-week
    range — a cheap stand-in for a true relative-strength-vs-SPY line,
    which would need a full historical series for every candidate; see
@@ -389,10 +388,39 @@ fields):
 **SHORT mode (exact mirror — a confirmed *downtrend*, not merely a
 long-mode failure):**
 1. Current price < SMA(50) < SMA(200)
-2. Current price within 25% of `low_52_weeks`
-3. Current price at least 25% below `high_52_weeks`
-4. Relative-weakness proxy: `(price - low_52_weeks) / (high_52_weeks -
+2. Current price at least 25% below `high_52_weeks`
+3. Relative-weakness proxy: `(price - low_52_weeks) / (high_52_weeks -
    low_52_weeks)` ≤ 0.4 (lower 40% of its 52-week range)
+
+#### ⚠ Removed 2026-08-11: proximity-to-52-week-extreme
+
+**User decision.** The template previously also required price *within
+25% of the 52-week high* (LONG) / *within 25% of the 52-week low*
+(SHORT). Both were removed together — removing only the long side would
+leave the "exact mirror" asymmetric, the same defect closed on
+`breakdown_52w` earlier the same day.
+
+Rationale: the check is a *leadership* filter drawn from Minervini's
+template, which is designed for multi-month position holds where being in
+the top cohort of a market cycle matters. At a sub-2-week swing horizon
+it mostly duplicates work already done elsewhere — criterion #1 (the SMA
+stack) already establishes an intact uptrend, criterion #3 already
+requires the upper 40% of the 52-week range, and `breakout_52w` at Tier 2
+independently requires price within **2%** of the high, a far stricter
+bar than 25%.
+
+**What this actually changes:** it opens `breakout_20d` and `pullback`
+(Tier 2) to names in a valid uptrend that are not near a 52-week high —
+a stock making a fresh 20-day high partway through a recovery, for
+instance. `breakout_52w` is unaffected, since its own 2% requirement is
+stricter than the removed 25% one.
+
+**What it does not change:** a name below its SMA(50) still fails
+criterion #1, and a name in the lower 60% of its 52-week range still
+fails criterion #3. This removal alone does not admit deeply broken names
+— worked example, NBIS on 2026-08-11: price $193.23 vs SMA50 $221.75
+(fails #1) and range position 0.552 vs the 0.6 bar (fails #3), so it
+remains a Tier 1 rejection with this criterion gone.
 
 **Earnings blackout runs here, not at Tier 3.** Make **one**
 `get_earnings_calendar` call (Robinhood, `days=7`, no market-cap filter)
@@ -414,26 +442,41 @@ setups must additionally clear all five counter-trend gates.
 (The SPY regime check that sets the mode happens once per run, before
 Tier 1 — see "Direction mode" above and step 1 of `run_instructions.md`.)
 
-### Value tiebreaker and Tier 2 cap
+### Tier 2 cap
 
-Published research (O'Shaughnessy's *What Works on Wall Street*, AQR's
-"Value and Momentum Everywhere" — see `framework.md`) finds that momentum
-combined with value outperforms momentum alone. So among Tier 1 survivors,
-rank by a composite of `0.6 × relative-strength proxy (from #4 above) +
-0.4 × (1 / pe_ratio, ranked cross-sectionally within this run's candidate
-set — lower P/E ranks higher)` (from `get_equity_fundamentals`; Robinhood
-doesn't expose PEG in this endpoint, so this uses raw P/E relative to
-peers in the same run rather than growth-adjusted P/E — a cruder value
-signal, noted as a limitation, not silently upgraded to something it
-isn't). This is a prioritization, not an additional pass/fail gate — it
-decides which survivors advance to the more expensive Tier 2, capped at
-the **top 8**.
+Among Tier 1 survivors, rank by the **relative-strength proxy** alone
+(criterion #3 above: `(price - low_52_weeks) / (high_52_weeks -
+low_52_weeks)`, higher ranks first). This is a prioritization, not an
+additional pass/fail gate — it decides which survivors advance to the
+more expensive Tier 2, capped at the **top 8**.
 
-**In SHORT mode, invert both terms**: rank by `0.6 × (1 −
-relative-strength proxy) + 0.4 × (pe_ratio ranked cross-sectionally —
-*higher* P/E ranks higher)`. The same research logic runs in reverse:
-expensive, weak names are the better short candidates, just as cheap,
-strong ones are the better longs.
+**In SHORT mode, invert it**: rank by `1 − relative-strength proxy`, so
+the weakest names in their 52-week range rank first.
+
+#### ⚠ Removed 2026-08-11: the value leg
+
+**User decision.** The composite was previously `0.6 × relative-strength
++ 0.4 × (1/pe_ratio ranked cross-sectionally)`, citing O'Shaughnessy and
+AQR's "Value and Momentum Everywhere."
+
+Rationale: **the holding period is wrong for it.** Those findings are
+built on cross-sectional portfolios of hundreds of names rebalanced
+monthly-to-annually, where the value premium has time to be realized.
+This system holds for **at most 10 trading days** and picks 8 names. A
+P/E rank cannot plausibly express itself over two weeks, so the leg was
+contributing noise weighted at 40% of the ranking.
+
+It was also actively fighting the AI tilt. Worked example, 2026-08-11:
+CRWD passed the Tier 1 trend template cleanly and was one of only two
+`ai_theme.md` names to reach the top 15 — then was cut by the value leg
+on a **−4,780 P/E**. High-growth AI infrastructure names are routinely
+unprofitable, so the value leg systematically penalized the exact
+category the AI tilt exists to surface. Same species of error as applying
+O'Neil's single-stock volume rule to an index ETF: a researched rule
+imported outside the domain its evidence covers.
+
+Ranking is now pure relative strength, which *is* horizon-appropriate —
+cross-sectional momentum is measured over weeks-to-months, not years.
 
 ## Tier 2 — Entry trigger (shortlist from Tier 1 only)
 

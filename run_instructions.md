@@ -192,6 +192,10 @@ Then pull `get_equity_quotes` (one batched call for all 15) and
 `get_equity_technical_indicators` (sma, period=50 and period=200,
 output=latest). Apply the Tier 1 trend-template checklist **in both
 directions** (long and inverted). Drop anything that passes neither.
+The **proximity-to-52-week-extreme criterion was removed 2026-08-11**
+(both directions) — the SMA stack and the upper/lower-40%-of-range test
+still apply, and `breakout_52w` at Tier 2 enforces a stricter 2% bar of
+its own. See `strategy.md`.
 
 **Before advancing anything to Tier 2:** check `trade_log.csv` for reject
 rows dated today. If a candidate was already rejected today on a
@@ -203,8 +207,9 @@ tallies in `strategy.md`. Price-based checks are exempt and should still
 re-run, since price does move.
 
 ### Tier 2 — shortlist
-For Tier 1 survivors (capped at top 8 by the value/momentum tiebreaker —
-see `strategy.md`), call `get_equity_technical_indicators` for RSI
+For Tier 1 survivors (capped at top 8 by the **relative-strength proxy**
+alone — the value leg was removed 2026-08-11 as horizon-inappropriate for
+a ≤10-day hold; see `strategy.md`), call `get_equity_technical_indicators` for RSI
 (period=14, output="last:5"), EMA (period=8 and 21, output="last:5"), and
 **donchian_channels (period=20, output="last:3")**. Three triggers now
 qualify — `breakout_52w`, `breakout_20d`, `pullback` (mirrored in SHORT

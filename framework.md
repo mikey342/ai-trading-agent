@@ -98,7 +98,7 @@ of pieces from each, not a pure implementation of any one:
 2. **Trend template / stage analysis (Minervini's SEPA)** — Mark
    Minervini's published methodology (*Trade Like a Stock Market Wizard*):
    a stock must be in a confirmed uptrend (price > 50DMA > 150/200DMA, DMAs
-   themselves rising, price within ~25% of its 52-week high) before it's
+   themselves rising, price in the upper 40% of its 52-week range) before it's
    even considered. We borrow the **multi-moving-average "stack" as a
    trend-quality filter**, applied before looking at any entry trigger.
 
@@ -277,7 +277,7 @@ factors** — not a replication of what a quant fund does. Real systematic
 equity shops differ from this in nearly every operational respect: they
 trade universes of thousands of names rather than a top-15 slice, derive
 thresholds statistically instead of from round numbers (RSI 35-45, ADX
-25, 25% of the 52-week high are all conventions, not optimized
+25, the 0.6 range-position bar are all conventions, not optimized
 parameters), run formal risk models and transaction-cost models, and
 diversify across many small positions rather than concentrating in six.
 
