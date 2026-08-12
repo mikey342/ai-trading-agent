@@ -1235,6 +1235,39 @@ rather than relaxed because the scan is shared with the breakout sleeve
 and widening it there has its own consequences. Revisit if
 mean-reversion candidates prove scarce in practice.
 
+**Base rate of the RSI(2) < 10 threshold, measured 2026-08-12.** The
+question of loosening to 15 came up after several names appeared to
+"just miss" — NBIS 12.47, BE 12.43, CRUS 17.43. Measuring the sleeve's
+*own* pre-filter population (lowest RSI(14) names clearing the $20M/day
+screen) on 2026-08-11:
+
+| Symbol | RSI(2) |
+|---|---|
+| SNEX | **3.46** ← qualifies |
+| CRUS | 17.43 |
+| ALHC | 20.99 |
+| ROL | 27.78 |
+| EIX | 75.65 |
+| KLAC | 76.91 |
+
+**At `<10`: 1 of 6. At `<15`: still 1 of 6 — the 10-15 band is empty.**
+The apparent near-misses were a **selection artifact**: NBIS and BE were
+raised in conversation precisely *because* they had sold off hard, which
+is the same property that put them near the threshold. They were never
+screen output. Loosening to 15 would have added nothing.
+
+Two further reasons the threshold was left alone: (1) this sleeve breaks
+even at roughly a 60% win rate given its R:R, against Connors' published
+70-80% *at `<5` or `<10`* — and since returns improve monotonically as
+RSI(2) falls, loosening admits weaker setups and pulls the win rate
+toward that line; (2) Connors published `<5` and `<10`, so 10 is already
+the permissive setting. **Revisit only on closed-trade evidence, and note
+that candidate scarcity must be demonstrated from screen output, not
+from names that came up in conversation.**
+
+*Caveat: 6 names on one day is a small sample. It refutes the specific
+argument that was made, not the general question.*
+
 **Reachability verified 2026-08-12** (the check that the `pullback`
 trigger failed): from the 10 lowest-RSI(14) names clearing the
 dollar-volume screen, SNEX printed RSI(2) **3.46** with price $65.97
