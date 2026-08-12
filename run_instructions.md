@@ -467,6 +467,39 @@ Commit all changed files with a message like:
 Push to `main`. If this step fails or is skipped, the next run starts
 blind to everything that happened today.
 
+## ⚠ Oversized tool results — read them IN PLACE, never copy them
+
+**This hung the 2026-08-12 morning run for four hours.** When a tool
+response exceeds the token limit it is written to a file under
+`.claude/projects/.../tool-results/` and the path is returned instead of
+the content. That directory is **permission-protected**. Any command that
+the sandbox reads as writing to, copying, or editing a file there raises
+an interactive permission prompt — and in a scheduled cloud run **there
+is no human to answer it, so the run blocks until it times out.** No
+journal entry, no commit, no trades: the whole session is lost.
+
+**Rule: never `cp`, `mv`, redirect into, or edit anything under
+`tool-results/`. Read it where it sits.**
+
+```bash
+# WRONG — blocks the run on a permission prompt
+cp "$F" "$SCRATCH/earnings.json"
+
+# RIGHT — query it in place, write only your own output elsewhere
+jq -r '.data.results[] | "\(.symbol)\t\(.report_date)"' "$F" > /tmp/earnings.tsv
+python3 -c "import json;d=json.load(open('$F'));..."
+```
+
+Writing *derived* output to `/tmp` or the scratchpad is fine. It is only
+touching the tool-result file itself that trips the guard.
+
+**Calls that reliably overflow, so plan for the file path:**
+`run_scan` (~100K chars), `get_earnings_calendar` with `days=7`
+(~100K — it is market-wide and unfiltered).
+
+If a permission prompt ever does appear, treat the run as unrecoverable:
+you cannot answer it. Nothing can be done from inside the session.
+
 ## Handling errors gracefully
 
 - Alpha Vantage quota/premium error on any call: log it, don't abort the
