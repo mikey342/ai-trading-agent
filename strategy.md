@@ -431,7 +431,11 @@ names.
 > criterion doing the blocking changed.
 
 **Earnings blackout runs here, not at Tier 3.** Make **one**
-`get_earnings_calendar` call (Robinhood, `days=7`, no market-cap filter)
+`get_earnings_calendar` call (Robinhood, **`days=3,
+filter="high_market_cap"`** — days=7 unfiltered returns the whole market
+at ~100K chars and overflows into a permission-protected file, which hung
+the 2026-08-12 morning run; the blackout only needs 3 days, and the >$1B
+filter cannot exclude a >$2B universe)
 at the start of Tier 1 and drop any candidate reporting within the next 3
 calendar days. This replaces the old per-finalist `get_earnings_results`
 blackout check: one market-wide call covers everything, and filtering here

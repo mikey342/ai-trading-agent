@@ -190,7 +190,9 @@ to screening a small diversified set of liquid large-caps and flag it in
 the journal as degraded operation.
 
 ### Tier 1 — trend template (top 15 from Tier 0)
-First, **one** `get_earnings_calendar` call (days=7) — drop any candidate
+First, **one** `get_earnings_calendar` call — **`days=3,
+filter="high_market_cap"`** (NOT days=7 and NOT unfiltered; see the
+oversized-results section) — drop any candidate
 reporting within 3 calendar days before spending anything else on it.
 Then pull `get_equity_quotes` (one batched call for all 15) and
 `get_equity_fundamentals` (2 batched calls), then per-symbol
@@ -494,8 +496,17 @@ Writing *derived* output to `/tmp` or the scratchpad is fine. It is only
 touching the tool-result file itself that trips the guard.
 
 **Calls that reliably overflow, so plan for the file path:**
-`run_scan` (~100K chars), `get_earnings_calendar` with `days=7`
-(~100K — it is market-wide and unfiltered).
+`run_scan` (~100K chars) — this one legitimately needs the file path.
+
+`get_earnings_calendar` **used to** overflow at ~100K with `days=7` and no
+filter, and that is exactly what killed the 2026-08-12 morning run. **Call
+it as `days=3, filter="high_market_cap"` and it returns inline** — no
+file, no permission risk. Both narrowings are free rather than trade-offs:
+the blackout only drops names reporting within **3 calendar days**, so
+days 4-7 were fetched and discarded on every run; and `high_market_cap`
+means >$1B while Tier 0 already requires >$2B, so the filter cannot
+exclude anything that could ever be a candidate. Verified live
+2026-08-12.
 
 If a permission prompt ever does appear, treat the run as unrecoverable:
 you cannot answer it. Nothing can be done from inside the session.
