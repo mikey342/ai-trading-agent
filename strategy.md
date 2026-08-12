@@ -1293,10 +1293,47 @@ companies in the first hour of a genuine problem. If the sentiment call
 is `UNAVAILABLE`, **take no mean-reversion trade that run** — the same
 standard applied to counter-trend setups, for the same reason.
 
-### Sizing — identical to the breakout sleeve
+### Sizing — same risk budget, but **no 3% stop ceiling**
 
-Same 0.4% NAV risk budget, same ATR-derived stop with the 3% floor, same
-15% position cap, same instrument-selection procedure. No new arithmetic.
+Same 0.4% NAV risk budget, same 15% position cap, same
+instrument-selection procedure. **One deliberate difference: this sleeve
+is exempt from `gates.md`'s 3% stop ceiling** and uses `1.5 x ATR14`
+outright.
+
+**Why (decided 2026-08-12).** This sleeve selects elevated-ATR names *by
+construction* — a stock only prints `RSI(2) < 10` by having just moved
+violently. Under the 3% ceiling the stop lands inside one average day's
+range:
+
+| | price | ATR14 | ATR % | stop @3% | stop / ATR |
+|---|---|---|---|---|---|
+| SNEX | $65.97 | $4.09 | 6.20% | $1.98 | **0.48x** |
+| CRUS | $121.99 | $5.39 | 4.42% | $3.66 | **0.68x** |
+| ACAD *(Sleeve A)* | $29.49 | $0.95 | 3.23% | $0.89 | 0.93x |
+
+A stop at half an average day's range is hit by noise, which would
+convert this sleeve's expected *high* win rate into a low one and destroy
+the only edge it has.
+
+**This does not loosen risk.** Sizing is risk-based, so dollar risk stays
+at 0.4% of NAV regardless of stop width — a wider stop simply buys fewer
+shares. It also *reduces* gap exposure, because the position shrinks
+proportionally:
+
+```
+SNEX @ $65.97, $40 at risk (0.4% of $10,000)
+  3% stop  ($1.98)  -> 20 shares -> $1,335  (13.4% NAV)
+  1.5xATR  ($6.13)  ->  6 shares -> $  396  ( 4.0% NAV)
+```
+
+A 10% overnight gap costs 1.33% of NAV under the tight stop and 0.40%
+under the wide one. **The tight stop was the riskier setting**, not the
+safer one — it forces a larger position to reach the same dollar risk.
+
+**Accepted cost:** materially less capital deployed per mean-reversion
+position. Six such positions would commit roughly 25% of the book rather
+than 90%, so this sleeve's absolute contribution is smaller even if its
+risk-adjusted behaviour improves. That trade was made knowingly.
 
 ### Exits — different by design
 

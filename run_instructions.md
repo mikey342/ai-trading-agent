@@ -308,8 +308,12 @@ oversold bounces often come on declining volume.
 this run — same standard as counter-trend, because news is what separates
 temporary selling from a real problem.
 
-**Sizing is unchanged** — 0.4% NAV risk, ATR stop with the 3% floor, 15%
-cap, same instrument-selection procedure in step 4.
+**Sizing:** 0.4% NAV risk and the 15% cap as usual, but **do NOT apply
+the 3% stop ceiling to this sleeve** — use `1.5 x ATR14` outright.
+Mean-reversion candidates have elevated ATR by construction, and a 3%
+stop would sit inside one average day's range (SNEX 0.48x ATR on
+2026-08-12). Dollar risk is unchanged at 0.4% because sizing is
+risk-based; the position simply gets smaller. See `strategy.md`.
 
 **Log with `sleeve=mean_reversion`, `trigger=mr_reversal`, and populate
 the `rsi2` column.** These rows must stay separable from breakout rows —
