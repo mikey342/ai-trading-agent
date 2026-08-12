@@ -742,3 +742,22 @@ All 8 fail volume confirmation (both breakout triggers need it) and all 8 have R
 **Rejected by gates:** None reached gates.md-level sizing/execution checks — nothing had a valid entry trigger this run. KLAC, PAY, PYPL, SAIA failed Tier 1 (unchanged from midday, re-verified on price only). TECH, CDNA, OGN, FBP, ATAI, LXP, LIND, CRWD all failed Tier 2 volume confirmation (LIND/CRWD freshly tested; the other six carried forward from midday's identical daily-bar result). EAT dropped at the Tier 1 earnings blackout (confirmed again, reports tomorrow). SSO/index sleeve dropped at Tier 2 volume confirmation (5th consecutive run). ACAD and PAYO were excluded from new-entry consideration as already-open positions (see judgment call above) — not gate rejections.
 
 **Strategy adaptation this run:** None — still only 0 closed trades, below every evidence bar in the adaptation policy. Restating the two standing observations from midday (index-sleeve volume gate now 5-for-5 failing; PAYO as a natural experiment for the retired momentum test) — neither acted on. New observation: the market-wide volume drought (every Tier 2 candidate across both the stock funnel and the index sleeve failed on `relative_volume` today) suggests today (Aug 10 session, the last completed bar feeding every check right now) was simply a low-participation day market-wide, not a defect in the 1.4 threshold specifically — worth confirming once Aug 11's session closes and becomes the new "last completed session" for tomorrow's runs.
+
+---
+
+### 2026-08-12 14:05 UTC — monitor run
+
+**Closed PAYO** (211 sh, stock sleeve, bullish) on `trend_break`: the
+2026-08-11 completed session closed $7.09, below the SMA(20) $7.12 that
+now governs stock-sleeve trend-break exits (changed from SMA(50) on
+2026-08-11, applied to already-open positions per user decision — flagged
+as expected in `positions.md` after that change). PAYO remains well above
+the SMA(50) $6.80 it was entered under, so this exit was caused by the
+rule change, not a new market event. Original stop $7.0190 was not
+breached and the R-target $7.2620 was not reached, so no higher-priority
+exit condition co-fired. Sold at bid $7.09. realized_pnl -$2.11, r_multiple
+-0.12R. NAV $9,997.44, cash $8,670.84.
+
+ACAD reviewed, no exit condition fired (price $29.48 vs stop $28.6053,
+R-target $31.2594 not reached, well above SMA20 $26.524, 1 trading day
+into a 10-day time-stop).

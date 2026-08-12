@@ -9,19 +9,18 @@ separate and simulated.
 | Field | Value |
 |---|---|
 | Starting NAV | $10,000 |
-| Current cash (simulated) | $7,174.85 |
-| Current NAV (simulated) | $9,991.14 |
-| Realized P&L (all-time) | $0 |
-| Today's realized P&L | $0 |
+| Current cash (simulated) | $8,670.84 |
+| Current NAV (simulated) | $9,997.44 |
+| Realized P&L (all-time) | -$2.11 |
+| Today's realized P&L | -$2.11 |
 | Trading halted today? | No |
-| Last updated | 2026-08-11 19:42 UTC (close run; no new trades, no exits — see trade_journal.md) |
+| Last updated | 2026-08-12 14:05 UTC (monitor run; closed PAYO on trend_break — see trade_journal.md) |
 
 ## Open positions — equity and leveraged ETFs
 
 | Symbol | Underlying | Sleeve | Direction | Counter-trend? | Qty | Entry price | Entry date | Original stop | R-target | R-target reached? | Current exit stop | Current price | Unrealized P&L | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| ACAD | ACAD | stock | bullish | No | 45 | $29.49 | 2026-08-11 | $28.6053 | $31.2594 | No | $28.6053 | $29.34 | -$6.75 | Health Technology. breakout_52w, vol-confirmed (rel_vol 1.565). PEAD tailwind (beat 5/7 qtrs, incl. most recent). |
-| PAYO | PAYO | stock | bullish | No | 211 | $7.10 | 2026-08-11 | $7.0190 | $7.2620 | No | $7.0190 | $7.09 | -$2.11 | Commercial Services. breakout_52w, vol-confirmed (rel_vol 1.513). Under-risked (cap-bound, no leveraged ETF available). Soft-negative PEAD (missed 6/7 qtrs, incl. most recent) and mixed/slightly-negative recent news. **EXPECTED TO CLOSE on the next monitor run**: price $7.09 sits below SMA20 $7.12. The trend-break exit MA changed from SMA(50) to SMA(20) for the stock sleeve on 2026-08-11, *after* this position was opened, and the user chose to apply it to open positions rather than grandfather them. It remains well above the SMA(50) $6.80 it was entered under, so this exit is **caused by the rule change, not by a market event** — record `exit_rule=trend_break` per the precedence order, but say so explicitly in the journal entry. |
+| ACAD | ACAD | stock | bullish | No | 45 | $29.49 | 2026-08-11 | $28.6053 | $31.2594 | No | $28.6053 | $29.48 | -$0.45 | Health Technology. breakout_52w, vol-confirmed (rel_vol 1.565). PEAD tailwind (beat 5/7 qtrs, incl. most recent). |
 
 `Underlying` is the symbol the **thesis** is about, and the one whose
 trend MA the trend-break exit checks (SMA20 for the stock sleeve, SMA50
@@ -84,3 +83,4 @@ is a one-way flag, same semantics as the equity table.
 | 2026-08-11 (morning, 14:01 UTC) | morning | $10,000 | $10,000 | $0 | No |
 | 2026-08-11 (midday, 18:45 UTC) | midday | $10,000.00 | $7,174.85 | $0 | No |
 | 2026-08-11 (close, 19:42 UTC) | close | $9,991.14 | $7,174.85 | $0 | No |
+| 2026-08-12 (monitor, 14:05 UTC) | monitor | $9,997.44 | $8,670.84 | -$2.11 | No |
