@@ -45,6 +45,7 @@ specific rule is actually earning its place).
 | `notional` | open/close | `qty × fill_price` (× 100 for options). |
 | `stop`, `r_target` | open | Fixed at entry, never recomputed later. |
 | `atr14`, `rsi14`, `ema8`, `ema21`, `sma50`, `sma200` | all | Indicator snapshot **at decision time**. This is the core of "why did we take this trade" in machine-readable form. |
+| `rsi2` | all | **RSI(2) on the last completed session** — the mean-reversion sleeve's entry measure (needs **< 15** as of 2026-08-12, raised from 10) and its exit measure (`mr_target` at **> 70**). **Record the actual number, never a pass/fail flag.** The pre-registered revert criterion in `strategy.md` splits closed mean-reversion trades into a sub-10 cohort and a 10-15 cohort and compares mean R — that is only computable if the real value is stored. Leave blank for breakout-sleeve rows. Note RSI(2) and RSI(14) measure very different things: a stock in an intact uptrend can print RSI(2) near zero after two down days while RSI(14) sits near 50. |
 | `pct_from_52w_high` | all | `(high_52_weeks - price) / high_52_weeks`, as a decimal. Populated on **every** row regardless of trigger or sleeve. Exists so the `momentum_vol` experiment can be evaluated as a continuous variable rather than a pass/fail flag — see `strategy.md`. Distinct from `pct_52w_range`, which measures position *within* the range rather than distance *from the high*. |
 | `pct_52w_range` | all | `(price - low52) / (high52 - low52)` — the relative-strength proxy. |
 | `pe_ratio` | all | From `get_equity_fundamentals`. |
