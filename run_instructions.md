@@ -100,6 +100,10 @@ For every row in `positions.md` (equity and options separately):
   stop until R-target hit, then trail EMA21 — see `strategy.md`). Also
   check days-to-expiration remaining vs. both the 21-DTE checkpoint and
   50% of DTE-at-entry.
+- **`mean_reversion` positions use a different exit set** — no trailing
+  EMA21 stop and no 2R target. Exit on: the fixed stop, **`mr_target`
+  (RSI(2) > 70)**, a close **below SMA(200)**, or a **5-trading-day**
+  time-stop. Precedence: stop → mr_target → trend_break → time_stop.
 - Check against the full exit rules in `strategy.md` (current exit stop
   per the above, trend-template break on the sleeve's MA, time-stop, options DTE
   checkpoints). **Time-stops differ by sleeve** — 10 trading days for an
@@ -249,6 +253,54 @@ check later whether it actually predicted anything.
 
 Drop anything failing the remaining checks. `MACD` (Alpha Vantage) is
 permanently premium-gated and must never be called.
+
+### Tier 0-3 MR — the mean-reversion sleeve (second pass, same scan)
+
+Run this **after** the breakout funnel above, using the **same `run_scan`
+response** — no second scan call. See `strategy.md`, "Mean-reversion
+sleeve," for the full rationale.
+
+**Skip this entire pass if SPY < SMA(200)** (the direction reading from
+step 1). The sleeve is LONG-mode only; in SHORT mode it is off, not
+merely restricted.
+
+Also skip if `positions.md` already holds **2** `mean_reversion`
+positions (`gates.md` cap).
+
+**Order the calls this way — it matters for cost:**
+
+1. From scan rows clearing the $20M/day dollar-volume screen, take the
+   **10 lowest `RSI`** (the scan's RSI(14)). Free.
+2. `get_equity_technical_indicators` (type=rsi, **period=2**,
+   interval=day, output="last:2") for those 10. Keep only names whose
+   **last completed session** printed **RSI(2) < 10**. Usually leaves
+   2-4 names.
+3. Only now pull `get_equity_quotes` and SMA(200) for the survivors.
+   Running step 3 first triples the call count for no benefit.
+
+**Tier 1-MR:** price **> SMA(200)**, and not reporting earnings within 3
+days (reuse the same `get_earnings_calendar` result already pulled — do
+not call it twice). Do **not** apply the SMA(20) test, the 0.6
+range-position floor, or the ADX rank — those belong to the breakout
+template and are mutually exclusive with a pullback by construction.
+
+**Tier 2-MR — trigger `mr_reversal`:** the oversold session's RSI(2) < 10
+**and** the current price is above that session's close (the first
+up-close). **No volume confirmation** — that is a breakout concept and
+oversold bounces often come on declining volume.
+
+**Tier 3-MR:** `NEWS_SENTIMENT` must not be negative **and must not be
+`UNAVAILABLE`**. If the quota is exhausted, take no mean-reversion trade
+this run — same standard as counter-trend, because news is what separates
+temporary selling from a real problem.
+
+**Sizing is unchanged** — 0.4% NAV risk, ATR stop with the 3% floor, 15%
+cap, same instrument-selection procedure in step 4.
+
+**Log with `sleeve=mean_reversion`, `trigger=mr_reversal`, and populate
+the `rsi2` column.** These rows must stay separable from breakout rows —
+the two sleeves have opposite payoff structures and pooling them produces
+statistics that describe neither.
 
 ## 4. Decide instrument: equity, leveraged ETF, or options
 

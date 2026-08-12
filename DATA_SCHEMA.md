@@ -29,7 +29,7 @@ specific rule is actually earning its place).
 | `run_type` | all | `morning` / `midday` / `pre-close` / `monitor`. |
 | `action` | all | `open` / `close` / `reject`. |
 | `symbol` | all | Underlying ticker. |
-| `sleeve` | all | `stock` (individual name from the Tier 0-3 funnel) or `index` (2x ETF market-direction bet). |
+| `sleeve` | all | `stock` (individual name from the breakout Tier 0-3 funnel), `index` (2x ETF market-direction bet), or `mean_reversion` (oversold-bounce sleeve, added 2026-08-12). **Always slice performance by this column before drawing conclusions** — the breakout and mean-reversion sleeves have opposite payoff structures (low win rate / fat tail vs. high win rate / capped wins), so a pooled win rate or average R describes neither. |
 | `instrument` | all | `equity`, `leveraged_etf`, or `option`. |
 | `direction` | all | `bullish` or `bearish` — which template the setup passed. |
 | `counter_trend` | all | `true` if the setup ran against the SPY regime (bearish while SPY > SMA(200), or bullish while below), `false` otherwise. Counter-trend trades are capped at 1 open, sized at half risk, and require undegraded data — so this column is the key one for later checking whether that allowance earned its place or just added losses. |
@@ -50,7 +50,7 @@ specific rule is actually earning its place).
 | `composite_rank` | all | The value+momentum tiebreaker score from `strategy.md`. |
 | `relative_volume` | all | Last COMPLETED session volume ÷ 30-day average, from `get_equity_fundamentals`. The breakout gate: ≥1.4 (O'Neil's 40% above average). Computed, never read from the scan's column, which uses `session="all"`. |
 | `momentum_test_would_pass` | all | Whether the retired EMA-spread test would have passed. **Logged only, gates nothing** — kept so the pre-registered question stays answerable: did the invented rule actually predict anything? |
-| `trigger` | open/reject | Which entry rule fired. LONG: `breakout_52w`, `breakout_20d`, `pullback`. SHORT: `breakdown_52w`, `breakdown_20d`, `rally_to_resistance`. When both breakout triggers qualify, record the stronger one (`breakout_52w`). **Slice performance by this column** — `breakout_20d` is the weaker level signal and was added to fill a coverage gap; if it underperforms the other two once trades close, it should be removed rather than kept on the argument that introduced it. |
+| `trigger` | open/reject | Which entry rule fired. LONG: `breakout_52w`, `breakout_20d`, `pullback`. SHORT: `breakdown_52w`, `breakdown_20d`, `rally_to_resistance`. MEAN-REVERSION: `mr_reversal`. When both breakout triggers qualify, record the stronger one (`breakout_52w`). **Slice performance by this column** — `breakout_20d` is the weaker level signal and was added to fill a coverage gap; if it underperforms the other two once trades close, it should be removed rather than kept on the argument that introduced it. |
 | `news_sentiment` | all | Score, or the literal `UNAVAILABLE` when the Alpha Vantage quota was exhausted (see `strategy.md`'s degradation rule). Never fabricate this. |
 | `social_score` | all | Stocktwits `sentiment.score` (0-100) at decision time, or `NO_COVERAGE`. **Never `bullish_pct`** — on thin names that reads as false consensus (IMAX showed "100% bullish" against a canonical score of 47). |
 | `social_label` | all | Stocktwits `sentiment.label` (Extremely Bearish … Extremely Bullish), or `NO_COVERAGE`. |
@@ -58,7 +58,7 @@ specific rule is actually earning its place).
 | `earnings_days_away` | all | Days to next earnings report; blackout is <3. |
 | `regime` | all | `risk-on` / `risk-off` — SPY vs its 200-day SMA. |
 | `strike`, `expiration`, `delta_at_entry`, `iv_at_entry`, `dte_at_entry`, `underlying_price` | options only | Blank for equity rows. |
-| `exit_rule` | close | Which rule fired: `stop`, `trailing_stop`, `trend_break`, `time_stop`, `dte_21`, `dte_50pct`. Time-stop limits by sleeve: 10 trading days for ordinary stock, 8 for an index-sleeve ETF, 5 for a single-stock leveraged ETF. |
+| `exit_rule` | close | Which rule fired: `stop`, `trailing_stop`, `mr_target`, `trend_break`, `time_stop`, `dte_21`, `dte_50pct`. `mr_target` (RSI(2) > 70) is the mean-reversion sleeve's primary exit and replaces the trailing stop there — that sleeve has no 2R target and no EMA21 trail. Time-stop limits by sleeve: 10 trading days for ordinary stock, 8 for an index-sleeve ETF, 5 for a single-stock leveraged ETF. |
 | `realized_pnl` | close | Dollars. |
 | `r_multiple` | close | `realized_pnl / (initial risk in dollars)`. The single most useful performance number — a system with a 30% win rate is fine if winners average +3R. |
 | `nav_after` | open/close | NAV following this action. |

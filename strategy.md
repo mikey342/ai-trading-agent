@@ -1113,6 +1113,149 @@ structurally in a rising market, so a SHORT-mode index position is a
 tactical position with a short leash, never something to sit in and wait
 on.
 
+## Mean-reversion sleeve — oversold bounces (added 2026-08-12)
+
+A **second, independent strategy** running alongside the breakout funnel,
+not a variant of it. Where the breakout sleeve buys strength at a level,
+this buys weakness inside an intact long-term uptrend and sells the
+snap-back.
+
+**Basis.** Short-term reversal is a separately documented effect from
+momentum: Jegadeesh (1990) and Lehmann (1990) find that 1-to-4-week
+losers outperform over the following 1-4 weeks, and at that horizon the
+effect is statistically stronger than momentum. The practitioner
+implementation is Connors & Alvarez, *Short Term Trading Strategies That
+Work* (2008): **RSI(2) below 10 on a stock trading above its 200-day
+moving average.**
+
+### ⚠ The 200-day condition is load-bearing, not decoration
+
+Connors' rule requires price **above the SMA(200)**. Removing that
+condition inverts the edge — buying oversold stocks in genuine downtrends
+is the falling-knife trade, one of the most reliable ways to lose money
+in equities. "Beaten down" and "oversold within an uptrend" are different
+setups with opposite expectancy, and this sleeve trades **only the
+second**. Every rule below exists to keep that distinction intact.
+
+### Regime: LONG mode only
+
+**This sleeve is disabled entirely whenever SPY is below its SMA(200).**
+Not merely restricted — off. Oversold bounces in a bear market are the
+documented failure mode of the strategy, and the stock-level SMA(200)
+filter is not sufficient protection when the whole market is breaking
+down. In CAUTION it remains available but counts against that level's
+1-trade cap. In STRESSED nothing opens anyway.
+
+It is **not** a counter-trend setup: it is long exposure in a long
+regime, so the five counter-trend gates do not apply. It buys weakness at
+the *stock* level while remaining aligned with the *market* regime, which
+is a different thing entirely.
+
+### Tier 0-MR — universe, ordered to minimise API calls
+
+Reuses the **same `run_scan` response** as the breakout sleeve — no
+additional scan call. It is ranked differently, and the call sequence
+below matters because RSI(2) is not a scan column and must be computed
+per symbol:
+
+1. From rows clearing the $20M/day dollar-volume screen, take the **10
+   lowest `RSI` (the scan's RSI(14))**. Free — scan data already in hand.
+   RSI(14) is a weak proxy for RSI(2) but a serviceable pre-filter, and
+   it costs nothing.
+2. Compute **RSI(2)** for those 10 (`type=rsi, period=2, output="last:2"`).
+   Keep only `RSI(2) < 10` on the last completed session. Typically
+   leaves 2-4 names.
+3. **Only then** pull SMA(200) and quotes for the survivors.
+
+Doing step 3 before step 2 would triple the call count for no benefit.
+
+### Tier 1-MR — template
+
+Required:
+- Price **> SMA(200)** — the long-term uptrend is intact.
+- Earnings blackout: nothing reporting within **3 calendar days** (same
+  rule and same shared `get_earnings_calendar` call as the breakout
+  sleeve).
+
+**Deliberately NOT required** — and this is the point of a separate
+template rather than a loosened one:
+- *No* `price > SMA(20)` test. The stock is dipping by construction, so
+  it will usually sit below its short-term averages. Requiring otherwise
+  makes the setup unreachable — precisely the self-contradiction that
+  left the breakout sleeve's `pullback` trigger structurally starved
+  (12.5% of the universe sat in its RSI band on 2026-08-11 while **0** of
+  the top 15 by ADX did).
+- *No* 0.6 range-position floor. A pulled-back stock is by definition
+  lower in its 52-week range; that floor and this setup are mutually
+  exclusive.
+- *No* ADX-descending rank. ADX measures trend persistence, and a stock
+  that just pulled back has interrupted its trend.
+
+### Tier 2-MR — trigger: `mr_reversal`
+
+Both conditions, on the last completed daily bar plus the live quote:
+- **RSI(2) < 10** on the last completed session (the oversold print), and
+- **current price > that session's close** — the first up-close.
+
+The second condition is the "just starting to turn up" requirement. It
+deviates from pure Connors, which buys the oversold close itself. The
+trade-off is explicit: waiting for one up-close gives up part of the
+bounce in exchange for not buying a knife that is still falling.
+
+**No volume confirmation.** The 1.4x rule is a *breakout* concept — it
+evidences accumulation through a level. Oversold bounces frequently occur
+on *declining* volume as selling exhausts itself, so requiring a volume
+surge here would reject the healthiest examples. Applying it would be the
+same category error as applying O'Neil's single-stock rule to an index
+ETF.
+
+### Tier 3-MR — news gate is stricter here, not looser
+
+`NEWS_SENTIMENT` must not be negative. This matters **more** for this
+sleeve than for breakouts: news is the main thing distinguishing
+"temporary selling pressure" from "something is actually broken," and a
+mean-reversion system with no news gate is a machine for buying
+companies in the first hour of a genuine problem. If the sentiment call
+is `UNAVAILABLE`, **take no mean-reversion trade that run** — the same
+standard applied to counter-trend setups, for the same reason.
+
+### Sizing — identical to the breakout sleeve
+
+Same 0.4% NAV risk budget, same ATR-derived stop with the 3% floor, same
+15% position cap, same instrument-selection procedure. No new arithmetic.
+
+### Exits — different by design
+
+| Rule | Condition |
+|---|---|
+| `stop` | Fixed ATR/3%-floor stop breached |
+| `mr_target` | **RSI(2) > 70** — the bounce has played out |
+| `trend_break` | Price closes **below SMA(200)** — the premise is dead |
+| `time_stop` | **5 trading days** |
+
+Precedence: `stop` → `mr_target` → `trend_break` → `time_stop`.
+
+**No trailing EMA21 stop and no 2R target.** Those are trend-following
+devices for letting a winner run, and mean reversion has no fat tail to
+preserve — the edge is a *high win rate with small wins*, the mirror
+image of the breakout sleeve's low win rate with occasional large ones.
+The 5-day clock is short because the effect is fast: Connors' average
+hold is 3-5 days, and a bounce that hasn't happened in a week is not
+going to.
+
+`r_multiple` is still computed on exit as `realized_pnl / initial risk`
+so the two sleeves share one performance unit — but see the warning
+below about pooling them.
+
+### ⚠ Never pool the two sleeves' statistics
+
+They have **opposite payoff structures**. The breakout sleeve expects
+roughly a 35-45% win rate carried by a minority of outsized winners; this
+sleeve expects a high win rate with capped wins. A blended "average R" or
+a blended win rate describes neither and will mislead every review that
+uses it. `trade_log.csv`'s `sleeve` column exists to keep them apart —
+**slice by it before drawing any conclusion.**
+
 ## Exit rules (all positions, checked every run)
 
 Mechanical trailing-stop logic (source: Qullamaggie's "let winners run"

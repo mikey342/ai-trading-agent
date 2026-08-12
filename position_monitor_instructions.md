@@ -55,6 +55,17 @@ For each open **equity** position:
   its trend MA; bearish position (a long inverse ETF) → exit if the
   underlying closes **back above** it. This exits regardless of R-target
   state.
+- **`mean_reversion` positions take a different path entirely.** If the
+  `Sleeve` column reads `mean_reversion`, do **not** apply the R-target
+  flag, the trailing EMA21 stop, or the SMA(20) trend test. Instead pull
+  `get_equity_technical_indicators` (type=rsi, **period=2**, interval=day,
+  output=latest) and SMA(200), then check, in this order:
+  **(1)** the fixed stop, **(2)** `mr_target` — RSI(2) **> 70**, the
+  bounce has played out, **(3)** `trend_break` — price closed **below
+  SMA(200)**, **(4)** `time_stop` at **5 trading days**. This sleeve has
+  no fat tail to protect, so there is no "let the winner run" state and
+  the time-stop is **not** suspended by anything. See `strategy.md`.
+
 - **Time-stop — only applies while `R-target reached?` is "No".** Pure
   date math from `Entry date`, no API call. Limits by sleeve: **10**
   trading days for ordinary stock, **8** for an index leveraged ETF
@@ -91,6 +102,8 @@ work. Record the **first** match in this order:
 
 1. `stop` — original fixed stop breached (R-target never reached)
 2. `trailing_stop` — trailing EMA21 stop breached (R-target reached)
+2b. `mr_target` — RSI(2) > 70 on a `mean_reversion` position (that
+   sleeve's primary exit; it has no trailing stop)
 3. `dte_21` / `dte_50pct` — options time decay checkpoint
 4. `trend_break` — underlying closed through its trend MA (SMA20 stock /
    SMA50 index)

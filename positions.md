@@ -37,7 +37,10 @@ position in an inverse ETF — never a short). `Counter-trend?` marks a
 setup taken against the SPY regime; **at most one may be open at a time**,
 and it is sized at half risk. Check this column before opening another.
 
-`Sleeve` is `stock` (individual name from the Tier 0-3 funnel) or `index`
+`Sleeve` is `stock` (breakout funnel), `mean_reversion` (oversold-bounce
+sleeve — **different exit rules**: no R-target flag, no EMA21 trail;
+exits on RSI(2) > 70, a close below SMA(200), or a 5-day time-stop; max
+2 open, LONG regime only), or `index`
 (a 2x ETF: SSO/QLD long, SDS/QID inverse). Index-sleeve positions are
 capped at **one at a time**, count **2x** toward gross exposure, and use
 an **8-trading-day** time-stop instead of 10 — see `gates.md`.
