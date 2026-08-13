@@ -25,6 +25,12 @@ pop) via long puts, once the tape shows it already cracking. Written up
 in `strategy.md`/`framework.md`; requires a human hand-edit to `gates.md`
 before it can fire — see `strategy.md`'s activation checklist.
 
+**Separate from the trading agent entirely:** `.claude/skills/spike-fade/`
+is an on-demand Claude Code skill — give it any ticker in chat and it
+runs the same overbought/oversold read `mr_spike_fade`/`mr_reversal` use,
+for research only. It never opens, sizes, or logs a trade, and doesn't
+touch `positions.md`, `trade_log.csv`, or `gates.md`.
+
 There is **no watchlist**. A saved market-wide screener defines the
 universe on every run.
 
