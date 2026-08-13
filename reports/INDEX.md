@@ -9,6 +9,7 @@ missing row means a page nobody can find.
 
 | Date | Report page | Headline |
 |---|---|---|
+| 2026-08-13 | [daily_report_2026-08-13](https://claude.ai/code/artifact/fcbddb17-31fb-49dd-9d9c-3068d4b42c84) | OGN opened, ACAD stopped out (-1.02R); NAV -0.49%; CIB rejected 3x on spread gate |
 | 2026-08-12 | [daily_report_2026-08-12](https://claude.ai/code/artifact/0abbcd78-f79c-4136-9646-088e3ec2a276) | PAYO closed (-0.12R), CVS opened — first mean-reversion fill; NAV +0.14% |
 | 2026-08-11 | [daily_report_2026-08-11](https://claude.ai/code/artifact/42c742e7-71bf-4d5f-94ad-10d2354c93fe) | First-ever fills — ACAD and PAYO opened, NAV -0.09%; index sleeve 5-for-5 blocked on volume |
 | 2026-08-10 | [daily_report_2026-08-10](https://claude.ai/code/artifact/8b49b5e6-578a-4789-90d1-2333f48e1584) | First live session — 0 trades, 4 Tier-3 rejections, 2 design bugs found |
