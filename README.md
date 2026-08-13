@@ -19,6 +19,12 @@ They have **opposite payoff structures**, so their statistics must never
 be pooled — see the `sleeve` column in `DATA_SCHEMA.md`. Holding period is
 capped at **10 trading days** (2 calendar weeks) for anything unresolved.
 
+**Proposed, not yet active (2026-08-13):** `mr_spike_fade`, a SHORT-mode
+mirror of Sleeve B for fading an over-extended spike (e.g. an earnings
+pop) via long puts, once the tape shows it already cracking. Written up
+in `strategy.md`/`framework.md`; requires a human hand-edit to `gates.md`
+before it can fire — see `strategy.md`'s activation checklist.
+
 There is **no watchlist**. A saved market-wide screener defines the
 universe on every run.
 
