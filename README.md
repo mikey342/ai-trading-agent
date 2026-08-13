@@ -19,17 +19,13 @@ They have **opposite payoff structures**, so their statistics must never
 be pooled — see the `sleeve` column in `DATA_SCHEMA.md`. Holding period is
 capped at **10 trading days** (2 calendar weeks) for anything unresolved.
 
-**Proposed, not yet active (2026-08-13):** `mr_spike_fade`, a SHORT-mode
-mirror of Sleeve B for fading an over-extended spike (e.g. an earnings
-pop) via long puts, once the tape shows it already cracking. Written up
-in `strategy.md`/`framework.md`; requires a human hand-edit to `gates.md`
-before it can fire — see `strategy.md`'s activation checklist.
-
 **Separate from the trading agent entirely:** `.claude/skills/spike-fade/`
 is an on-demand Claude Code skill — give it any ticker in chat and it
-runs the same overbought/oversold read `mr_spike_fade`/`mr_reversal` use,
-for research only. It never opens, sizes, or logs a trade, and doesn't
-touch `positions.md`, `trade_log.csv`, or `gates.md`.
+checks whether it's overbought after a spike (possible fade, via puts)
+or oversold within an uptrend (possible bounce), for research only. It
+never opens, sizes, or logs a trade, and doesn't touch `positions.md`,
+`trade_log.csv`, or `gates.md` — entirely outside the scheduled routines
+above.
 
 There is **no watchlist**. A saved market-wide screener defines the
 universe on every run.

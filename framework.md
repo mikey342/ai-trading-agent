@@ -51,7 +51,7 @@ than overturned the direction, and added two refinements:
   Added to `strategy.md`'s options exit rules alongside the existing DTE-
   decay rule.
 
-## The six approaches this system draws from
+## The five approaches this system draws from
 
 These are real, publicly documented systematic/discretionary methodologies
 with track records — not proprietary secrets. `strategy.md` is a synthesis
@@ -135,61 +135,6 @@ of pieces from each, not a pure implementation of any one:
    sentiment is a tailwind, not just a "don't trade into an unknown," and an
    upcoming (not-yet-reported) earnings date is treated as event risk to
    avoid, per the earnings blackout gate.
-
-6. **Short-horizon reversal of an extended/spiked move (exhaustion fade)**
-   — added 2026-08-13, the unexploited **other half** of the same effect
-   Sleeve B's long side already trades. This is *not* a new hypothesis; it
-   is the short leg of an effect already in the system.
-
-   **Core citation, already Tier A here:** Jegadeesh (1990) and Lehmann
-   (1990) — 1-to-4-week losers outperform over the following 1-4 weeks,
-   *and the mirror holds too*: extreme short-horizon winners underperform
-   over the following 1-4 weeks. Connors & Alvarez operationalize the
-   oversold side as `RSI(2) < 10`; the overbought side of the same
-   indicator (ConnorsRSI convention: **90-95**, vs. classic RSI's 70) is
-   the practitioner implementation of the winner-side reversal. Also
-   drawn on: John Bollinger's %B (band-extreme mean reversion, *Bollinger
-   on Bollinger Bands*) and the classic-TA "exhaustion gap" / "blow-off
-   top" pattern (climax volume, a wide-range bar, price stretched several
-   ATRs from its short moving average, late in an already-extended move)
-   — see the evidence-tier audit below for how much weight each piece
-   carries.
-
-   ### ⚠ This directly abuts PEAD — read this before trusting the rule
-
-   PEAD (item 5, Tier A) says the *average* post-earnings-beat stock
-   drifts up for weeks. A live research pass (2026-08-13) confirmed this
-   isn't just theoretical: earnings-driven gap-ups hold their gains ~71%
-   of the time within 5 days, and gaps that print on confirming volume
-   (breakaway gaps) fill **less than 30%** of the time within a month —
-   multiple independent trading-education sources describe blindly fading
-   an earnings gap as one of the more reliable ways to lose money on a
-   gap trade. **So "stock jumped on earnings → short it" is not a rule
-   this framework can support — it would directly contradict the Tier A
-   evidence already cited in item 5.**
-
-   What *is* narrower and better supported is fading the specific
-   sub-population where the tape itself has already started disagreeing
-   with the average PEAD outcome, rather than anticipating that it will.
-   Concretely, the entry this framework uses (see `strategy.md`,
-   `mr_spike_fade`) requires the **most recently completed session to
-   already be a down-close** off the spike — mirroring exactly how the
-   long side of this sleeve requires the first *up*-close rather than
-   buying a falling knife mid-drop. This changes the claim from "this
-   stock's pop will reverse" (fights PEAD) to "this stock's pop has
-   already started reversing, and short-horizon reversal says that
-   process tends to continue for a few more days" (consistent with
-   Jegadeesh/Lehmann, doesn't require predicting PEAD to be wrong on
-   this name — it requires PEAD to already have visibly *not* held).
-
-   Practically, this keeps the rule out of the strongest PEAD cases
-   (durable beats that drift straight up with no down day) and targets
-   gaps/pops that were already cracking — thinner-conviction moves,
-   "sell the news" prints, and late-stage blow-offs after an already-
-   extended run. It also means this trigger will simply not fire on most
-   earnings jumps, which is correct, not a bug: most earnings jumps are
-   exactly the PEAD case this framework already trades in the *other*
-   direction (the catalyst/news layer in item 5 above).
 
 ## The funnel: cheap screen → expensive confirmation
 
@@ -317,9 +262,6 @@ real quantitative funds do build on them:
 - **Post-earnings-announcement drift** — Bernard & Thomas (1989).
 - **Volatility-scaled position sizing** — standard practice across
   managed-futures/CTA funds; uncontroversial.
-- **Short-horizon reversal (both directions)** — Jegadeesh (1990),
-  Lehmann (1990). Already Tier A for Sleeve B's long side; the short
-  side (`mr_spike_fade`) draws on the identical result, not a new one.
 
 ### Tier B — practitioner frameworks with real but weaker evidence
 This is where Minervini sits, and the distinction matters:
@@ -338,25 +280,6 @@ This is where Minervini sits, and the distinction matters:
   periods and criticized as prone to overfitting.
 - **Qullamaggie** — a genuinely verified public track record, but n=1, in
   a particular era, concentrated in high-momentum names.
-- **ConnorsRSI overbought convention (90-95)** — same standing as the
-  oversold convention already used (Connors & Alvarez, backtested in
-  their own books over limited periods, criticized as overfitting-prone).
-
-### Tier C — descriptive pattern, not backtested public research
-Weaker than either tier above; included because it's mechanically
-sensible and widely taught, not because it has a documented track record:
-
-- **Exhaustion gap / blow-off top / volume climax** — classic technical
-  analysis (Edwards & Magee; Kirkpatrick & Dahlquist). Pattern-recognition
-  from chart study, not a statistically tested public result. Used here
-  only as *logged context* (52-week range position, ATR-distance from
-  SMA20) on `mr_spike_fade` rows, never as a standalone gate, until it
-  earns one on this system's own record — same treatment already given to
-  Stocktwits sentiment in `tool_verification.md`.
-- **Bollinger %B band-extreme reversion** — widely used, intuitive
-  (volatility-band touch + momentum rollover), but the "combine two
-  indicators for higher confidence" claim is practitioner consensus
-  rather than a controlled result.
 
 ### The honest characterization
 This system is **a practitioner-flavored implementation of Tier A
@@ -417,27 +340,6 @@ selling (defined-risk inverse ETFs only), and a bear universe naturally
 limited to ~13 names with liquid inverse products. Those are not
 oversights to be "fixed" into symmetry; they are the asymmetry being
 respected.
-
-### `mr_spike_fade` (2026-08-13): evidence standing, stated the same way
-
-Following the pattern set above rather than skipping it because this
-addition is newer. What it rests on:
-
-| Component | Evidence standing |
-|---|---|
-| Short-horizon reversal after an extreme move | Tier A — Jegadeesh (1990), Lehmann (1990); same citation as Sleeve B's long side |
-| `RSI(2) ≥ 90` overbought extreme | Tier B — ConnorsRSI convention, same standing as the `<15`/`<10` oversold convention already in use |
-| First down-close requirement (don't anticipate, confirm) | Design choice, not a citation — mirrors the long side's first up-close requirement, and is the specific mechanism that keeps this rule from contradicting PEAD (see item 6 above) |
-| Spike/gap detection (≥8% one-session or ≥15% three-session, with volume confirmation) | Practitioner convention from live trading-education sources, not peer-reviewed |
-| Exhaustion-gap / blow-off-top framing, ATR-stretch, range position | Tier C — logged context only, not a gate |
-
-**What would make this weaker than stated:** if in practice the down-close
-filter turns out too loose (fires on names still mid-drift that happen to
-print one red day inside an ongoing PEAD-driven climb). There is no data
-yet to confirm or refute this — it is a new, untested addition, exactly
-like `momentum_vol` was when it started. Treat it with the same
-skepticism until it has closed trades of its own — see `strategy.md`'s
-pre-registered review criterion.
 
 ### Four caveats that genuinely bite
 1. **Survivorship bias in the practitioner sources.** Minervini and

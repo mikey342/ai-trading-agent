@@ -14,15 +14,47 @@ market cap, ADX>25) the scheduled routines use — that screener exists to
 keep an unattended scan cheap, and doesn't apply to a one-off lookup a
 human is initiating directly.
 
-The indicator logic and evidence standing below are the same as the
-`mr_spike_fade` (short/fade) and `mr_reversal` (long/bounce) signals
-documented in this repo's `strategy.md`, and the reasoning for *why* those
-thresholds are what they are — including the PEAD-reconciliation that
-keeps a fade from just fighting post-earnings drift — lives in
-`framework.md` item 6 and the mean-reversion sections of `strategy.md`.
-**Read those before changing anything here; don't re-derive the reasoning
-from scratch.** This skill applies that logic on demand; it doesn't
-redefine it.
+The oversold/bounce side of this reuses `strategy.md`'s existing
+mean-reversion sleeve (`mr_reversal`: `RSI(2) < 15`, price > SMA(200),
+first up-close) — that logic is live in the trading agent, not redefined
+here. **The overbought/fade side is not part of the trading agent at
+all** — it lives only in this skill, standalone, and is explained in
+full below rather than pointing elsewhere.
+
+## Why the fade side is narrower than "stock jumped, short it"
+
+This system's own framework treats post-earnings-announcement drift
+(PEAD) as strong evidence: Bernard & Thomas (1989) found stocks that beat
+earnings estimates keep drifting *up* for weeks, and the market
+underreacts to the surprise. Separately, live research (2026-08-13)
+found: earnings-driven gap-ups hold their gains ~71% of the time within 5
+days, and gaps that print on confirming volume fill less than 30% of the
+time within a month. Multiple independent trading-education sources
+describe blindly fading an earnings gap as one of the more reliable ways
+to lose money on a gap trade.
+
+So "it jumped on earnings → it's overbought → short it" would contradict
+that evidence, not apply it. The fix used here: **only treat it as a fade
+candidate once the tape has already started reversing** — a first
+down-close off the spike — rather than anticipating that it will. That
+changes the claim from "this pop will reverse" (fights PEAD) to "this
+pop has already cracked, and short-horizon reversal (Jegadeesh 1990,
+Lehmann 1990 — extreme short-horizon winners underperform over the
+following 1-4 weeks, the same effect `mr_reversal` already trades on the
+oversold side) says that tends to continue a few more days." The
+overbought threshold itself (`RSI(2) ≥ 90`) is the ConnorsRSI convention
+(Connors & Alvarez) — a practitioner heuristic, not a peer-reviewed
+result, same evidence tier as the `<15` oversold threshold already in
+use. The exhaustion-gap/blow-off-top framing (volume climax, price
+stretched several ATRs from its short moving average) is classic
+technical-analysis pattern recognition — weaker still, used here only as
+descriptive context, never as a gate on its own.
+
+**No sub-daily version of this exists on purpose.** This trading agent
+holds 3-10 days and runs three fixed times a day; nothing here is
+designed for intraday timeframes (see `framework.md`). A same-day
+"lost VWAP by 11am" fade is a day-trading rule and doesn't fit this
+system's data or cadence — don't add one.
 
 ## Steps
 
@@ -66,13 +98,14 @@ redefine it.
 4. **Check the load-bearing thing: has it already turned?** This is what
    separates this analysis from just noticing a stock is extended:
    - **Overbought case:** did the most recently completed session close
-     *down* from the one before? (`mr_spike_fade`'s first down-close.)
+     *down* from the one before? (First down-close — see "why the fade
+     side is narrower" above.)
    - **Oversold case:** did the current price close *up* from the most
      recently completed session? (`mr_reversal`'s first up-close.)
    - If neither has happened yet, say so explicitly and do not soften it
      into a signal — see the read categories below. Anticipating a
-     reversal that the tape hasn't shown yet is exactly the PEAD-
-     contradicting mistake `framework.md` item 6 warns about.
+     reversal that the tape hasn't shown yet is exactly the
+     PEAD-contradicting mistake described above.
 
 5. **Sentiment, logged not gating.** `NEWS_SENTIMENT` (Alpha Vantage,
    quota-limited — use sparingly, `limit: 5`). Report the score and
@@ -100,15 +133,15 @@ RSI(2) X · RSI(14) X · ATR-stretch from SMA20: X.Xx ATR
 
 **Read:** one of —
 - OVERBOUGHT — FADE CANDIDATE: spike confirmed, RSI(2) ≥ 90, and a first
-  down-close is already in — matches `mr_spike_fade`.
+  down-close is already in.
 - OVERBOUGHT — TOO EARLY: extended, RSI(2) high, but no down-close yet.
-  PEAD says the average case here keeps drifting; this is not yet the
-  narrower pattern that clears `mr_spike_fade`. Don't anticipate it.
+  PEAD says the average case here keeps drifting — don't anticipate it.
 - OVERSOLD — BOUNCE CANDIDATE: RSI(2) < 15, price > SMA200, first
-  up-close present — matches `mr_reversal`.
-- OVERSOLD — FALLING KNIFE: RSI(2) low but price < SMA200. Deliberately
-  excluded — see `strategy.md`'s "the 200-day condition is load-bearing"
-  note. Buying this is the failure mode, not the opportunity.
+  up-close present — matches `mr_reversal`, the trading agent's live
+  long-side signal.
+- OVERSOLD — FALLING KNIFE: RSI(2) low but price < SMA200. Buying this
+  is the failure mode this system deliberately excludes, not a signal —
+  see `strategy.md`'s "the 200-day condition is load-bearing" note.
 - NEUTRAL / NO SIGNAL.
 
 **If expressing this as a trade** (informational only — nothing is
@@ -118,10 +151,10 @@ equity or a call. Reference points only, not enforced here: 30+ DTE,
 delta 0.40-0.60 absolute, open interest ≥500, spread ≤10% of mid,
 underlying stop ~1.5x ATR14 against entry.
 
-**Evidence standing:** point back to `framework.md` item 6 (Tier A/B/C
-breakdown) rather than restating it. If the read is OVERBOUGHT — FADE
-CANDIDATE, repeat the one-line reminder: this only clears the bar because
-the tape already shows a down-close, not because a jump happened.
+**Evidence caveat:** overbought reads are weaker-evidenced than oversold
+reads (practitioner convention + pattern recognition vs. `mr_reversal`'s
+established basis) and only apply once a down-close is already in —
+repeat that reminder whenever the read is OVERBOUGHT — FADE CANDIDATE.
 ```
 
 ## What this skill deliberately does not do
@@ -134,4 +167,5 @@ the tape already shows a down-close, not because a jump happened.
   is nothing being opened for those caps to apply to.
 - Does not run on a schedule and is not part of `run_instructions.md`,
   `position_monitor_instructions.md`, or the premarket/daily-report
-  routines. Those stay exactly as they are.
+  routines, and is not itself a trigger in `strategy.md` or `gates.md`.
+  Those stay exactly as they were before this skill existed.
