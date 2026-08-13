@@ -99,6 +99,20 @@ All of:
   2025 SSRN research ties the reversal enhancement to. Sparse coverage
   on mid-caps is expected; `NO_COVERAGE` is a valid answer, not a
   negative signal.
+
+  **This qualifier got materially stronger on 2026-08-13.** A 2025 EFMA
+  paper (Moneta, *Retail Trading and Stock Return Predictability*) finds
+  that for stocks receiving **the most positive sentiment alongside high
+  discussion volume**, retail trading has a *negative* effect on future
+  returns — intensive retail buying leads to price reversals. That is
+  close to a direct description of what Stocktwits measures, and it means
+  the combination this skill checks (heavy message volume **plus** very
+  bullish sentiment) is the specific signature the research flags, not
+  just a loose proxy. Note the implication: **strongly bullish sentiment
+  is a fade *qualifier* here, not a reason to stand down** — which is the
+  opposite of how sentiment reads in section D's PEAD check. Both are
+  true at once and they genuinely pull in opposite directions: report
+  both rather than collapsing them into one verdict.
 - **Turnover / range-position check, not range-position alone**: a
   stock that is **both** high-turnover **and** near its 52-week high
   historically shows momentum continuation, not reversal (ScienceDirect,
@@ -120,23 +134,69 @@ All of:
 
 #### C. Is it actually turning? (confirmation — the part that matters most)
 
-The **four pillars**: one required, plus at least two of the remaining
-three at the same time.
+> **⚠ Evidence provenance, stated plainly.** The multi-pillar
+> confirmation structure below is a **practitioner heuristic**, adapted
+> from trading-education sources — **not** a peer-reviewed result. The
+> academic papers cited elsewhere in this skill support *which stocks to
+> look at* (section A) and *why short-horizon reversal exists at all* —
+> they say nothing about this specific confirmation scheme. The pillars
+> are **not** equally evidenced, so they are no longer treated as
+> interchangeable "any 2 of 3." Weights below reflect what the research
+> actually supports.
 
-1. **Pattern/structural break — required.** Minimum: a down-close.
-   Stronger: a level break — below the prior session's low, below the
-   spike's opening print, or below EMA8.
-2. **Volume** — the down day on *above-average* volume (distribution).
-3. **Exhaustion candlestick** — shooting star, bearish engulfing, or
-   doji at the highs.
-4. **Divergence** — RSI/MACD lower high vs. price higher high. **Weight
-   lightest of the four** — flagged as specifically unreliable on
-   parabolic, catalyst-driven moves, exactly this setup.
+**Pillar 1 — Pattern/structural break. REQUIRED, and never substitutable.**
+Pure price, no indicator, so it survives an interpolated-bar outage.
+- Minimum: a down-close vs. the prior session's close.
+- Stronger: a level break — below the prior session's **low**, below the
+  spike day's **opening print**, or below EMA8 (EMA8 only if step 0
+  confirmed the bar isn't interpolated).
 
-Report which pillars are present, not just a count. Note whether a
-second consecutive down day is also in, and whether a conservative entry
-(wait for a retest of the broken level) vs. an aggressive one (act on
-the initial break) applies.
+**Pillar 2 — Volume. The strongest confirming evidence available.**
+Volume's usefulness in forecasting returns is one of the few things
+practitioners *and* academics broadly agree on. Two distinct checks:
+- **Distribution**: the down day on *above-average* volume — real
+  selling, not just an absence of buyers.
+- **Volume-price divergence on the spike itself**: price still making
+  highs while volume *declines* session over session = fading
+  conviction behind the move. This is a genuinely earlier tell than the
+  down-day check and costs no extra call.
+
+**Pillar 3 — Momentum divergence (RSI/MACD lower high vs. price higher
+high). Practitioner-tier, and structurally unavailable early.**
+Needs *two* comparable peaks to measure, so it simply cannot contribute
+on a first spike — say "not assessable" rather than "absent." Also
+explicitly unreliable on parabolic, catalyst-driven moves, which is
+exactly this setup.
+
+**Pillar 4 — Exhaustion candlestick. Weakest pillar; do not lean on it.**
+Downgraded 2026-08-13 after checking the actual literature, which is
+worse than practitioner sources imply:
+- **Marshall, Young & Rose (2006)** tested 28 candlestick patterns on
+  Dow 30 stocks over a decade and found **no real edge**.
+- A large backtest of 75 patterns on the S&P 500 found only a handful
+  above average; on FTSE 100 1-minute data, **not one pattern cleared 1%
+  net of spread**.
+- Even the better performers (bullish/bearish engulfing, morning star)
+  land at ~55-65% win rates — "barely enough to overcome costs." A
+  shooting-star backtest showed 55.64% over 1,010 trades.
+- Not uniformly negative: **Caginalp & Laurent (1998)** found some
+  three-day patterns had short-term predictive power on S&P 500 stocks,
+  and an S&P 500 study found bearish engulfing outperformed its
+  population on open/high criteria — though that same study found candle
+  *size* and *prior trend* were **not** significant.
+
+**Scoring rule (revised):**
+- Pillar 1 absent → **no signal**, regardless of everything else.
+- Pillar 1 + Pillar 2 → the real **FADE CANDIDATE** bar.
+- Pillar 1 + (Pillar 3 or 4) but **not** Pillar 2 → **WEAK
+  CONFIRMATION** only. Candlesticks and divergence do not substitute for
+  volume; on this evidence they cannot carry a full read by themselves.
+- Pillar 1 alone → **WEAK CONFIRMATION** (probe size or skip).
+
+Report which pillars are present *and* which are unavailable versus
+genuinely absent. Note whether a second consecutive down day is in, and
+whether a conservative entry (wait for a retest of the broken level) vs.
+an aggressive one (act on the initial break) applies.
 
 #### D. When to stand down
 
@@ -232,25 +292,41 @@ Informational only — nothing is tracked between invocations.
 - ADX: still climbing hard on the downside → less ripe yet. Flattening
   or rolling over → corroborates exhaustion.
 
-#### C. Is it actually turning? (confirmation, mirrored four pillars)
+#### C. Is it actually turning? (confirmation, mirrored pillars)
 
-1. **Pattern/structural break — required.** Minimum: a first up-close
-   (this is `mr_reversal`'s live trigger). Stronger: a level reclaim —
-   above the prior session's high, above the plunge's opening print, or
-   above EMA8.
-2. **Volume** — the up day on *above-average* volume (accumulation).
-   **This is the load-bearing dead-cat-bounce check**: a real reversal
-   tends to show rising volume; a dead-cat bounce typically shows up on
-   *low* volume that fails to sustain.
-3. **Exhaustion candlestick** — hammer, bullish engulfing, or doji at
-   the lows.
-4. **Divergence** — bullish RSI/MACD divergence (price lower low,
-   indicator higher low). Some practitioner sources rate bullish
-   divergence as *more* reliable specifically when RSI is simultaneously
-   oversold than the equivalent overbought-divergence case — a small
-   asymmetric edge in this direction's favor — but the same
-   parabolic/catalyst-driven-move caution still applies to an
-   earnings-miss crash. Weight it second-lightest, not the primary leg.
+Same evidence caveat and same weighting as the short side — the
+structure is practitioner-derived, and the pillars are **not**
+interchangeable.
+
+**Pillar 1 — Pattern/structural break. REQUIRED.** Minimum: a first
+up-close (this is `mr_reversal`'s live trigger). Stronger: a level
+reclaim — above the prior session's high, above the plunge's opening
+print, or above EMA8 (only if step 0 cleared the interpolation check).
+
+**Pillar 2 — Volume. Strongest confirming evidence, and it carries extra
+weight on this side**: it doubles as the load-bearing
+dead-cat-bounce check. A real reversal tends to show *rising* volume; a
+dead-cat bounce typically comes on *low* volume that fails to sustain.
+Also check volume-price divergence in reverse — price still making lows
+while volume declines = selling exhausting itself.
+
+**Pillar 3 — Momentum divergence** (price lower low, indicator higher
+low). Practitioner-tier and needs two comparable troughs, so it's
+unavailable on a first plunge. One genuine asymmetry in this direction's
+favor: several practitioner sources rate bullish divergence as *more*
+reliable when RSI is simultaneously oversold than the mirrored
+overbought case. Still not a substitute for Pillar 2, and the
+catalyst-driven-move caution still applies to an earnings-miss crash.
+
+**Pillar 4 — Exhaustion candlestick** (hammer, bullish engulfing, doji
+at the lows). **Weakest pillar** — see the short side's citation list;
+Marshall, Young & Rose (2006) found no real edge across 28 patterns, and
+the better performers barely clear costs. Do not let a hammer alone
+carry a read.
+
+**Scoring rule:** identical to the short side — Pillar 1 is mandatory,
+Pillar 1 + Pillar 2 is the real **BOUNCE CANDIDATE** bar, and Pillar 1
+plus only candlestick/divergence is **WEAK CONFIRMATION**.
 
 **Dead-cat-bounce disqualifiers, specific to this side** — treat any of
 these as reasons to downgrade the read even if the four-pillar count
@@ -344,6 +420,28 @@ Worth stating plainly rather than pretending this is a clean sign-flip:
 
 ## Tool calls, in order (minimize calls, never trust the wrong source)
 
+0. **⚠ MANDATORY FIRST CALL — the interpolated-bar guard.** Call
+   `get_equity_historicals` (interval `day`, ~2 weeks back) and check
+   whether the most recent bar has **`interpolated: true`**. That flag
+   means the bar is a **synthetic gap-fill** — OHLC all set to the prior
+   close, volume 0 — emitted when the bar feed lags the quote feed.
+
+   **`get_equity_technical_indicators` does not expose this flag.** It
+   computes over the fake bar and returns clean-looking numbers. Verified
+   on NBIS 2026-08-13 (see `tool_verification.md`): the real session was
+   +34% on 63.5M shares, while ATR *fell* to exactly `prior × 13/14`,
+   RSI(2) and RSI(14) came back byte-identical to the prior day, and
+   EMA8 back-solved to precisely the interpolated close.
+
+   **If the latest bar is interpolated, report every section-B indicator
+   as `UNAVAILABLE (interpolated bar)` — never as a number.** Section C
+   still works: pillar 1 (price levels) and pillar 2 (volume) come from
+   `get_equity_quotes` / `get_equity_fundamentals`, which carry the real
+   session. Say which parts are degraded rather than quietly reporting a
+   fabricated reading. This is also the tell for spotting it by eye: two
+   consecutive identical RSI values, or ATR falling on a wide-range day,
+   means interpolation until proven otherwise.
+
 1. **Orient**: `get_equity_quotes` (live price + official prior close),
    `get_equity_fundamentals` (sector, 52-week range, market cap, 30-day
    avg volume), `get_earnings_results` (trailing surprise history) and
@@ -392,13 +490,19 @@ proxy X% · range position X% · [short interest: X%, if available]
 → <QUALIFIES (path: mr_reversal / plunge-exhaustion / spike-fade) /
 DOES NOT QUALIFY: reason>
 
+**Data integrity:** <latest daily bar real | ⚠ INTERPOLATED — all
+section-B indicators UNAVAILABLE this run>
+
 **B. Extension:** RSI(2) X · RSI(14) X · ATR-stretch X.Xx · ADX X
 (<climbing/flat/rolling over>) · [%B: X, best-effort]
+(or: UNAVAILABLE — interpolated bar, see data-integrity line)
 
-**C. Turning?** Pillars present: <list, e.g. "pattern break, volume;
-missing: candlestick, divergence">. Pattern break <present/absent>
-(required). [Dead-cat-bounce check, long side only: RSI(14) vs. 50,
-retrace %, old-support reclaim]
+**C. Turning?** Pattern break (REQUIRED): <present/absent> · Volume
+(strongest): <present/absent> · Divergence: <present/absent/not
+assessable — needs 2 peaks> · Candlestick (weakest): <present/absent>
+→ <FADE|BOUNCE CANDIDATE (1+2) | WEAK CONFIRMATION | no signal>
+[Dead-cat-bounce check, long side only: RSI(14) vs. 50, retrace %,
+old-support reclaim]
 
 **D. Stand-down check:** <none triggered | reason, incl. downside/
 upside PEAD caution if relevant>
@@ -425,6 +529,9 @@ CANDIDATE: this is a retail-overreaction, noise-trading effect (not a
 other news — sharper on the downside, where the best-looking candidates
 carry the strongest continuation risk — and its academic edge is
 front-loaded, so a multi-day hold captures a diluted slice of it.
+**Section C's confirmation structure is practitioner-derived, not
+peer-reviewed** — the academic backing sits in section A and in the
+reversal premise itself, not in the pillar scheme.
 ```
 
 ## What this skill deliberately does not do

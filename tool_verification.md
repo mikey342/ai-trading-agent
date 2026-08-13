@@ -136,6 +136,56 @@ but must **never satisfy a gate** — gates re-measure with a direct call.
 Assume the same session-bounds caveat applies to every other scan column
 (RSI, volume, relative volume), not just ADX.
 
+### ⚠⚠ Indicators are silently computed over **interpolated (fake) bars**
+
+**Found 2026-08-13 on NBIS — the most dangerous data defect recorded here
+so far, because it produces plausible-looking numbers rather than an
+error.**
+
+The daily bar feed backing `get_equity_technical_indicators` can lag the
+quote/fundamentals feeds by a full session. When it does, it does **not**
+return short — it emits a **synthetic gap-fill bar** that repeats the
+prior close as OHLC with zero volume:
+
+```
+Aug 11: open 187.50, close 193.23, high 195.60, low 187.31, vol 22,528,729
+Aug 12: open 193.23, close 193.23, high 193.23, low 193.23, vol 0, interpolated: true
+```
+
+NBIS actually closed Aug 12 at **$259.20** (+34%, 63.5M shares, on
+earnings). `get_equity_quotes` and `get_equity_fundamentals` both had the
+real session. The bar feed had none of it.
+
+**Every indicator then computed perfectly — over fabricated input:**
+
+| Indicator | Reported | Why it's wrong |
+|---|---|---|
+| `ATR(14)` | 21.749 | Flat bar → true range 0 → `23.4223 × 13/14 = 21.749` exactly. ATR **fell** on a $43-range day. |
+| `RSI(2)` | 60.597 | Zero change halves both avg gain and avg loss → ratio unchanged → **byte-identical to the prior day**. |
+| `RSI(14)` | 47.549 | Same mechanism, also byte-identical. |
+| `EMA8` | 194.123 | Back-solving the EMA recurrence gives an implied close of **exactly $193.23** — the interpolated value. |
+
+**The trap: `get_equity_technical_indicators` does not expose the
+`interpolated` flag.** Only `get_equity_historicals` does. The indicator
+response looks completely normal.
+
+**Rule: before trusting any indicator value, call
+`get_equity_historicals` for the same symbol/interval and confirm the
+most recent bar is not `interpolated: true`.** If it is, treat every
+indicator for that session as **UNAVAILABLE** — never as a real reading.
+
+**Why this is load-bearing, not cosmetic.** `gates.md` sizes every
+position off `ATR(14)`, and the mean-reversion sleeve enters on
+`RSI(2) < 15` and exits on `RSI(2) > 70`. On an interpolated bar, ATR
+decays toward zero (each flat bar multiplies it by 13/14), which would
+**shrink stops and inflate position sizes** — and a frozen RSI(2) can
+hold a stale entry or exit signal indefinitely. Both failure modes are
+silent and would look like normal operation in the logs.
+
+Note the mechanism also explains why a *quiet* symbol can look stable:
+repeated interpolated bars produce smoothly decaying ATR and perfectly
+flat RSI, which reads as "low volatility" rather than "no data."
+
 ### Scanner filters available but not yet used
 The screener exposes an **options-flow filter group** that nothing in the
 current strategy touches: `FILTER_TYPE_RELATIVE_OPTIONS_VOLUME` (unusual
