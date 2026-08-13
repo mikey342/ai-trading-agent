@@ -959,3 +959,101 @@ from that comparison, not merely footnoted. At 1 of a required 20 closed
 trades this changes nothing yet, but the exclusion needs to hold when the
 sample grows.
 
+---
+
+### 2026-08-13 13:46 UTC — morning run
+
+**gates.md MODE check:** `PAPER` — confirmed, run proceeds under normal paper-trading rules.
+
+**Market status:** `MARKET_STATUS` (Alpha Vantage) succeeded — US equity markets `open`. Corroborated via Robinhood `get_equity_quotes` (SPY): live regular-session trade at 2026-08-13T13:40:27Z (09:40 ET), inside the 9:30am ET morning slot.
+
+**Account (before this run):** NAV $10,005.28, cash $7,912.04, halted: no. Two open positions: ACAD (45 sh @ $29.49), CVS (8 sh @ $94.85, mean_reversion).
+
+**Position review:**
+- **ACAD:** current $29.51 vs stop $28.6053 (not breached) and R-target $31.2594 (not reached, flag stays No). SMA(20) $26.7005 (stock-sleeve trend MA) — price well above, no `trend_break`. Entry 2026-08-11, 2 trading days elapsed, no time-stop (10-day clock). Unrealized P&L: 45 × (29.51−29.49) = **+$0.90**.
+- **CVS (mean_reversion):** current $95.88 vs stop $90.35 (not breached). RSI(2) on the last completed session (Aug 12) = **44.58**, not >70 — `mr_target` not fired. SMA(200) $85.2356 — price well above, no `trend_break`. Entered 2026-08-12, 1 trading day into the 5-day time-stop clock, not yet due. Unrealized P&L: 8 × (95.88−94.85) = **+$8.24**.
+
+No exit conditions met on either position — both held.
+
+**Regime filter:**
+- **Direction:** SPY $776.28 > SMA(200) $704.4966 (last:5 series 702.46→702.97→703.48→703.99→704.50, climbing steadily all week) → **LONG mode**, well-established, 3-close confirmation trivially satisfied.
+- **Risk level:** SPY $776.28 > SMA(50) $748.118 ✓, VIX 14.46 < 20 ✓ → **NORMAL**. Full rules: up to 2 new trades this run, index sleeve permitted, counter-trend permitted.
+
+**Scouted (Tier 0):** `run_scan` (scan_id de1b1994...) overflowed to a file (~102K chars) and was read in place per the standing rule (never copied) — **396 total matches, 200 rows returned** (identical response shape to every prior run this week). ACAD and CVS excluded per no-pyramiding. After the $20M/day dollar-volume screen client-side (`Last × Average volume`), **188 of the remaining 198 rows** cleared. Ranked by ADX(14) desc (scan column) with the 1.15× `ai_theme.md` tilt applied — only **KLAC** among the theme list landed in the tilted top 20 (untilted ADX 45.34 → tilted 52.14, moved it from rank ~7 to rank 5; did not change which names made the top 15):
+
+| Rank | Symbol | ADX(14) (scan) | AI tilt | Score |
+|---|---|---|---|---|
+| 1 | TECH | 59.58 | no | 59.58 |
+| 2 | CDNA | 56.82 | no | 56.82 |
+| 3 | OGN | 56.02 | no | 56.02 |
+| 4 | PAY | 52.39 | no | 52.39 |
+| 5 | KLAC | 45.34 | **yes** | 52.14 |
+| 6 | FBP | 51.70 | no | 51.70 |
+| 7 | ATAI | 51.53 | no | 51.53 |
+| 8 | LIND | 47.41 | no | 47.41 |
+| 9 | AMLX | 46.89 | no | 46.89 |
+| 10 | CIB | 46.26 | no | 46.26 |
+| 11 | AWI | 46.20 | no | 46.20 |
+| 12 | WTW | 46.02 | no | 46.02 |
+| 13 | PYPL | 45.54 | no | 45.54 |
+| 14 | GRMN | 45.52 | no | 45.52 |
+| 15 | LXP | 45.49 | no | 45.49 |
+
+**Top 15 into Tier 1:** TECH, CDNA, OGN, PAY, KLAC, FBP, ATAI, LIND, AMLX, CIB, AWI, WTW, PYPL, GRMN, LXP.
+
+**Earnings blackout (Tier 1, one `get_earnings_calendar` call, days=3/high_market_cap — returned inline, ~74 entries, no file):** none of the 15 candidates appear in the window. All 15 proceed.
+
+**Tier 1 — trend template, both directions, all 15** (price vs SMA(20), SMA(50) vs SMA(200), ≥25% above 52wk low, range position ≥0.6 long / ≤0.4 short):
+- **PASS LONG:** TECH ($72.17, SMA20 $71.9535, SMA50 $66.0483, SMA200 $60.0253, 52wk $43.195–$72.39, %above-low 67.1%, range 0.9925), CDNA ($47.10, SMA20 $41.6195, SMA50 $32.2818, SMA200 $22.2299, 52wk $11.272–$49.76, %above-low 317.9%, range 0.9309), OGN ($13.695, new 52wk high today $13.71, SMA20 $13.554, SMA50 $13.498, SMA200 $9.7223, 52wk $5.69–$13.71, %above-low 140.7%, range 0.9981), FBP ($29.44, new 52wk high today $29.49, SMA20 $28.687, SMA50 $26.8846, SMA200 $23.0051, 52wk $19.16–$29.49, %above-low 53.7%, range 0.9952), ATAI ($7.24, SMA20 $7.1908, SMA50 $5.6325, SMA200 $4.4643, 52wk $3.265–$7.26, %above-low 121.8%, range 0.9950), LIND ($34.495, SMA20 $30.4653, SMA50 $27.2325, SMA200 $19.3136, 52wk $11.3694–$34.95, %above-low 203.4%, range 0.9807), AMLX ($23.612, SMA20 $20.24, SMA50 $17.7984, SMA200 $15.1382, 52wk $7.63–$24.60, %above-low 209.5%, range 0.9418), CIB ($95.66, SMA20 $88.5155, SMA50 $82.602, SMA200 $72.2853, 52wk $48.056–$100.736, %above-low 99.1%, range 0.9036), GRMN ($309.9686, SMA20 $277.4065, SMA50 $254.1558, SMA200 $231.673, 52wk $186.67–$314.28, %above-low 66.1%, range 0.9662), LXP ($60.685, SMA20 $60.48, SMA50 $56.4798, SMA200 $51.0623, 52wk $40.50–$61.61, %above-low 49.8%, range 0.9562).
+- **FAIL both:** PAY (SMA50 $28.0952 < SMA200 $28.3313 — fails the ascending-stack leg for LONG; price not < SMA20 — fails SHORT), KLAC (range position 0.5580 < 0.6 — fails LONG despite an intact SMA50>SMA200 stack; price not < SMA20 — fails SHORT), AWI (SMA50 $162.384 < SMA200 $175.6015 — fails LONG stack; price not < SMA20 — fails SHORT), WTW (SMA50 $289.0016 < SMA200 $298.7802 — fails LONG stack despite price near its high; price not < SMA20 — fails SHORT), PYPL (range position 0.5082 < 0.6 and SMA50 $49.3504 < SMA200 $51.7462 — fails LONG on two legs; price not < SMA20 — fails SHORT).
+
+**Tier 1 survivors (10, all with-trend bullish — no counter-trend candidate this run):** TECH, CDNA, OGN, FBP, ATAI, LIND, AMLX, CIB, GRMN, LXP.
+
+**Relative-strength-proxy ranking (range position desc, top 8 advance):** OGN (0.9981), FBP (0.9952), ATAI (0.9950), TECH (0.9925), LIND (0.9807), GRMN (0.9662), LXP (0.9562), AMLX (0.9418) — **CDNA (0.9309) and CIB (0.9036) cut.**
+
+**Tier 2 — triggers, top 8** (donchian period=7 last:3 — compared against the **prior bar's**, i.e. Aug 12's, channel; EMA8/21 last:5; RSI14 last:5; volume confirmation = Aug 12 completed-session volume ÷ 30-day average, computed from `get_equity_historicals`/`get_equity_fundamentals`, never the scan's `session="all"` column):
+
+| Symbol | price vs prior-bar (Aug 12) Donchian-7 upper | EMA8 vs EMA21 (Aug 12) | relative_volume | ≥1.4? | RSI(14) Aug 12 | Trigger |
+|---|---|---|---|---|---|---|
+| OGN | 13.695 < 13.70 (missed by $0.005) | 13.6066>13.5592 ✓ | 5,606,650/2,574,488 = **2.178** | ✓ | 72.28 | **momentum_vol** |
+| FBP | 29.44 > 29.415 — **breaks out** | 28.9857>28.4635 ✓ | 1,212,005/1,544,499 = 0.785 | ✗ | 67.19 | none — level cleared but volume fails |
+| ATAI | 7.24 < 7.26 | 7.2025>6.8627 ✓ | 3,865,814/18,408,922 = 0.210 | ✗ | 72.12 | none |
+| TECH | 72.17 < 72.39 | 72.1090>71.2229 ✓ | 2,359,005/3,557,839 = 0.663 | ✗ | 71.90 | none |
+| LIND | 34.495 < 34.95 | 33.0097>30.8735 ✓ | 643,818/817,573 = 0.788 | ✗ | 73.50 | none |
+| GRMN | 309.9686 < 314.28 | 303.8424>283.7338 ✓ | 623,561/1,054,042 = 0.592 | ✗ | 74.98 | none |
+| LXP | 60.685 < 60.76 | 60.6044>59.6906 ✓ | 362,916/925,539 = 0.392 | ✗ | 69.46 | none |
+| AMLX | 23.612 < 24.60 | 22.5117>20.7425 ✓ | 1,454,262/1,957,793 = 0.743 | ✗ | 68.15 | none |
+
+Every one of the 8 sits with EMA8>EMA21 (unsurprising — Tier 1's range-position floor already selects momentum names), so **volume confirmation is doing all the discriminating work this run**, exactly the load-bearing role `gates.md` assigns it. **FBP is the interesting near-miss**: it genuinely broke the prior bar's Donchian-7 upper ($29.44 vs $29.415) — the first live `breakout_7d` price condition to clear since the channel was shortened — but volume (0.785) killed it before the trigger could fire, so it is logged as **no trigger**, not `breakout_7d`. **OGN missed its own breakout by $0.005** for the third run in a row (same $0.005 gap noted 2026-08-12 close) but clears on `momentum_vol` since no level test is required for that trigger — it is the only Tier 2 survivor.
+
+**Tier 2 survivor: OGN** (well under the Tier 3 cap of 3).
+
+**Tier 3 — OGN:** `NEWS_SENTIMENT` (Alpha Vantage, 50 most recent articles — overflowed to a file, read in place per the standing rule): ticker-specific sentiment averaged **+0.191** (Somewhat-Bullish edge) across 50 articles spanning back to mid-June. The dominant, recurring theme is **Sun Pharma's ~$11.75B acquisition of Organon**, shareholder-approved 2026-07-24 — multiple Bullish-labeled articles through the period (+0.40 to +0.50 range), plus two "stock hits 52-week high" pieces (2026-08-07 at $13.61, and today's own new high). Some genuinely bearish items are mixed in (a −0.405 investor-alert/investigation piece 2026-07-25, −0.235 another investigation-notice piece 2026-06-24, two Somewhat-Bearish earnings-adjacent pieces) but the average and the recent trend both sit clearly positive — not negative, not `UNAVAILABLE`. `get_earnings_results`: **most recent report (2026-07-31) was an EPS MISS** — actual $0.85 vs estimate $1.03 — the opposite of a PEAD tailwind; logged honestly rather than glossed over, though it is not a gating factor for the with-trend breakout sleeve (only counter-trend and mean-reversion carry an explicit sentiment gate). Next report 2026-11-09 (unverified), 88 days out — no blackout conflict. ATR14 = **0.046834** (0.342% of price — an unusually tight-ranging name; daily bars this week spanned only ~$0.05). `get_sentiment` (Stocktwits): unavailable — connector not authenticated this session, logged `NO_COVERAGE`, same as every prior run. **Momentum test (logged, non-gating):** EMA8−EMA21 spread Aug6→Aug12 (0.0267, 0.0307, 0.0356, 0.0423, **0.0474**) — most recent is the widest, steadily widening all week — `momentum_test_would_pass=true`.
+
+**Decision — OGN opened — equity — 109 shares @ $13.70 (stock sleeve)** (`trade_log.csv`: `OGN-20260813-1`):
+  - **Trigger:** `momentum_vol` — EMA8>EMA21 and volume-confirmed (relative_volume 2.178), no level test passed (missed the prior-bar Donchian-7 upper by $0.005).
+  - **Trend:** price > SMA(20) $13.554, SMA(50) $13.498 > SMA(200) $9.7223, 140.7% above the 52-week low, range position 0.9981 (new 52-week high today). Clean pass on all four Tier 1 legs.
+  - **Momentum:** EMA8/EMA21 spread widening every session this week (logged, non-gating per the 2026-08-11 retirement of this as a gate).
+  - **Relative strength:** range-position proxy 0.9981 — top of the Tier 1 survivor set this run.
+  - **Valuation:** PE 17.50 — logged only, no longer a gate (value leg removed 2026-08-11).
+  - **Catalyst:** news sentiment +0.191 (not negative), dominated by the Sun Pharma acquisition story; most recent earnings (Jul 31) was an EPS miss, explicitly not treated as a tailwind despite the stock's continued strength; no earnings blackout conflict.
+  - **Sizing:** ATR14 = 0.046834 → stop_distance = min(1.5×ATR14 = $0.070250, 3%-floor $0.411) = **$0.070250** (ATR binds, far inside the 3% ceiling) → stop price **$13.62975**. risk_budget = 0.4% NAV ($10,007.03) = $40.03 → shares_risk = floor(40.03/0.07025) = **569**; shares_cap = floor(0.15×$10,007.03/$13.70) = **109** → **cap binds, position under-risked** (109 shares carries only ~0.077% NAV risk vs the 0.4% target). Per the instrument-selection rule, no single-stock leveraged ETF is mapped to OGN, so the correct response is plain equity at the capped size, not a workaround — logged as an accepted under-risked position, not a rejection.
+  - **Direction:** bullish, with-trend (SPY regime is LONG).
+  - **Execution:** signal_price $13.695 → fresh entry_price (ask) $13.70 immediately before fill, unchanged from signal — no chase-protection issue. Spread $13.69/$13.70 = 0.073% of mid, well under the 0.5% cap. Depth: 4,815 shares resting at the best ask vs. a 109-share order — ample. Filled as a marketable limit at the ask, $13.70. Notional $1,493.30 (14.92% of NAV, just under the 15% cap).
+  - **Sector:** Health Technology — 2 of 3 allowed (ACAD is also Health Technology), no conflict.
+  - **R-target:** entry + 2×stop_distance = $13.70 + $0.1405 = **$13.8405**.
+  - **Thesis:** A quiet, extremely low-volatility (0.34% ATR) name at a fresh 52-week high, riding a well-covered M&A catalyst (Sun Pharma's shareholder-approved acquisition), confirmed on volume even though price fell just short of its own 7-day channel — the cleanest `momentum_vol` read this system has logged since the trigger was introduced, and its first live test toward the pre-registered 10-trade review.
+
+**Index sleeve (SSO):** SPY passes the index-adjusted long template (price $776.28 > SMA50 $748.118 > SMA200 $704.4966; 0.073% below the 52wk high $776.85, well within 10%; RS proxy (776.28−629.28)/(776.85−629.28) = 0.9961 ≥ 0.6). Tier 2: price $776.28 < prior-bar (Aug 12) Donchian-7 upper $776.85 → no `breakout_7d` (missed by $0.57). EMA8 $767.06 > EMA21 $757.59 (true) but rel_vol = 33,179,126/47,980,263 = **0.692** < 1.4 → `momentum_vol` fails. RSI(14) = 64.44, not 35–45 → no `pullback`. **No trigger — no index-sleeve trade**, same outcome as essentially every run since the volume-confirmation rule was added (7th+ consecutive run).
+
+**Mean-reversion sleeve (second pass, same scan, SPY > SMA200 so the sleeve is active; 1 of 2 mean_reversion slots used entering this run — CVS):**
+- Step 1 — 10 lowest scan RSI(14) among rows clearing $20M/day (excl. ACAD/CVS/OGN): DVA (25.91), ROL (26.56), NI (28.36), RSI [ticker] (30.25), CRUS (30.62), ALHC (30.72), BXMT (30.84), AXS (31.80), CHRW (31.90), WSO (32.23).
+- Step 2 — RSI(2) on the last completed session (Aug 12): qualifiers (<15): **ROL 12.763, AXS 1.427, WSO 8.864**. DVA 43.77, NI 27.82, RSI[ticker] 17.59, CRUS 19.97, ALHC 47.84, BXMT 41.81, CHRW 46.30 all failed (several of these — DVA, RSI[ticker], ALHC, BXMT, CHRW — printed a qualifying RSI(2) the prior day, Aug 11, but already bounced back above 15 by Aug 12's close; only the most recent completed session counts).
+- Step 3 (3 survivors only) — Tier1-MR price>SMA200: **ROL** $36.54 < SMA200 $54.1046 **FAIL** (35% below the long-term trend — a broken name, not an oversold dip); **AXS** $99.625 < SMA200 $102.6535 **FAIL**; **WSO** $311.745 < SMA200 $378.4877 **FAIL** (18% below). All three are genuinely broken rather than oversold-in-uptrend — the falling-knife exclusion doing exactly its job, same pattern as every mean-reversion pass this week. **No mean-reversion trade this run** — 0 candidates reached Tier 2-MR.
+
+**Net result: 1 position opened (OGN, stock sleeve), 0 closed, 0 gate-level rejections.** FBP and the SSO index sleeve both stopped at the Tier 2 trigger/volume gate (non-gate Tier 2 declines, not logged to `trade_log.csv` per schema scope); ATAI, TECH, LIND, GRMN, LXP, AMLX likewise failed Tier 2 volume confirmation. PAY, KLAC, AWI, WTW, PYPL failed Tier 1 (broken/mixed trend stack or sub-0.6 range position). CDNA, CIB were cut at the Tier 1→Tier 2 relative-strength ranking (not a gate failure). ROL, AXS, WSO failed Tier1-MR (below SMA200).
+
+**Rejected by gates:** None this run — OGN cleared every gate in Step 5 (position size 14.92% ≤15% cap, no daily-loss halt, 1st of 2 new-trade slots this run, 3 of 6 open positions after this trade, Health Technology at 2 of 3 sector cap, stop 0.51% well inside the 3% floor, not options, not leveraged, no margin/no short) and the execution-level checks (chase-protection, spread, depth) all passed cleanly.
+
+**Strategy adaptation this run:** None — still far below every evidence bar (1 of a required 10 closed `momentum_vol` trades toward that review — OGN is now open, not closed; 0 closed mean-reversion trades toward the 10-trade rsi2-cohort review). One observation worth flagging without acting on it: FBP's clean Donchian-7 breakout that failed only on volume, and OGN's third consecutive $0.005 miss on the same level, both point at the 7-day channel sitting right at the edge of what current volume conditions can confirm — not yet a pattern requiring a threshold change, just noted for visibility per the adaptation policy's evidence bar.
+
