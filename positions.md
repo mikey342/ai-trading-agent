@@ -9,20 +9,19 @@ separate and simulated.
 | Field | Value |
 |---|---|
 | Starting NAV | $10,000 |
-| Current cash (simulated) | $6,418.74 |
-| Current NAV (simulated) | $10,007.03 |
-| Realized P&L (all-time) | -$2.11 |
-| Today's realized P&L | $0.00 |
+| Current cash (simulated) | $7,705.29 |
+| Current NAV (simulated) | $9,958.39 |
+| Realized P&L (all-time) | -$42.61 |
+| Today's realized P&L | -$40.50 |
 | Trading halted today? | No |
-| Last updated | 2026-08-13 13:46 UTC (morning run; 1 opened (OGN, stock sleeve), 0 closed — see trade_journal.md) |
+| Last updated | 2026-08-13 18:45 UTC (midday run; 0 opened, 1 closed (ACAD, stop-out) — see trade_journal.md) |
 
 ## Open positions — equity and leveraged ETFs
 
 | Symbol | Underlying | Sleeve | Direction | Counter-trend? | Qty | Entry price | Entry date | Original stop | R-target | R-target reached? | Current exit stop | Current price | Unrealized P&L | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| ACAD | ACAD | stock | bullish | No | 45 | $29.49 | 2026-08-11 | $28.6053 | $31.2594 | No | $28.6053 | $29.51 | $0.90 | Health Technology. breakout_52w, vol-confirmed (rel_vol 1.565). PEAD tailwind (beat 5/7 qtrs, incl. most recent). SMA20 (stock trend MA) $26.7005 as of 2026-08-13 morning run -- no trend_break. |
-| CVS | CVS | mean_reversion | bullish | No | 8 | $94.85 | 2026-08-12 | $90.35 | N/A (MR sleeve) | N/A | $90.35 | $95.88 | $8.24 | Retail Trade. mr_reversal, entry rsi2=0.560 (Aug 11 session, sub-10 cohort). No volume confirmation required (MR sleeve). Stop = 1.5xATR14 (MR sleeve exempt from 3% ceiling). Exits: stop -> mr_target (RSI2>70) -> trend_break (close<SMA200) -> 5-day time-stop. SMA200 $85.2356 as of 2026-08-13 morning run -- no trend_break. RSI(2) on last completed session (Aug 12) = 44.58, not >70 -- mr_target not yet fired. 1 trading day into the 5-day time-stop clock. |
-| OGN | OGN | stock | bullish | No | 109 | $13.70 | 2026-08-13 | $13.62975 | $13.8405 | No | $13.62975 | $13.695 | -$0.55 | Health Technology. momentum_vol (no level test -- price missed the prior-bar Donchian-7 upper by $0.005), vol-confirmed (rel_vol 2.178). News sentiment +0.191 (Somewhat-Bullish, Sun Pharma acquisition is the dominant catalyst). Most recent earnings (2026-07-31) was an EPS miss, not a PEAD tailwind. Position capped by the 15%-of-NAV rule (shares_risk 569 >> shares_cap 109) -- under-risked at ~0.08% NAV vs the 0.4% target, plain equity per the instrument-selection rule (no single-stock leveraged ETF mapped to OGN). SMA20 (stock trend MA) $13.554 as of 2026-08-13 morning run. Entered today, time-stop clock not yet started. |
+| CVS | CVS | mean_reversion | bullish | No | 8 | $94.85 | 2026-08-12 | $90.35 | N/A (MR sleeve) | N/A | $90.35 | $94.77 | -$0.64 | Retail Trade. mr_reversal, entry rsi2=0.560 (Aug 11 session, sub-10 cohort). No volume confirmation required (MR sleeve). Stop = 1.5xATR14 (MR sleeve exempt from 3% ceiling). Exits: stop -> mr_target (RSI2>70) -> trend_break (close<SMA200) -> 5-day time-stop. SMA200 $85.2356 as of 2026-08-13 midday run -- no trend_break. RSI(2) on last completed session (Aug 12) = 44.59, not >70 -- mr_target not yet fired. 1 trading day into the 5-day time-stop clock. |
+| OGN | OGN | stock | bullish | No | 109 | $13.70 | 2026-08-13 | $13.62975 | $13.8405 | No | $13.62975 | $13.715 | $0.17 | Health Technology. momentum_vol (no level test -- price missed the prior-bar Donchian-7 upper by $0.005), vol-confirmed (rel_vol 2.178). News sentiment +0.191 (Somewhat-Bullish, Sun Pharma acquisition is the dominant catalyst). Most recent earnings (2026-07-31) was an EPS miss, not a PEAD tailwind. Position capped by the 15%-of-NAV rule (shares_risk 569 >> shares_cap 109) -- under-risked at ~0.08% NAV vs the 0.4% target, plain equity per the instrument-selection rule (no single-stock leveraged ETF mapped to OGN). SMA20 (stock trend MA) $13.554 as of 2026-08-13 midday run -- no trend_break. Entered today, time-stop clock not yet started. |
 
 `Underlying` is the symbol the **thesis** is about, and the one whose
 trend MA the trend-break exit checks (SMA20 for the stock sleeve, SMA50
@@ -89,3 +88,4 @@ is a one-way flag, same semantics as the equity table.
 | 2026-08-12 (midday, 18:38 UTC) | midday | $10,000.14 | $7,912.04 | $0 | No |
 | 2026-08-12 (close, 19:45 UTC) | close | $10,005.28 | $7,912.04 | $0 | No |
 | 2026-08-13 (morning, 13:46 UTC) | morning | $10,007.03 | $6,418.74 | $0 | No |
+| 2026-08-13 (midday, 18:45 UTC) | midday | $9,958.39 | $7,705.29 | -$40.50 | No |

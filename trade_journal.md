@@ -1057,3 +1057,52 @@ Every one of the 8 sits with EMA8>EMA21 (unsurprising — Tier 1's range-positio
 
 **Strategy adaptation this run:** None — still far below every evidence bar (1 of a required 10 closed `momentum_vol` trades toward that review — OGN is now open, not closed; 0 closed mean-reversion trades toward the 10-trade rsi2-cohort review). One observation worth flagging without acting on it: FBP's clean Donchian-7 breakout that failed only on volume, and OGN's third consecutive $0.005 miss on the same level, both point at the 7-day channel sitting right at the edge of what current volume conditions can confirm — not yet a pattern requiring a threshold change, just noted for visibility per the adaptation policy's evidence bar.
 
+
+### 2026-08-13 18:45 UTC — midday run
+
+**Market status:** open (per `MARKET_STATUS`, US equity markets open 09:30-16:15 ET)
+**Account:** NAV $9,958.39, cash $7,705.29, halted: no
+
+**Regime:** Direction LONG (SPY $777.43 > SMA200 $704.4966, confirmed across the last 5 sessions, no flip risk). Risk level NORMAL (SPY $777.43 > SMA50 $748.118, VIX 14.66 < 20 — both legs clear). Max 2 new trades this run, index sleeve and counter-trend both permitted.
+
+**Scouted:** Tier 0 scan matched 396 (200 returned, unchanged from recent runs). After the $20M/day dollar-volume screen (187 names) and dropping the 3 already-held symbols (ACAD, CVS, OGN), the ADX-ranked top 15 (AI tilt applied, no theme names reached this cut) was: TECH, CDNA, PAY, FBP, ATAI, LIND, AMLX, CIB, AWI, WTW, PYPL, GRMN, LXP, SAIA, BXMT.
+
+Of these, 7 (TECH, FBP, ATAI, LIND, AMLX, GRMN, LXP) were already confirmed today (morning run) to pass Tier 1 and fail Tier 2 on `relative_volume < 1.4` — a daily-bar criterion computed off the last completed session, unchanged intraday — so they were not re-tested, per `run_instructions.md`'s duplicate-rejection rule. The remaining 8 were freshly evaluated:
+
+- **AWI:** range position 0.5882 < 0.6 — Tier 1 FAIL (price-based leg, re-tested since price moves; still fails).
+- **PYPL:** range position 0.5285 < 0.6 — Tier 1 FAIL.
+- **SAIA:** range position 0.5195 < 0.6 — Tier 1 FAIL.
+- **BXMT:** range position 0.1045 < 0.6, and only 5.3% above 52wk low (needs 25%) — Tier 1 FAIL on both legs (also excluded from the mean-reversion pass below on the same broken-trend basis).
+- **PAY:** price $41.80 > SMA20 $34.72 (pass), but SMA50 $28.10 < SMA200 $28.33 — Tier 1 FAIL (broken MA stack).
+- **WTW:** price $334.29 > SMA20 $318.82 (pass), but SMA50 $289.00 < SMA200 $298.78 — Tier 1 FAIL (broken MA stack).
+- **CDNA:** Tier 1 PASS (96.97>...wait, price $46.97>SMA20 $41.62>none needed, SMA50 $32.28>SMA200 $22.23, range 0.9275). Tier 2: RSI14 73.96 (no pullback), EMA8 45.66>EMA21 41.17 (bullish), price $46.97 below the prior-bar (Aug 12) Donchian-7 upper $48.2936 (no breakout_7d), but `relative_volume` = 984,931/1,307,368 = 0.754 < 1.4 — momentum_vol fails too. **No trigger.**
+- **CIB:** Tier 1 PASS (price $96.965>SMA20 $88.52>SMA50 $82.60>SMA200 $72.29; range 0.9284). Tier 2: RSI14 67.91 (no pullback), EMA8 92.70>EMA21 88.97 (bullish), price below prior-bar Donchian-7 upper $100.736 (no breakout_7d), `relative_volume` = 442,950/315,467.67 = **1.404** — clears 1.4 narrowly — **`momentum_vol` fires.** Advanced to Tier 3.
+
+**Index sleeve (SSO):** SPY made a fresh 52wk high today ($779.37 intraday) and price $777.43 cleared the prior-bar (Aug 12) Donchian-7 upper $776.85 — the level test passes for the first time in over a week — and EMA8 $767.06 > EMA21 $757.60 (bullish). But `relative_volume` = 33,179,126/47,980,262.6 = **0.692** < 1.4 — volume confirmation fails, so neither `breakout_7d` nor `momentum_vol` fires. **No index-sleeve trade** — 8th+ consecutive run blocked at the same gate, now even with the level test clearing.
+
+**Mean-reversion sleeve (SPY > SMA200, sleeve active; 1 of 2 slots used entering this run — CVS):** Reused the same scan response. Step 1 (10 lowest scan RSI among $20M/day-qualifying, non-held names) was identical to this morning's list (DVA, ROL, NI, RSI[ticker], CRUS, ALHC, BXMT, AXS, CHRW, WSO), and RSI(2) on the last completed session (Aug 12) is a daily-bar figure unchanged from the morning read — reused rather than re-called: qualifiers (<15) were ROL 12.763, AXS 1.427, WSO 8.864. Step 3 (Tier1-MR, price > SMA200): ROL $36.54 (wait, re-verify not needed, unchanged from morning) FAILED, WSO FAILED, and AXS was re-checked with a fresh quote ($100.13, still below SMA200 $102.6535) — still FAILS. **No mean-reversion trade this run** — 0 candidates reached Tier 2-MR, same as every run since 2026-08-11.
+
+**Decisions:**
+
+**CIB — rejected at execution (Tier 3 passed, spread gate failed):**
+- **Trigger:** `momentum_vol` (no level test — price below the prior-bar Donchian-7 upper).
+- **Trend:** price $96.965 > SMA20 $88.52 > SMA50 $82.60 > SMA200 $72.29.
+- **Momentum:** RSI(14) 67.91, EMA8 $92.70 > EMA21 $88.97 (bullish spread).
+- **Relative strength:** pct_52w_range 0.9284.
+- **Valuation:** PE 22.69 (logged only).
+- **Catalyst:** news sentiment +0.155 (Somewhat-Bullish, 50 AV articles, driven by Aug 10 Q2 earnings call coverage and the Aug 11 +8.2% gap); next earnings 2026-11-09, no blackout conflict.
+- **Risk:** ATR14 3.3538 → stop_distance = min(1.5×ATR14 $5.03, 3% floor $2.909) = **$2.909** (3% floor binds) → stop would be $94.056. risk_budget 0.4% NAV ($9,958.39) = $39.83 → shares_risk = floor(39.83/2.909) = 13; shares_cap = floor(0.15×9,958.39/96.965) = 15 → risk budget binds, plain equity, 13 shares would have been $1,260.55 (12.66% of NAV).
+- **Direction:** bullish, with-trend.
+- **Execution:** chase-protection clear (signal $96.965 → entry_price(ask) $97.68, moved $0.715 vs a $1.454 threshold). **Fresh quote at fill time: bid $97.07 / ask $97.68 — spread 0.627% of mid, exceeds the 0.5% cap.** Skipped per the mechanical spread rule, not entered. This is the second consecutive run (2026-08-12 and 2026-08-13 midday) CIB has fired `momentum_vol` and been rejected on this exact gate — both shortly after its Aug 10 earnings report. Worth watching, not yet a pattern warranting a change (n=2).
+- **One-sentence thesis:** would have been a clean momentum_vol read on a bank ADR still digesting a well-received earnings beat, but the post-earnings spread remains too wide to cross twice running.
+
+**Position review:**
+- **ACAD — CLOSED on fixed stop.** Current bid $28.59 / last trade $28.60 breached the original stop $28.6053 (entered 2026-08-11 at $29.49). R-target $31.2594 was never reached. Sold at bid $28.59 (363 sh resting, ample depth for the 45 sh order). realized_pnl = 45×(28.59−29.49) = **−$40.50**; r_multiple = −40.50/39.8115 = **−1.017R**. No specific catalyst identified for the drop — a broad pullback in the name (opened $29.02 vs prior close $29.45, drifted lower through the session).
+- **CVS (mean_reversion):** current $94.77, no exit condition met. RSI(2) on last completed session (Aug 12) = 44.59, not > 70 — `mr_target` not fired. SMA200 $85.2356, no `trend_break`. 1 of 5 trading days into its time-stop clock.
+- **OGN (stock):** current $13.715, no exit condition met. SMA20 (stock trend MA) $13.554 — price still well above, no `trend_break`. Stop $13.62975 and R-target $13.8405 both untouched. Entered today (2026-08-13), time-stop clock not started.
+
+**Rejected by gates:** CIB — execution-level spread gate (0.627% of mid > 0.5% cap), logged above and in `trade_log.csv`.
+
+**Strategy adaptation this run:** None. Still 0 of the required 10 closed `momentum_vol` trades toward that pre-registered review (OGN remains the only open one; CIB's second straight spread-gate rejection is noted for visibility but n=2 is far below any evidence bar). 0 closed mean-reversion trades toward the rsi2-cohort review. ACAD's stop-out is the system's first closed `breakout_52w`-era trade and the first realized loss of any real size — logged plainly, not treated as a signal about anything given n=1.
+
+**Net result: 0 opened, 1 closed (ACAD, stop-out, −$40.50 / −1.017R), 1 rejected by gates (CIB, spread). CDNA and the SSO index sleeve both stopped at the Tier 2 volume-confirmation gate (non-gate Tier 2 declines, not logged to `trade_log.csv` per schema scope). AWI, PYPL, SAIA, BXMT, PAY, WTW failed Tier 1 (range position or broken MA stack). ROL, AXS, WSO failed Tier1-MR (below SMA200, re-verified for AXS with a fresh quote).**
