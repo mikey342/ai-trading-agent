@@ -910,3 +910,52 @@ Only **CIB** fires a trigger — `momentum_vol` (no level test passed: price sit
 **Position review:** ACAD and CVS both checked against stop/target/trend-break/time-stop — no exit conditions met, both held (see above).
 
 **Strategy adaptation this run:** None. Standing observations reaffirmed, not repeated in full — see the 18:38 UTC entry above. One new data point: OGN's `breakout_7d` miss ($13.655 vs a $13.66 prior-bar upper) was the closest anything came to a level-based trigger this run, and it would still have failed volume confirmation (1.103) had the level cleared — a reminder that the volume gate, not the shortened 7-day channel, is currently the binding constraint on Sleeve A entries.
+
+---
+
+### 2026-08-13 00:30 UTC — operator note (not a run)
+
+**Why no 9:30am ET scan ran on 2026-08-12.** The daily report flags this as
+"worth confirming this was intentional scheduling rather than a missed
+run." It was neither — the run **started and hung**, and the agent had no
+way to see that.
+
+Session `cse_017eVWRk8g2AgSbd4GeartJh` began 13:40 UTC and blocked at
+13:43 UTC on an interactive permission prompt, staying in
+`requires_action` until it timed out. Sequence: `get_earnings_calendar`
+with `days=7` and no filter returned 99,503 characters, over the token
+limit, so the payload was written to a file under
+`.claude/projects/.../tool-results/` and only the path returned. The run
+then tried to copy that file into its scratchpad. That directory is
+permission-protected, the sandbox raised an approval prompt, and a
+scheduled cloud run has no human to answer it.
+
+**What was lost:** the run had already completed the regime read (LONG /
+NORMAL) and a correct Tier 0 pass — 396 matches, 192 clearing the
+$20M/day screen, **190 after dropping the two held symbols**, which was
+the no-pyramiding rule's first live test and it passed. None of that was
+committed, because the session died before Step 3.
+
+**Fixed the same day, two ways** (commits `4c024a7`, `9a5bb55`):
+1. `get_earnings_calendar` is now called with `days=3,
+   filter="high_market_cap"`, which returns **inline** — verified live,
+   ~145 entries, no file. Both narrowings are free: the blackout only
+   uses 3 calendar days, and the >$1B filter cannot exclude a >$2B
+   universe.
+2. A general rule to read oversized tool results **in place** with
+   jq/python and never copy, move, redirect into, or edit anything under
+   `tool-results/`. `run_scan` still overflows legitimately and needs
+   this.
+
+The 18:38 and 19:45 UTC runs both completed normally afterwards, so the
+fix is confirmed working.
+
+**One correction to today's report.** Its experiment-3 tally counts
+PAYO's close (`momentum_test_would_pass=false`, −0.123R) as a data point.
+PAYO's exit was **config-driven** — caused by the SMA50→SMA20 trend-MA
+change applied to an already-open position, not by a market event, as
+`positions.md` and `strategy.md` both record. It should be **excluded**
+from that comparison, not merely footnoted. At 1 of a required 20 closed
+trades this changes nothing yet, but the exclusion needs to hold when the
+sample grows.
+
