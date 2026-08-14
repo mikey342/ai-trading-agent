@@ -1243,3 +1243,84 @@ None of the 8 hit the RSI(14) 35-45 `pullback` band (all sit 68-75, unsurprising
 **Net result: 1 position opened (EAT, stock sleeve), 0 closed, 0 gate-level rejections.** FBP and the SSO index sleeve both stopped at the Tier 2 trigger/volume gate (non-gate Tier 2 declines, not logged to `trade_log.csv` per schema scope); ATAI, TECH, LIND, CAKE, CIB, CDNA likewise failed Tier 2 volume confirmation. KLAC, AWI, PYPL failed Tier 1 (range position dead zone). LXP failed Tier 1 (price marginally below SMA20). PAY, ACAD, AMLX were cut at the Tier 1→Tier 2 relative-strength ranking (not a gate failure). ROL, CRUS, VERA failed Tier1-MR (below SMA200).
 
 **Strategy adaptation this run:** None — still far below every evidence bar (2 of a required 10 closed `momentum_vol` trades toward that review — OGN and EAT are both now open, neither closed; 0 closed mean-reversion trades toward the 10-trade rsi2-cohort review). One observation worth flagging without acting on it: FBP has now cleared the Donchian-7 level test on two consecutive runs it appeared in (2026-08-13 morning, 2026-08-14 morning) and failed only on volume both times — not yet a pattern warranting a change (n=2 runs, likely the same underlying near-miss), just noted for visibility per the adaptation policy's evidence bar.
+
+---
+
+### 2026-08-14 18:37 UTC — midday run
+
+**gates.md MODE check:** `PAPER` — confirmed, run proceeds under normal paper-trading rules.
+
+**Market status:** `MARKET_STATUS` (Alpha Vantage) — US equity markets `open` (09:30-16:15 ET). Corroborated via live SPY quote at 2026-08-14T18:37:52Z (14:37 ET) — the 2:30pm ET midday slot.
+
+**Account (before this run):** NAV $9,975.39, cash $6,524.89, halted: no. Three open positions: CVS (8 sh @ $94.85, mean_reversion), OGN (109 sh @ $13.70, stock), EAT (5 sh @ $236.08, stock, opened this morning).
+
+**Position review:**
+- **CVS (mean_reversion):** current $96.99 (up from $96.895 at the morning check). RSI(2) on the last completed session (Aug 13) = **53.660**, not >70 — `mr_target` not fired. SMA(200) $85.3009 — price well above, no `trend_break`. Stop $90.35 not breached. Entered 2026-08-12; today is the 3rd trading day into the 5-day time-stop clock (Aug 12, 13 complete, Aug 14 in progress), not yet due. Unrealized P&L: 8 × (96.99−94.85) = **+$17.12**.
+- **OGN (stock):** current $13.715, essentially flat since the morning check. SMA(20) $13.5655 — price still above, no `trend_break`. Stop $13.62975 and R-target $13.8405 both untouched. Entered 2026-08-13; 2nd trading day into the 10-day time-stop clock, not due. Unrealized P&L: +$0.16.
+- **EAT (stock):** current $237.615 (up from the $236.08 morning entry). SMA(20) $210.739 — no `trend_break`. Stop $228.9976 and R-target $250.2448 both untouched. Entered this morning; time-stop clock not started. Unrealized P&L: +$7.68.
+
+No exit conditions met on any position — all three held.
+
+**Regime filter:**
+- **Direction:** SPY $775.93 > SMA(200) $704.9998 (last:5 series 702.97→703.48→703.99→704.50→705.00, climbing steadily) → **LONG mode**, well-established, 3-close confirmation trivially satisfied.
+- **Risk level:** SPY $775.93 > SMA(50) $748.4844 ✓, VIX 14.31 < 20 ✓ → **NORMAL**. Full rules: up to 2 new trades this run, index sleeve and counter-trend both permitted.
+
+**Scouted (Tier 0):** `run_scan` (scan_id de1b1994...) overflowed to a file (~102K chars), read in place per the standing rule (never copied) — **397 total matches, 200 rows returned**. CVS, OGN, EAT excluded per no-pyramiding. After the $20M/day dollar-volume screen client-side (`Last × Average volume`), **191 of the remaining 198 rows** cleared. Ranked by ADX(14) desc (scan column) with the 1.15× `ai_theme.md` tilt applied — **no `ai_theme.md` name appeared anywhere in the top 25 by score this run** (none tilted into contention, unlike the morning run's KLAC), so the tilt was a no-op this pass:
+
+| Rank | Symbol | ADX(14) (scan) |
+|---|---|---|
+| 1 | CAKE | 63.17 |
+| 2 | TECH | 59.33 |
+| 3 | CDNA | 57.36 |
+| 4 | PAY | 53.44 |
+| 5 | ATAI | 52.08 |
+| 6 | FBP | 51.84 |
+| 7 | LIND | 47.94 |
+| 8 | AMLX | 46.94 |
+| 9 | AWI | 46.72 |
+| 10 | ACAD | 46.68 |
+| 11 | CIB | 46.39 |
+| 12 | PYPL | 45.82 |
+| 13 | LXP | 45.68 |
+| 14 | WTW | 45.59 |
+| 15 | PAG | 45.12 |
+
+**Top 15 into Tier 1:** CAKE, TECH, CDNA, PAY, ATAI, FBP, LIND, AMLX, AWI, ACAD, CIB, PYPL, LXP, WTW, PAG. (BFLY at 44.31 was the first cut.)
+
+**Earnings blackout (Tier 1, one `get_earnings_calendar` call, days=3/high_market_cap — returned inline, 11 entries, no file):** SGML, RMIX, SIND, USAS, REPL, CSAN, RLX, COVTY, SKYT, MSADY, CVAC — none overlap the 15 candidates. All proceed.
+
+**Tier 1 — trend template, both directions.** AWI (range position 0.5495, also only 20.4% above the 52wk low) and PYPL (0.5259) fail both directions on the range-position leg alone (dead zone 0.4–0.6), so their SMA data wasn't pulled — consistent with the morning run's readings for these same two names:
+
+- **PASS LONG:** CAKE ($112.53, SMA20 $98.8765, SMA50 $85.1168 > SMA200 $63.6749, %above-low 161.3%, range 0.9213), TECH ($72.305, SMA20 $71.9735, SMA50 $66.4963 > SMA200 $60.0566, %above-low 67.4%, range 0.9971), CDNA ($45.42, SMA20 $41.9715, SMA50 $32.788 > SMA200 $22.392, %above-low 302.9%, range 0.8872), PAY ($42.31, SMA20 $35.35, SMA50 $28.492 > SMA200 $28.3863 — ascending stack barely intact, unchanged from the morning run's $0.106 margin — %above-low 110.4%, range 0.8810), ATAI ($7.265, SMA20 $7.19575, SMA50 $5.6813 > SMA200 $4.471725, %above-low 122.5%, range 0.9963), FBP ($29.58, SMA20 $28.7645, SMA50 $26.9924 > SMA200 $23.0503, %above-low 54.4%, range 0.9821), LIND ($33.80, SMA20 $30.814, SMA50 $27.4681 > SMA200 $19.423575, %above-low 197.3%, range 0.9492), AMLX ($21.65, SMA20 $20.513, SMA50 $17.9822 > SMA200 $15.1797, %above-low 183.7%, range 0.8262), ACAD ($28.32, SMA20 $26.838, SMA50 $24.9213 > SMA200 $23.958675, %above-low 43.8%, range 0.8494), CIB ($96.40, SMA20 $89.3485, SMA50 $83.0496 > SMA200 $72.48555, %above-low 100.6%, range 0.9177), PAG ($219.23, SMA20 $214.63, SMA50 $195.0522 > SMA200 $169.32225, %above-low 56.5%, range 0.9106).
+- **FAIL both (range position 0.4–0.6 dead zone):** AWI (0.5495), PYPL (0.5259).
+- **FAIL both (broken MA stack):** LXP ($60.57 < SMA20 $60.6145 by $0.045 — SMA50 $56.6874 > SMA200 $51.1273 so it doesn't qualify SHORT either), WTW ($332.41 > SMA20 $320.804 so LONG's price leg passes, but SMA50 $290.5532 < SMA200 $298.80847 — the ascending stack itself is broken; SHORT needs price<SMA20 which also fails).
+
+**Tier 1 survivors (11, all with-trend bullish — no counter-trend candidate this run):** CAKE, TECH, CDNA, PAY, ATAI, FBP, LIND, AMLX, ACAD, CIB, PAG.
+
+**Relative-strength-proxy ranking (range position desc, top 8 advance):** TECH (0.9971), ATAI (0.9963), FBP (0.9821), LIND (0.9492), CAKE (0.9213), CIB (0.9177), PAG (0.9106), CDNA (0.8872) — **PAY (0.8810), ACAD (0.8494) and AMLX (0.8262) cut.**
+
+**Tier 2 — triggers, top 8** (donchian period=7 last:3, compared against the **prior bar's** i.e. Aug 13's channel; EMA8/21 last:5; RSI14 last:2; volume confirmation = Aug 13 completed-session volume ÷ 30-day average, from `get_equity_historicals`/`get_equity_fundamentals`, never the scan's `session="all"` column):
+
+| Symbol | price vs prior-bar (Aug 13) Donchian-7 upper | EMA8 vs EMA21 (Aug 13) | relative_volume | ≥1.4? | RSI(14) Aug 13 | Trigger |
+|---|---|---|---|---|---|---|
+| TECH | 72.305 < 72.39 | bullish | 1,976,173/3,549,119.1875 = 0.557 | ✗ | 71.85 | none |
+| ATAI | 7.265 > 7.26 — **breaks out** ($0.005) | bullish | 4,099,277/18,245,394.276 = 0.225 | ✗ | 72.70 | none — level cleared but volume fails |
+| FBP | 29.58 > 29.575 — **breaks out** ($0.005) | bullish | 1,180,727/1,559,986.211 = 0.757 | ✗ | 68.94 | none — level cleared but volume fails |
+| LIND | 33.80 < 34.95 | bullish | 937,281/836,401.165 = 1.121 | ✗ | 74.10 | none |
+| CAKE | 112.53 < 118.46 | bullish | 2,109,027/1,919,074.159 = 1.099 | ✗ | 74.60 | none |
+| CIB | 96.40 < 100.736 | bullish | 397,199/326,116.013 = 1.218 | ✗ | 68.37 | none |
+| PAG | 219.23 < 220.99 | bullish | 282,476/530,022.461 = 0.533 | ✗ | 66.23 | none |
+| CDNA | 45.42 < 48.2936 | bullish | 739,265/1,315,107.276 = 0.562 | ✗ | 74.07 | none |
+
+None of the 8 hit the RSI(14) 35-45 `pullback` band (all sit 66-75). **Zero triggers fire this run** — every candidate that cleared or approached the Donchian-7 level (ATAI, FBP) was killed by volume confirmation, and the rest never got close to the level at all. ATAI and FBP are now each on their **second** near-miss on the level test without a volume-confirmed clear (FBP: 2026-08-13 morning and 2026-08-14 morning/midday; ATAI new to this pattern today). **No Tier 3 candidates — no stock-sleeve trade this run.**
+
+**Index sleeve (SSO):** SPY passes the index-adjusted long template (price $775.93 > SMA50 $748.4844 > SMA200 $704.9998; 0.44% below the 52wk high $779.37, well within 10%; RS proxy (775.93−629.28)/(779.37−629.28) = 0.9771 ≥ 0.6). Tier 2: price $775.93 < prior-bar (Aug 13) Donchian-7 upper $779.37 → no `breakout_7d`. EMA8 $769.463 > EMA21 $759.445 (bullish) but rel_vol = 35,634,483/47,615,951.94 = **0.748** < 1.4 → `momentum_vol` fails. RSI(14) = 67.27, not 35–45 → no `pullback`. **No trigger — no index-sleeve trade**, same volume-gate outcome as essentially every run since the rule was added.
+
+**Mean-reversion sleeve (second pass, same scan, SPY > SMA200 so the sleeve is active; 1 of 2 mean_reversion slots used entering this run — CVS):**
+- Step 1 — 10 lowest scan RSI(14) among rows clearing $20M/day (excl. CVS/OGN/EAT): DVA (25.02), ROL (25.56), AMX (25.61), GOLF (26.62), NI (29.38), CRUS (30.00), VERA (30.48), ALHC (30.52), MYRG (32.18), RSI[ticker] (32.37) — identical candidate set to the morning run (same daily-bar scan RSI).
+- Step 2 — RSI(2) on the last completed session (Aug 13, unchanged from the morning run): qualifiers (<15): **ROL 7.677, CRUS 11.312, VERA 6.086**. DVA 27.82, AMX 18.85, GOLF 35.96, NI 46.28, ALHC 42.42, MYRG 21.59, RSI[ticker] 45.31 all failed.
+- Step 3 (3 survivors only) — Tier1-MR price>SMA200, re-verified with fresh quotes and fresh SMA200 pulls: **ROL** $36.235 < SMA200 $54.0027 **FAIL** (33% below trend, unchanged pattern); **CRUS** $120.90 < SMA200 $140.8920 **FAIL**; **VERA** $31.56 < SMA200 $38.9702 **FAIL** (VERA jumped ~9.2% intraday from Aug 13's $28.89 close but remains well below its 200-day trend — a bounce inside a broken chart, not oversold-in-uptrend). All three genuinely broken rather than oversold-in-uptrend. **No mean-reversion trade this run** — 0 candidates reached Tier 2-MR, same as every run since 2026-08-11.
+
+**Net result: 0 opened, 0 closed, 0 gate-level rejections.** ATAI and FBP cleared the Donchian-7 level test but failed volume confirmation (non-gate Tier 2 declines, not logged to `trade_log.csv` per schema scope); TECH, LIND, CAKE, CIB, PAG, CDNA likewise failed Tier 2 volume confirmation outright. AWI, PYPL failed Tier 1 (range position dead zone). LXP, WTW failed Tier 1 (broken MA stack — WTW's SMA50<SMA200 break is new to this run's data, not previously flagged). PAY, ACAD, AMLX were cut at the Tier 1→Tier 2 relative-strength ranking (not a gate failure). ROL, CRUS, VERA failed Tier1-MR (below SMA200, all three re-verified with fresh quotes/SMA200 pulls).
+
+**Strategy adaptation this run:** None — still far below every evidence bar (2 of a required 10 closed `momentum_vol` trades toward that review — OGN and EAT both open, neither closed; 0 closed mean-reversion trades toward the 10-trade rsi2-cohort review). FBP has now cleared the Donchian-7 level test on three consecutive runs it has appeared in (2026-08-13 morning, 2026-08-14 morning, 2026-08-14 midday) and failed only on volume each time; ATAI joined that pattern for the first time this run. Still n=3 runs for FBP (likely the same underlying near-miss recurring on unchanged daily-bar data across same-day runs, not 3 independent observations) and n=1 for ATAI — noted for visibility, no action warranted under the pre-registered evidence bar.
