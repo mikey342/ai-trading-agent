@@ -161,8 +161,22 @@ practitioners *and* academics broadly agree on. Two distinct checks:
   conviction behind the move. This is a genuinely earlier tell than the
   down-day check and costs no extra call.
 
-**Pillar 3 — Momentum divergence (RSI/MACD lower high vs. price higher
-high). Practitioner-tier, and structurally unavailable early.**
+**Pillar 3 — Momentum divergence (RSI(14)/MACD lower high vs. price
+higher high). Practitioner-tier, and structurally unavailable early.**
+
+**⚠ Use `RSI(14)` or `MACD` — never `RSI(2)` for this check.** RSI(2) is
+deliberately hyper-reactive (that's why section B uses it for the
+overbought trigger), which means it saturates near 100 on almost any
+strong up session and has little room left to register a *second*,
+weaker push. A stock reading `RSI(2) ≈ 95` at peak one will very often
+read `≈ 90-95` at peak two even when the underlying momentum genuinely
+weakened — the indicator is pinned against its ceiling, not actually
+measuring the difference. Divergence needs an oscillator with dynamic
+range between the two comparison points; only the 14-period reading (or
+MACD, which isn't bounded at all) has that range. Confirmed 2026-08-14
+on NBIS: `RSI(2)` was already at 95.6 on the first peak, leaving no
+headroom to show whether the second peak was actually weaker.
+
 Needs *two* comparable peaks to measure, so it simply cannot contribute
 on a first spike — say "not assessable" rather than "absent." Also
 explicitly unreliable on parabolic, catalyst-driven moves, which is
@@ -311,12 +325,16 @@ Also check volume-price divergence in reverse — price still making lows
 while volume declines = selling exhausting itself.
 
 **Pillar 3 — Momentum divergence** (price lower low, indicator higher
-low). Practitioner-tier and needs two comparable troughs, so it's
-unavailable on a first plunge. One genuine asymmetry in this direction's
-favor: several practitioner sources rate bullish divergence as *more*
-reliable when RSI is simultaneously oversold than the mirrored
-overbought case. Still not a substitute for Pillar 2, and the
-catalyst-driven-move caution still applies to an earnings-miss crash.
+low). Same rule as the short side: **`RSI(14)` or `MACD` only, never
+`RSI(2)`** — RSI(2) saturates near 0 on a sharp plunge the same way it
+saturates near 100 on a spike, leaving no room to show a second trough
+as genuinely less severe than the first. Practitioner-tier and needs two
+comparable troughs, so it's unavailable on a first plunge. One genuine
+asymmetry in this direction's favor: several practitioner sources rate
+bullish divergence as *more* reliable when RSI is simultaneously
+oversold than the mirrored overbought case. Still not a substitute for
+Pillar 2, and the catalyst-driven-move caution still applies to an
+earnings-miss crash.
 
 **Pillar 4 — Exhaustion candlestick** (hammer, bullish engulfing, doji
 at the lows). **Weakest pillar** — see the short side's citation list;
