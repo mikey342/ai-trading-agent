@@ -186,6 +186,39 @@ Note the mechanism also explains why a *quiet* symbol can look stable:
 repeated interpolated bars produce smoothly decaying ATR and perfectly
 flat RSI, which reads as "low volatility" rather than "no data."
 
+### ⚠ Hourly bars have a *second, independent* corruption — not the same bug as the daily interpolation above
+
+**Found 2026-08-14, also on NBIS, while trying to work around the daily
+interpolation issue.** The instinct "daily bars are broken, try hourly"
+does not work — hourly bars carry their own defect, and it is not the
+interpolation pattern (no `interpolated` flag, real-looking nonzero
+volume). Cross-checking a hearsay-hourly bar against the same window's
+verified 5-minute bars found it silently wrong:
+
+| | Hourly bar (`14:00 UTC` bucket) | True (summed from 5-minute bars) |
+|---|---|---|
+| Open | $267.15 | $268.90 |
+| High | $267.49 | **$275.96** |
+| Low | $266.71 | $264.11 |
+| Volume | 22,074 | **3,812,141** (≈173x higher) |
+
+The hourly bar understated volume by two orders of magnitude and missed
+the session's actual high entirely — the real $275.96 print (visible
+correctly in 5-minute bars) never surfaces in the hourly series at all.
+An `RSI(14)` computed on the hourly series (attempted the same day, to
+check for bearish divergence against the prior day's peak) therefore
+**inherits this corruption** and cannot be trusted either, even though
+nothing about the response looks suspicious on its own (no repeated
+values, no impossible direction — the failure mode that made the daily
+bug easy to catch by eye is absent here).
+
+**Only 5-minute (and finer) bars have been verified clean so far.**
+Daily and hourly are both compromised, via two different mechanisms.
+**Before trusting any non-5-minute aggregation, spot-check it against
+the 5-minute bars for the same window** — do not assume a bar's
+plausibility from its shape alone; this one looked completely normal
+and was still wrong by 173x on volume.
+
 ### Scanner filters available but not yet used
 The screener exposes an **options-flow filter group** that nothing in the
 current strategy touches: `FILTER_TYPE_RELATIVE_OPTIONS_VOLUME` (unusual
