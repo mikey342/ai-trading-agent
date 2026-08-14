@@ -9,19 +9,20 @@ separate and simulated.
 | Field | Value |
 |---|---|
 | Starting NAV | $10,000 |
-| Current cash (simulated) | $7,705.29 |
-| Current NAV (simulated) | $9,956.76 |
+| Current cash (simulated) | $6,524.89 |
+| Current NAV (simulated) | $9,975.39 |
 | Realized P&L (all-time) | -$42.61 |
-| Today's realized P&L | -$40.50 |
+| Today's realized P&L | $0.00 |
 | Trading halted today? | No |
-| Last updated | 2026-08-13 19:42 UTC (close run; 0 opened, 0 closed — see trade_journal.md) |
+| Last updated | 2026-08-14 17:10 UTC (morning-slot run; 1 opened (EAT), 0 closed — see trade_journal.md) |
 
 ## Open positions — equity and leveraged ETFs
 
 | Symbol | Underlying | Sleeve | Direction | Counter-trend? | Qty | Entry price | Entry date | Original stop | R-target | R-target reached? | Current exit stop | Current price | Unrealized P&L | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | CVS | CVS | mean_reversion | bullish | No | 8 | $94.85 | 2026-08-12 | $90.35 | N/A (MR sleeve) | N/A | $90.35 | $94.565 | -$2.28 | Retail Trade. mr_reversal, entry rsi2=0.560 (Aug 11 session, sub-10 cohort). No volume confirmation required (MR sleeve). Stop = 1.5xATR14 (MR sleeve exempt from 3% ceiling). Exits: stop -> mr_target (RSI2>70) -> trend_break (close<SMA200) -> 5-day time-stop. SMA200 $85.2356 as of 2026-08-13 close run -- no trend_break. RSI(2) on last completed session (Aug 12) = 44.58, not >70 -- mr_target not yet fired. 2 trading days into the 5-day time-stop clock. |
-| OGN | OGN | stock | bullish | No | 109 | $13.70 | 2026-08-13 | $13.62975 | $13.8405 | No | $13.62975 | $13.7151 | $0.16 | Health Technology. momentum_vol (no level test -- price missed the prior-bar Donchian-7 upper by $0.005), vol-confirmed (rel_vol 2.178). News sentiment +0.191 (Somewhat-Bullish, Sun Pharma acquisition is the dominant catalyst). Most recent earnings (2026-07-31) was an EPS miss, not a PEAD tailwind. Position capped by the 15%-of-NAV rule (shares_risk 569 >> shares_cap 109) -- under-risked at ~0.08% NAV vs the 0.4% target, plain equity per the instrument-selection rule (no single-stock leveraged ETF mapped to OGN). SMA20 (stock trend MA) $13.554 as of 2026-08-13 close run -- no trend_break. Entered today, time-stop clock not yet started. |
+| OGN | OGN | stock | bullish | No | 109 | $13.70 | 2026-08-13 | $13.62975 | $13.8405 | No | $13.62975 | $13.715 | $0.16 | Health Technology. momentum_vol (no level test -- price missed the prior-bar Donchian-7 upper by $0.005), vol-confirmed (rel_vol 2.178). News sentiment +0.191 (Somewhat-Bullish, Sun Pharma acquisition is the dominant catalyst). Most recent earnings (2026-07-31) was an EPS miss, not a PEAD tailwind. Position capped by the 15%-of-NAV rule (shares_risk 569 >> shares_cap 109) -- under-risked at ~0.08% NAV vs the 0.4% target, plain equity per the instrument-selection rule (no single-stock leveraged ETF mapped to OGN). SMA20 (stock trend MA) $13.5655 as of 2026-08-14 morning-slot run -- no trend_break. 1 trading day into the 10-day time-stop clock. |
+| EAT | EAT | stock | bullish | No | 5 | $236.08 | 2026-08-14 | $228.9976 | $250.2448 | No | $228.9976 | $236.08 | $0.00 | Consumer Services. momentum_vol (no level test -- price $236.08 well below prior-bar Donchian-7 upper $253.7095, so no breakout_7d), vol-confirmed (rel_vol 1.467, Aug 13 completed session vs 30d avg). Reported Q4 earnings 2026-08-12 (actual $3.07 vs est $3.08, essentially in-line) and gapped from ~$221 to ~$246 the same day -- PEAD-style post-earnings drift already underway, not a fresh catalyst. News sentiment +0.245 (Somewhat-Bullish, 50 articles, mix of bullish analyst price-target raises and one bearish valuation-concern piece today). Next earnings 2026-10-28, 75 days out -- no blackout conflict. ATR14 $10.388 (4.4% of price) -> 3%-of-entry stop ceiling binds over 1.5xATR (which would be $15.58) -- stop_distance = $7.0824 (3.00% of entry). risk_budget 0.4% NAV ($9,975.39) = $39.90 -> shares_risk = floor(39.90/7.0824) = 5; shares_cap = floor(0.15x$9,975.39/$236.08) = 6 -> risk budget binds, plain equity, on-target risk (~0.4% NAV). Entered today, time-stop clock not yet started. |
 
 `Underlying` is the symbol the **thesis** is about, and the one whose
 trend MA the trend-break exit checks (SMA20 for the stock sleeve, SMA50
@@ -90,3 +91,4 @@ is a one-way flag, same semantics as the equity table.
 | 2026-08-13 (morning, 13:46 UTC) | morning | $10,007.03 | $6,418.74 | $0 | No |
 | 2026-08-13 (midday, 18:45 UTC) | midday | $9,958.39 | $7,705.29 | -$40.50 | No |
 | 2026-08-13 (close, 19:42 UTC) | close | $9,956.76 | $7,705.29 | $0 | No |
+| 2026-08-14 (morning-slot, 17:10 UTC) | morning | $9,975.39 | $6,524.89 | $0 | No |
