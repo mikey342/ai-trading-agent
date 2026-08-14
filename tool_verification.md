@@ -219,6 +219,39 @@ the 5-minute bars for the same window** — do not assume a bar's
 plausibility from its shape alone; this one looked completely normal
 and was still wrong by 173x on volume.
 
+### ⚠ Robinhood's own consumer-app chart disagrees with the API's RSI(14) — same symbol, same day, ~30 points apart
+
+**Found 2026-08-14, user cross-check on NBIS.** The user read `RSI(14)`
+directly off the Robinhood app chart for Aug 12 and got **90.19**. The
+same day, via `get_equity_technical_indicators` (this tool), the value
+was **61.96** — after the daily-interpolation bug (above) had already
+cleared, so the API reading was on real data, not a fabricated bar.
+
+**First hypothesis (session bounds, like the ADX case above) — tested
+and disproven.** Re-ran the same call with `bounds="extended"`: it
+returned **the exact same value**, 61.963657798400945, byte-identical
+to the `bounds="regular"` call. So unlike ADX, this indicator's API
+value does not vary with the `bounds` parameter at all for this symbol —
+the chart/API gap is caused by something else.
+
+**More likely explanation, also not yet confirmed**: RSI has more than
+one standard formulation. The classic **Wilder's RSI** (exponential/
+Wilder smoothing of gains and losses — what this API almost certainly
+computes) and **Cutler's RSI** (a simple moving average of gains and
+losses) are both commonly called "RSI(14)" but can diverge meaningfully,
+especially in the days right after a large price move, before Wilder's
+smoothing has "settled" from its seed value. Consumer charting products
+don't always disclose which variant they use. Not confirmed which
+variant Robinhood's app chart uses — flagging as the leading candidate
+since the bounds explanation is now ruled out.
+
+**Practical conclusion, unchanged**: the size of the gap (30 points,
+enough to flip a reading from "neutral" to "near-overbought") means any
+single-source RSI reading should be treated with caution until
+cross-checked. Do not assume "it's all Robinhood data" implies
+agreement between the consumer app and this API — it demonstrably
+doesn't, and the cause is still open.
+
 ### Scanner filters available but not yet used
 The screener exposes an **options-flow filter group** that nothing in the
 current strategy touches: `FILTER_TYPE_RELATIVE_OPTIONS_VOLUME` (unusual
