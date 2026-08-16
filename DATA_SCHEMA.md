@@ -6,6 +6,25 @@ this CSV holds the same decisions as queryable rows (good for computing
 win rate, expectancy, R-multiple distribution, or checking whether a
 specific rule is actually earning its place).
 
+> ### ⚠ Verify the column count after every append
+>
+> The row is **52 fields wide** and is written by hand, so a skipped
+> empty field silently shifts everything after it. This happened on
+> 2026-08-14: the EAT open row omitted the empty `r_multiple`, which
+> pushed `nav_after` into `r_multiple` and the notes text into
+> `nav_after` — the row parsed as 51 columns and its stop, target and
+> indicator fields all read wrong.
+>
+> **After appending, check it:**
+> ```bash
+> python3 -c "import csv;r=list(csv.reader(open('trade_log.csv')));\
+> b=[i for i,x in enumerate(r) if len(x)!=len(r[0])];\
+> print('BAD ROWS:',b) if b else print('ok',len(r)-1,'rows x',len(r[0]))"
+> ```
+> Empty fields still need their comma. An `open` row leaves `exit_rule`,
+> `realized_pnl` **and** `r_multiple` empty — that is three consecutive
+> commas, not two.
+
 **Append-only.** One row per action. Never rewrite past rows.
 
 ## When to write a row
